@@ -48,12 +48,14 @@ export default function LoginPage() {
       <div className="flex flex-col gap-1">
         <Link
           href="/"
-          className="font-mono text-sm text-ink-muted transition-colors hover:text-ink"
+          className="font-display text-sm tracking-tight text-ink-muted transition-colors hover:text-ink"
         >
-          ← <span className="text-accent">~/</span>harbi.eu
+          ← harbi.eu
         </Link>
-        <p className="font-mono text-sm text-accent">~/login</p>
-        <h1 className="font-display text-2xl font-medium text-ink">Sign in</h1>
+        <p className="mt-6 text-sm tracking-wide text-ink-faint">Sign in</p>
+        <h1 className="font-display text-3xl font-medium tracking-tight text-ink">
+          Welcome back
+        </h1>
       </div>
 
       <form onSubmit={handlePasswordLogin} className="flex flex-col gap-3">

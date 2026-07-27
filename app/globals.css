@@ -1,27 +1,26 @@
 @import "tailwindcss";
 
 /*
-  Design tokens for harbi.eu — single source of truth for color, type, and
-  motion. Everything below is consumed through Tailwind utilities generated
-  by @theme (bg-canvas, text-ink, font-display, ...); never hardcode a hex
-  value or font stack in a component.
+  Design tokens — editorial warm identity for harbi.eu.
+  Consumed via Tailwind @theme utilities (bg-canvas, text-ink, font-display, …).
+  Never hardcode hex / font stacks in components.
 */
 :root {
-  /* surfaces — graphite, not pure black */
-  --color-canvas: #15181b;
-  --color-surface: #1c2024;
-  --color-surface-hover: #23282d;
-  --color-border: #2b3136;
+  /* paper */
+  --color-canvas: #faf6f0;
+  --color-surface: #f3ede4;
+  --color-surface-hover: #ebe3d7;
+  --color-border: #ddd0c0;
 
-  /* text — off-white, never pure white */
-  --color-ink: #e7e9e6;
-  --color-ink-muted: #9aa3a6;
-  --color-ink-faint: #666e71;
+  /* ink — warm near-black */
+  --color-ink: #1c1916;
+  --color-ink-muted: #5c534a;
+  --color-ink-faint: #8a8075;
 
-  /* accent — muted sage, the only saturated color on the site */
-  --color-accent: #6fa287;
-  --color-accent-strong: #8cc7a6;
-  --color-accent-soft: #1b2621;
+  /* accent — deep terracotta, used sparingly */
+  --color-accent: #9a4e2c;
+  --color-accent-strong: #7a3b20;
+  --color-accent-soft: #f2e4d8;
 }
 
 @theme inline {
@@ -36,14 +35,14 @@
   --color-accent-strong: var(--color-accent-strong);
   --color-accent-soft: var(--color-accent-soft);
 
-  /* display: Geist (headings) · body: IBM Plex Sans · mono: Geist Mono (labels, data, paths) */
-  --font-display: var(--font-geist-sans);
-  --font-body: var(--font-plex-sans);
+  /* display: Fraunces · body: Public Sans · mono: Geist Mono (workspace only) */
+  --font-display: var(--font-fraunces);
+  --font-body: var(--font-public-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
   scroll-behavior: smooth;
 }
 
@@ -54,31 +53,50 @@ body {
 
 :focus-visible {
   outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
-@keyframes blink {
-  0%,
-  49% {
-    opacity: 1;
-  }
-  50%,
-  100% {
+/* Quiet entrance — essay page, not dashboard motion */
+@keyframes rise {
+  from {
     opacity: 0;
+    transform: translateY(0.6rem);
   }
-}
-
-.cursor-blink {
-  display: inline-block;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .cursor-blink {
-    animation: blink 1.1s step-end infinite;
+  .animate-rise {
+    animation: rise 0.7s ease-out both;
+  }
+
+  .animate-rise-delay {
+    animation: rise 0.7s ease-out 0.12s both;
+  }
+
+  .animate-rise-delay-2 {
+    animation: rise 0.7s ease-out 0.24s both;
   }
 }
 
-/* Claudette markdown + code highlighting (graphite) */
+/* Editorial underline link */
+.link-underline {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.28em;
+  transition: color 160ms ease, text-decoration-thickness 160ms ease;
+}
+
+.link-underline:hover {
+  color: var(--color-accent-strong);
+  text-decoration-thickness: 2px;
+}
+
+/* Claudette markdown — light paper */
 .markdown-body p {
   margin: 0.4em 0;
 }
@@ -102,7 +120,7 @@ body {
 }
 
 .markdown-body a {
-  color: var(--color-accent-strong);
+  color: var(--color-accent);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -131,7 +149,7 @@ body {
 
 .markdown-body blockquote {
   margin: 0.5em 0;
-  border-left: 2px solid var(--color-border);
+  border-left: 2px solid var(--color-accent);
   padding-left: 0.75rem;
   color: var(--color-ink-muted);
 }
@@ -149,12 +167,12 @@ body {
 
 .markdown-body .hljs-string,
 .markdown-body .hljs-attr {
-  color: #b7c9a8;
+  color: #6b5a3e;
 }
 
 .markdown-body .hljs-number,
 .markdown-body .hljs-built_in {
-  color: #c4b08a;
+  color: #7a5a2e;
 }
 
 .markdown-body .hljs-title,

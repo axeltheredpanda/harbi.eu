@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/backend/supabase/server";
 import { NavLinks } from "./nav-links";
 import { SignOutButton } from "./sign-out-button";
@@ -19,11 +20,14 @@ export default async function PrivateLayout({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-surface px-6 py-4 sm:px-10">
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-surface/80 px-6 py-4 sm:px-10">
         <div className="flex items-center gap-8">
-          <span className="font-mono text-sm text-ink-muted">
-            <span className="text-accent">~/</span>harbi.eu
-          </span>
+          <Link
+            href="/"
+            className="font-display text-sm tracking-tight text-ink-muted transition-colors hover:text-ink"
+          >
+            harbi.eu
+          </Link>
           <NavLinks />
         </div>
         <SignOutButton />

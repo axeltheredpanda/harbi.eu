@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { buttonClass } from "@/frontend/components/button-variants";
 
 type Project = {
   name: string;
   description: string;
-  tags: string[];
   url?: string;
 };
 
@@ -12,163 +10,142 @@ const projects: Project[] = [
   {
     name: "Axel Project",
     description:
-      "Add a one-line summary of what Axel Project does and the problem it solves.",
-    tags: ["TODO", "add", "stack"],
+      "A product built end-to-end — still writing the proper one-line account of what it does and who it serves.",
   },
   {
     name: "Astraia",
     description:
-      "Add a one-line summary of what Astraia does and the problem it solves.",
-    tags: ["TODO", "add", "stack"],
+      "Another piece of work in progress. The short version of the problem it solves belongs here.",
   },
 ];
 
-const stack = [
-  { label: "Frontend", items: ["Next.js", "React", "TypeScript", "Tailwind CSS"] },
-  { label: "Backend", items: ["Supabase", "PostgreSQL", "Node.js"] },
-  { label: "Tools", items: ["Vercel", "Git", "Anthropic API"] },
+const stackLines = [
+  "On the interface: Next.js, React, TypeScript, Tailwind.",
+  "Underneath: Supabase, PostgreSQL, Node.",
+  "Around it: Vercel, Git, and the Anthropic API when the task asks for it.",
 ];
 
 export default function HomePage() {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-5 sm:px-10">
-        <Link href="/" className="font-mono text-sm text-ink-muted">
-          <span className="text-accent">~/</span>harbi.eu
+      <header className="mx-auto flex w-full max-w-2xl items-baseline justify-between gap-6 px-6 pt-10 sm:px-8">
+        <Link
+          href="/"
+          className="font-display text-lg tracking-tight text-ink transition-colors hover:text-accent"
+        >
+          harbi.eu
         </Link>
-        <nav className="hidden gap-6 font-mono text-xs tracking-wider text-ink-muted uppercase sm:flex">
-          <a href="#projects" className="hover:text-ink">
-            Projects
+        <nav className="flex gap-5 text-sm text-ink-muted">
+          <a href="#work" className="transition-colors hover:text-ink">
+            Work
           </a>
-          <a href="#stack" className="hover:text-ink">
-            Stack
+          <a href="#notes" className="transition-colors hover:text-ink">
+            Notes
           </a>
-          <a href="#contact" className="hover:text-ink">
+          <a href="#contact" className="transition-colors hover:text-ink">
             Contact
           </a>
         </nav>
-        <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 font-mono text-xs text-ink-muted">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-          available for opportunities
-        </div>
       </header>
 
-      <main className="flex flex-1 flex-col">
-        <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-8 px-6 py-28 sm:px-10">
-          <p className="font-mono text-sm text-ink-muted">
-            <span className="text-accent">~</span>/harbi
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 sm:px-8">
+        <section className="pb-20 pt-24 sm:pb-28 sm:pt-32">
+          <p className="animate-rise text-sm tracking-wide text-ink-faint">
+            Available for opportunities
           </p>
-          <h1 className="font-display text-5xl font-medium tracking-tight text-ink sm:text-6xl">
-            Your Name<span className="cursor-blink text-accent">_</span>
+          <h1 className="animate-rise-delay mt-5 font-display text-[2.75rem] leading-[1.1] font-medium tracking-tight text-ink sm:text-6xl">
+            Arthur Reichard
           </h1>
-          <p className="max-w-xl text-lg leading-relaxed text-ink-muted">
-            Software engineer building products end-to-end, from database schema to the
-            pixel in front of the user. TODO: replace with your real one-liner.
+          <p className="animate-rise-delay-2 mt-8 max-w-xl text-lg leading-[1.7] text-ink-muted sm:text-xl sm:leading-[1.75]">
+            I build software the long way around — schema to screen — and care
+            about the parts that usually get rushed: naming, structure, and the
+            sentence a product leaves in someone&apos;s head.
           </p>
-          <div className="flex flex-wrap gap-3 pt-2">
-            <a href="#contact" className={buttonClass("primary")}>
-              Get in touch
+          <p className="animate-rise-delay-2 mt-6 flex flex-wrap gap-x-6 gap-y-2 text-base">
+            <a href="#contact" className="link-underline">
+              Write to me
             </a>
-            <a href="/resume.pdf" className={buttonClass("secondary")}>
-              Download résumé
+            <a href="/resume.pdf" className="link-underline">
+              Read the résumé
             </a>
-          </div>
+          </p>
         </section>
 
-        <section id="projects" className="border-t border-border px-6 py-24 sm:px-10">
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-10">
-            <div className="flex flex-col gap-2">
-              <p className="font-mono text-sm text-accent">{"// projects"}</p>
-              <h2 className="font-display text-2xl font-medium text-ink">Selected work</h2>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2">
-              {projects.map((project) => (
-                <article
-                  key={project.name}
-                  className="flex flex-col gap-4 rounded-md border border-border bg-surface p-6"
-                >
-                  <h3 className="font-display text-lg font-medium text-ink">
-                    {project.name}
-                  </h3>
-                  <p className="flex-1 text-sm leading-relaxed text-ink-muted">
-                    {project.description}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {project.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded border border-border px-2 py-0.5 font-mono text-xs text-ink-muted"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+        <section id="work" className="border-t border-border py-16 sm:py-20">
+          <h2 className="font-display text-2xl font-medium tracking-tight text-ink sm:text-3xl">
+            Selected work
+          </h2>
+          <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-muted">
+            A short shelf. Each piece is something I shaped myself, or nearly so.
+          </p>
+
+          <ul className="mt-12 flex flex-col">
+            {projects.map((project) => (
+              <li
+                key={project.name}
+                className="border-t border-border py-8 first:border-t-0 first:pt-0"
+              >
+                <h3 className="font-display text-xl font-medium text-ink">
                   {project.url ? (
-                    <a
-                      href={project.url}
-                      className="font-mono text-sm text-accent hover:text-accent-strong"
-                    >
-                      View project ↗
+                    <a href={project.url} className="link-underline">
+                      {project.name}
                     </a>
                   ) : (
-                    <span className="font-mono text-sm text-ink-faint">Link coming soon</span>
+                    project.name
                   )}
-                </article>
-              ))}
-            </div>
+                </h3>
+                <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-muted">
+                  {project.description}
+                </p>
+                {!project.url && (
+                  <p className="mt-3 text-sm text-ink-faint">Link soon.</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section id="notes" className="border-t border-border py-16 sm:py-20">
+          <h2 className="font-display text-2xl font-medium tracking-tight text-ink sm:text-3xl">
+            How I work
+          </h2>
+          <div className="mt-8 max-w-prose space-y-5 text-base leading-relaxed text-ink-muted">
+            {stackLines.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
           </div>
         </section>
 
-        <section id="stack" className="border-t border-border px-6 py-24 sm:px-10">
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-10">
-            <div className="flex flex-col gap-2">
-              <p className="font-mono text-sm text-accent">{"// stack"}</p>
-              <h2 className="font-display text-2xl font-medium text-ink">
-                What I build with
-              </h2>
-            </div>
-            <dl className="flex flex-col gap-4">
-              {stack.map((row) => (
-                <div
-                  key={row.label}
-                  className="grid gap-1 border-b border-border pb-4 last:border-0 last:pb-0 sm:grid-cols-[140px_1fr] sm:gap-4"
-                >
-                  <dt className="font-mono text-xs tracking-wider text-ink-muted uppercase">
-                    {row.label}
-                  </dt>
-                  <dd className="text-ink">{row.items.join(" · ")}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </section>
-
-        <section id="contact" className="border-t border-border px-6 py-24 sm:px-10">
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-            <p className="font-mono text-sm text-accent">{"// contact"}</p>
-            <h2 className="font-display text-3xl font-medium text-ink">Let&apos;s talk.</h2>
-            <p className="max-w-lg text-ink-muted">
-              Open to new opportunities — reach out and I&apos;ll get back to you.
-            </p>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-sm text-ink-muted">
-              <a href="mailto:hello@harbi.eu" className="hover:text-ink">
-                hello@harbi.eu
-              </a>
-              <span className="text-ink-faint">·</span>
-              <a href="https://github.com/yourusername" className="hover:text-ink">
-                GitHub
-              </a>
-              <span className="text-ink-faint">·</span>
-              <a href="https://linkedin.com/in/yourusername" className="hover:text-ink">
-                LinkedIn
-              </a>
-            </div>
-          </div>
+        <section id="contact" className="border-t border-border py-16 sm:py-24">
+          <h2 className="font-display text-2xl font-medium tracking-tight text-ink sm:text-3xl">
+            Let&apos;s talk
+          </h2>
+          <p className="mt-4 max-w-prose text-base leading-relaxed text-ink-muted">
+            If something here resonates — a role, a collaboration, a question —
+            send a note. I read everything that arrives.
+          </p>
+          <p className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-base">
+            <a href="mailto:hello@harbi.eu" className="link-underline">
+              hello@harbi.eu
+            </a>
+            <a
+              href="https://github.com/axeltheredpanda"
+              className="link-underline"
+            >
+              GitHub
+            </a>
+            <a
+              href="https://linkedin.com/in/yourusername"
+              className="link-underline"
+            >
+              LinkedIn
+            </a>
+          </p>
         </section>
       </main>
 
-      <footer className="border-t border-border px-6 py-6 sm:px-10">
-        <p className="font-mono text-xs text-ink-faint">~/harbi.eu</p>
+      <footer className="mx-auto w-full max-w-2xl px-6 pb-12 pt-4 sm:px-8">
+        <p className="text-sm text-ink-faint">harbi.eu</p>
       </footer>
     </div>
   );
