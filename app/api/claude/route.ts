@@ -1,0 +1,397 @@
+import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@/backend/supabase/server";
+import { anthropic } from "@/backend/anthropic";
+import {
+  buildAnthropicMessages,
+  buildSystemBlocks,
+  mediaTypeFromPath,
+  prepareContext,
+  type ContextMessage,
+} from "@/backend/chat/context";
+import { summarizeMessages } from "@/backend/chat/summarize";
+import {
+  CHAT_MODEL,
+  CHAT_STORAGE_BUCKET,
+  MAX_TOKENS,
+  TITLE_MAX_LENGTH,
+} from "@/backend/chat/constants";
+import type { Attachment, Message } from "@/backend/supabase/types";
+
+type Body = {
+  conversation_id?: string;
+  content?: string;
+  attachment_ids?: string[];
+  edit_message_id?: string;
+};
+
+function sseEncode(event: string, data: unknown): string {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  return Buffer.from(buffer).toString("base64");
+}
+
+export async function POST(request: Request) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  let body: Body;
+  try {
+    body = await request.json();
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const conversationId = body.conversation_id;
+  const content = String(body.content ?? "").trim();
+  const attachmentIds = Array.isArray(body.attachment_ids)
+    ? body.attachment_ids.filter((id): id is string => typeof id === "string")
+    : [];
+  const editMessageId = body.edit_message_id;
+
+  if (!conversationId) {
+    return new Response(JSON.stringify({ error: "conversation_id is required" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  if (!content && attachmentIds.length === 0) {
+    return new Response(JSON.stringify({ error: "content or attachments required" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const { data: conversation, error: convError } = await supabase
+    .from("conversations")
+    .select("*")
+    .eq("id", conversationId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (convError || !conversation) {
+    return new Response(JSON.stringify({ error: "Conversation not found" }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  // Edit path: truncate subsequent messages, update the edited user message
+  let userMessageId: string;
+  let userMessageContent = content;
+
+  if (editMessageId) {
+    const { data: existing, error: existingError } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("id", editMessageId)
+      .eq("conversation_id", conversationId)
+      .maybeSingle();
+
+    if (existingError || !existing || existing.role !== "user") {
+      return new Response(JSON.stringify({ error: "Message not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const { error: deleteError } = await supabase
+      .from("messages")
+      .delete()
+      .eq("conversation_id", conversationId)
+      .gt("created_at", existing.created_at);
+
+    if (deleteError) {
+      return new Response(JSON.stringify({ error: deleteError.message }), {
+        status: 502,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const { error: updateError } = await supabase
+      .from("messages")
+      .update({ content: userMessageContent })
+      .eq("id", editMessageId);
+
+    if (updateError) {
+      return new Response(JSON.stringify({ error: updateError.message }), {
+        status: 502,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    userMessageId = editMessageId;
+
+    if (attachmentIds.length > 0) {
+      await supabase
+        .from("attachments")
+        .update({ message_id: userMessageId })
+        .in("id", attachmentIds)
+        .eq("user_id", user.id)
+        .eq("conversation_id", conversationId);
+    }
+  } else {
+    const { data: inserted, error: insertError } = await supabase
+      .from("messages")
+      .insert({
+        conversation_id: conversationId,
+        role: "user",
+        content: userMessageContent,
+      })
+      .select("*")
+      .single();
+
+    if (insertError || !inserted) {
+      return new Response(JSON.stringify({ error: insertError?.message ?? "Insert failed" }), {
+        status: 502,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    userMessageId = inserted.id;
+
+    if (attachmentIds.length > 0) {
+      const { error: linkError } = await supabase
+        .from("attachments")
+        .update({ message_id: userMessageId })
+        .in("id", attachmentIds)
+        .eq("user_id", user.id)
+        .eq("conversation_id", conversationId)
+        .is("message_id", null);
+
+      if (linkError) {
+        return new Response(JSON.stringify({ error: linkError.message }), {
+          status: 502,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // Auto-title on first user message
+    if (conversation.title === "New conversation") {
+      const title =
+        userMessageContent.slice(0, TITLE_MAX_LENGTH).trim() || "New conversation";
+      await supabase
+        .from("conversations")
+        .update({ title, updated_at: new Date().toISOString() })
+        .eq("id", conversationId);
+    }
+  }
+
+  // Load full history + attachments
+  const { data: messages, error: messagesError } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: true });
+
+  if (messagesError || !messages) {
+    return new Response(JSON.stringify({ error: messagesError?.message ?? "Load failed" }), {
+      status: 502,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const { data: attachments } = await supabase
+    .from("attachments")
+    .select("*")
+    .eq("conversation_id", conversationId);
+
+  const byMessage = new Map<string, Attachment[]>();
+  for (const attachment of attachments ?? []) {
+    if (!attachment.message_id) continue;
+    const list = byMessage.get(attachment.message_id) ?? [];
+    list.push(attachment);
+    byMessage.set(attachment.message_id, list);
+  }
+
+  const contextMessages: ContextMessage[] = messages.map((message: Message) => ({
+    ...message,
+    attachments: byMessage.get(message.id) ?? [],
+  }));
+
+  let prepared = prepareContext(
+    contextMessages,
+    conversation.summary,
+    conversation.summary_until_message_id,
+  );
+
+  let summary = conversation.summary;
+
+  if (prepared.needsSummaryRefresh && prepared.olderMessages.length > 0) {
+    const lastSummarizedIndex = conversation.summary_until_message_id
+      ? prepared.olderMessages.findIndex(
+          (m) => m.id === conversation.summary_until_message_id,
+        )
+      : -1;
+    const toSummarize =
+      lastSummarizedIndex >= 0
+        ? prepared.olderMessages.slice(lastSummarizedIndex + 1)
+        : prepared.olderMessages;
+
+    if (toSummarize.length > 0) {
+      try {
+        summary = await summarizeMessages(
+          toSummarize.map((m) => ({ role: m.role, content: m.content })),
+          conversation.summary,
+        );
+        const untilId = prepared.olderMessages[prepared.olderMessages.length - 1]?.id ?? null;
+        await supabase
+          .from("conversations")
+          .update({
+            summary,
+            summary_until_message_id: untilId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", conversationId);
+
+        const pdfTexts = [...prepared.olderMessages, ...prepared.windowMessages]
+          .flatMap((m) => m.attachments)
+          .filter((a) => a.type === "pdf" && a.extracted_text)
+          .map((a) => a.extracted_text as string);
+
+        prepared = {
+          ...prepared,
+          system: buildSystemBlocks(summary, pdfTexts),
+          needsSummaryRefresh: false,
+        };
+      } catch {
+        // Continue without refreshed summary
+      }
+    }
+  }
+
+  // Load image bytes only for the last user message's image attachments
+  const lastUser = [...prepared.windowMessages].reverse().find((m) => m.role === "user");
+  const imageBytesByAttachmentId = new Map<
+    string,
+    { data: string; mediaType: string }
+  >();
+
+  if (lastUser) {
+    for (const attachment of lastUser.attachments) {
+      if (attachment.type !== "image") continue;
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from(CHAT_STORAGE_BUCKET)
+        .download(attachment.storage_path);
+      if (downloadError || !fileData) continue;
+      const buffer = await fileData.arrayBuffer();
+      imageBytesByAttachmentId.set(attachment.id, {
+        data: arrayBufferToBase64(buffer),
+        mediaType: mediaTypeFromPath(attachment.storage_path),
+      });
+    }
+  }
+
+  const anthropicMessages = await buildAnthropicMessages(
+    prepared.windowMessages,
+    imageBytesByAttachmentId,
+  );
+
+  const encoder = new TextEncoder();
+  let assistantText = "";
+  let inputTokens: number | null = null;
+  let outputTokens: number | null = null;
+  let aborted = false;
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (event: string, data: unknown) => {
+        controller.enqueue(encoder.encode(sseEncode(event, data)));
+      };
+
+      send("user_message", {
+        id: userMessageId,
+        content: userMessageContent,
+        conversation_id: conversationId,
+      });
+
+      try {
+        const anthropicStream = anthropic.messages.stream(
+          {
+            model: CHAT_MODEL,
+            max_tokens: MAX_TOKENS,
+            system: prepared.system,
+            messages: anthropicMessages,
+          },
+          { signal: request.signal },
+        );
+
+        anthropicStream.on("text", (text) => {
+          assistantText += text;
+          send("delta", { text });
+        });
+
+        const finalMessage = await anthropicStream.finalMessage();
+        inputTokens = finalMessage.usage?.input_tokens ?? null;
+        outputTokens = finalMessage.usage?.output_tokens ?? null;
+      } catch (error) {
+        if (request.signal.aborted || (error instanceof Error && error.name === "AbortError")) {
+          aborted = true;
+        } else if (error instanceof Anthropic.APIError) {
+          send("error", { message: error.message });
+          controller.close();
+          return;
+        } else {
+          send("error", {
+            message: error instanceof Error ? error.message : "Stream failed",
+          });
+          controller.close();
+          return;
+        }
+      }
+
+      // Persist assistant message (including partial on abort)
+      let assistantId: string | null = null;
+      if (assistantText.trim() || aborted) {
+        const { data: assistantRow } = await supabase
+          .from("messages")
+          .insert({
+            conversation_id: conversationId,
+            role: "assistant",
+            content: assistantText,
+            token_count: outputTokens,
+          })
+          .select("id")
+          .single();
+
+        assistantId = assistantRow?.id ?? null;
+      }
+
+      await supabase
+        .from("conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", conversationId);
+
+      send("done", {
+        assistant_message_id: assistantId,
+        content: assistantText,
+        aborted,
+        usage: { input_tokens: inputTokens, output_tokens: outputTokens },
+      });
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+    },
+  });
+}
