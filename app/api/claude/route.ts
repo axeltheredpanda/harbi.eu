@@ -13,8 +13,8 @@ import {
   CHAT_MODEL,
   CHAT_STORAGE_BUCKET,
   MAX_TOKENS,
-  TITLE_MAX_LENGTH,
 } from "@/backend/chat/constants";
+import { generateConversationTitle } from "@/backend/chat/title";
 import type { Attachment, Message } from "@/backend/supabase/types";
 
 type Body = {
@@ -22,6 +22,7 @@ type Body = {
   content?: string;
   attachment_ids?: string[];
   edit_message_id?: string;
+  regenerate_message_id?: string;
 };
 
 function sseEncode(event: string, data: unknown): string {
@@ -61,6 +62,8 @@ export async function POST(request: Request) {
     ? body.attachment_ids.filter((id): id is string => typeof id === "string")
     : [];
   const editMessageId = body.edit_message_id;
+  const regenerateMessageId = body.regenerate_message_id;
+  const isRegenerate = Boolean(regenerateMessageId);
 
   if (!conversationId) {
     return new Response(JSON.stringify({ error: "conversation_id is required" }), {
@@ -69,7 +72,7 @@ export async function POST(request: Request) {
     });
   }
 
-  if (!content && attachmentIds.length === 0) {
+  if (!isRegenerate && !content && attachmentIds.length === 0) {
     return new Response(JSON.stringify({ error: "content or attachments required" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
@@ -90,11 +93,77 @@ export async function POST(request: Request) {
     });
   }
 
-  // Edit path: truncate subsequent messages, update the edited user message
+  // Edit / regenerate / new message paths
   let userMessageId: string;
   let userMessageContent = content;
+  let shouldGenerateTitle = false;
 
-  if (editMessageId) {
+  if (regenerateMessageId) {
+    const { data: target, error: targetError } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("id", regenerateMessageId)
+      .eq("conversation_id", conversationId)
+      .maybeSingle();
+
+    if (targetError || !target) {
+      return new Response(JSON.stringify({ error: "Message not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (target.role === "assistant") {
+      const { error: deleteError } = await supabase
+        .from("messages")
+        .delete()
+        .eq("conversation_id", conversationId)
+        .gte("created_at", target.created_at);
+
+      if (deleteError) {
+        return new Response(JSON.stringify({ error: deleteError.message }), {
+          status: 502,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: priorUser } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", conversationId)
+        .eq("role", "user")
+        .lt("created_at", target.created_at)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!priorUser) {
+        return new Response(JSON.stringify({ error: "Nothing to regenerate from" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      userMessageId = priorUser.id;
+      userMessageContent = priorUser.content;
+    } else {
+      const { error: deleteError } = await supabase
+        .from("messages")
+        .delete()
+        .eq("conversation_id", conversationId)
+        .gt("created_at", target.created_at);
+
+      if (deleteError) {
+        return new Response(JSON.stringify({ error: deleteError.message }), {
+          status: 502,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      userMessageId = target.id;
+      userMessageContent = target.content;
+    }
+  } else if (editMessageId) {
     const { data: existing, error: existingError } = await supabase
       .from("messages")
       .select("*")
@@ -181,15 +250,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // Auto-title on first user message
-    if (conversation.title === "New conversation") {
-      const title =
-        userMessageContent.slice(0, TITLE_MAX_LENGTH).trim() || "New conversation";
-      await supabase
-        .from("conversations")
-        .update({ title, updated_at: new Date().toISOString() })
-        .eq("id", conversationId);
-    }
+    // Title is generated after the first full exchange (user + assistant).
+    shouldGenerateTitle = conversation.title === "New conversation";
   }
 
   // Load full history + attachments
@@ -314,11 +376,13 @@ export async function POST(request: Request) {
         controller.enqueue(encoder.encode(sseEncode(event, data)));
       };
 
-      send("user_message", {
-        id: userMessageId,
-        content: userMessageContent,
-        conversation_id: conversationId,
-      });
+      if (!isRegenerate) {
+        send("user_message", {
+          id: userMessageId,
+          content: userMessageContent,
+          conversation_id: conversationId,
+        });
+      }
 
       try {
         const anthropicStream = anthropic.messages.stream(
@@ -376,6 +440,22 @@ export async function POST(request: Request) {
         .from("conversations")
         .update({ updated_at: new Date().toISOString() })
         .eq("id", conversationId);
+
+      if (shouldGenerateTitle && !aborted && assistantText.trim()) {
+        try {
+          const title = await generateConversationTitle(
+            userMessageContent,
+            assistantText,
+          );
+          await supabase
+            .from("conversations")
+            .update({ title, updated_at: new Date().toISOString() })
+            .eq("id", conversationId);
+          send("title", { title });
+        } catch {
+          // Keep "New conversation" if title generation fails
+        }
+      }
 
       send("done", {
         assistant_message_id: assistantId,

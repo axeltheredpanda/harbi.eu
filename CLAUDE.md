@@ -21,8 +21,8 @@ Toute la logique (accès Supabase, appel Anthropic, types) vit dans `backend/` o
   (Axel Project, Astraia)
 - `app/(private)/` — zone connectée : todo, projets perso, Claudette
   (layout fait le gate d'auth ; nav : `nav-links.tsx`, `sign-out-button.tsx`)
-- `app/(private)/claudette/` — chat multi-conversations (sidebar, streaming, markdown,
-  pièces jointes)
+- `app/(private)/chat/` — chat multi-conversations Claudette (sidebar, streaming,
+  markdown, pièces jointes) ; redirects `/claude` et `/claudette` → `/chat`
 - `app/api/claude/` — SSE streaming Anthropic + upload PDF/image
 - `app/login/`, `app/auth/callback/` — pages/routes d'auth publiques
 - `backend/` — code serveur uniquement (jamais importé par un composant client) :
@@ -34,7 +34,7 @@ Toute la logique (accès Supabase, appel Anthropic, types) vit dans `backend/` o
   - `backend/anthropic.ts` — client Anthropic (clé serveur uniquement)
 - `frontend/supabase/client.ts` — client Supabase navigateur
 - `proxy.ts` — (ex `middleware.ts`) rafraîchit la session Supabase et protège
-  `/todo`, `/projects`, `/claudette` ; redirect `/claude` → `/claudette`
+  `/todo`, `/projects`, `/chat` ; redirect `/claude` et `/claudette` → `/chat`
 
 ## Conventions
 - Composants en TypeScript strict, un composant = un fichier
@@ -47,19 +47,21 @@ Toute la logique (accès Supabase, appel Anthropic, types) vit dans `backend/` o
 
 ## État actuel
 - [x] Setup initial (Next.js + Supabase + Tailwind)
-- [x] Auth + proxy (email/password + magic link, `/todo` `/projects` `/claudette` protégés)
-- [x] Claudette : chat persistant multi-conversations, streaming SSE, résumé de fenêtre,
-  cache_control, upload PDF/image (`/api/claude`, `/api/claude/upload`)
+- [x] Auth + proxy (email/password + magic link, `/todo` `/projects` `/chat` protégés)
+- [x] Claudette : chat UI editorial à `/chat` — optimistic send, thinking phrases,
+  streaming markdown + caret, sticky scroll + jump button, edit/regenerate, sidebar
+  search + mobile drawer, empty/error+retry, titres IA (Haiku après 1er échange),
+  upload PDF/image (`/api/claude`, `/api/claude/upload`)
 - [x] Todo list (CRUD via Supabase, RLS par `user_id`)
 - [x] Section projets (CRUD via Supabase, RLS par `user_id`)
-- [ ] Portfolio public / présentation recruteurs — squelette posé (`app/(public)/page.tsx`),
-      contenu réel (bio, CV, description Axel Project / Astraia) encore à écrire
-- [ ] Design final (skill frontend-design)
+- [ ] Portfolio public / présentation recruteurs — redesign landing posé, descriptions
+      Axel Project / Astraia encore placeholder
+- [ ] Design final hors Claudette (skill frontend-design)
 
 Reste à faire avant usage réel :
 - Créer un projet Supabase, remplir `.env` depuis `.env.example`, exécuter `supabase/schema.sql`
   (inclut tables chat + bucket `chat-attachments`)
-- Créer au moins un utilisateur (auth Supabase) pour accéder à `/todo` `/projects` `/claudette`
+- Créer au moins un utilisateur (auth Supabase) pour accéder à `/todo` `/projects` `/chat`
 - Remplacer les TODO de contenu dans `app/(public)/page.tsx`
 
 ## Notes

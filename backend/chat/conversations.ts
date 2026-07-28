@@ -33,7 +33,7 @@ export async function createConversation(title = "New conversation"): Promise<Co
     .single();
 
   if (error) throw error;
-  revalidatePath("/claudette");
+  revalidatePath("/chat");
   return data;
 }
 
@@ -48,14 +48,14 @@ export async function renameConversation(id: string, title: string): Promise<voi
     .eq("id", id);
 
   if (error) throw error;
-  revalidatePath("/claudette");
+  revalidatePath("/chat");
 }
 
 export async function deleteConversation(id: string): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.from("conversations").delete().eq("id", id);
   if (error) throw error;
-  revalidatePath("/claudette");
+  revalidatePath("/chat");
 }
 
 export async function getConversationMessages(

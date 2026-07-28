@@ -5,12 +5,22 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/claude",
-        destination: "/claudette",
+        destination: "/chat",
         permanent: true,
       },
       {
         source: "/claude/:path*",
-        destination: "/claudette/:path*",
+        destination: "/chat/:path*",
+        permanent: true,
+      },
+      {
+        source: "/claudette",
+        destination: "/chat",
+        permanent: true,
+      },
+      {
+        source: "/claudette/:path*",
+        destination: "/chat/:path*",
         permanent: true,
       },
     ];
