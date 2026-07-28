@@ -52,7 +52,7 @@ function ConversationList({
             <button
               type="button"
               onClick={() => onSelect(conversation.id)}
-              className={`min-w-0 flex-1 truncate rounded-md px-2 py-2 text-left text-sm transition-colors ${
+              className={`min-w-0 flex-1 truncate rounded-md px-2 py-2 text-left text-sm transition-colors duration-150 ${
                 active
                   ? "bg-accent-soft text-accent"
                   : "text-ink-muted hover:bg-surface-hover hover:text-ink"
@@ -63,7 +63,7 @@ function ConversationList({
             <button
               type="button"
               onClick={() => onDelete(conversation.id)}
-              className="rounded-md px-2 font-mono text-xs text-ink-faint opacity-0 transition-opacity hover:text-ink group-hover:opacity-100 focus-visible:opacity-100"
+              className="rounded-md px-2 font-mono text-xs text-ink-faint opacity-0 transition-opacity duration-150 hover:text-ink group-hover:opacity-100 focus-visible:opacity-100"
               aria-label="Delete conversation"
             >
               ×
@@ -143,7 +143,7 @@ export function ConversationSidebar({
     <>
       {/* Desktop column */}
       <aside
-        className={`relative hidden shrink-0 flex-col border-r border-border transition-[width] md:flex ${
+        className={`relative hidden shrink-0 flex-col border-r border-border transition-[width] duration-200 ease-out md:flex ${
           collapsed ? "w-12" : "w-64"
         }`}
       >
