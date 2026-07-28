@@ -158,7 +158,7 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     projects: [
       {
         name: "Axel CRM",
-        wink: "Nommé d'après moi — pas par vanité, par responsabilité.",
+        wink: "Le seul produit ici qui a refusé de porter ma palette.",
         description:
           "Un produit de bout en bout : schéma, interface, et la colle ennuyeuse entre les deux. La phrase publique pour qui ça sert se précise encore.",
       },
@@ -207,7 +207,7 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     projects: [
       {
         name: "Axel CRM",
-        wink: "Named after myself — not out of vanity, out of accountability.",
+        wink: "The one product here that refused to wear my palette.",
         description:
           "An end-to-end product: schema, interface, and the boring glue between them. Still tightening the public one-liner for who it serves.",
       },

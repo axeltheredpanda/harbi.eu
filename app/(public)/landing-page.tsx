@@ -16,6 +16,7 @@ import { ScrollReveal } from "@/frontend/motion/scroll-reveal";
 import { CountUp } from "@/frontend/motion/count-up";
 import { MonogramLogo } from "@/frontend/motion/monogram-logo";
 import { PipelineDiagram } from "@/frontend/motion/pipeline-diagram";
+import { AxelBrandSwatch } from "@/frontend/motion/axel-brand-swatch";
 import { morphTheme } from "@/frontend/motion/theme-morph";
 
 const SITE_LAUNCH_MS = Date.UTC(2026, 6, 1);
@@ -321,26 +322,40 @@ export function LandingPage({
             selector=":scope > li"
             stagger={80}
           >
-            {copy.projects.map((project) => (
-              <li
-                key={project.name}
-                className="border-t border-border py-8 first:border-t-0 first:pt-0"
-              >
-                <h3 className="font-display text-xl font-medium text-ink">
-                  {project.name}
-                </h3>
-                <p className="mt-3 max-w-prose font-display text-[0.95rem] italic leading-relaxed text-ink-faint">
-                  {project.wink}
-                </p>
-                {project.name === "Axel CRM" && (
-                  <PipelineDiagram className="mt-4 h-7 w-full max-w-[240px]" />
-                )}
-                <p className="mt-2 max-w-prose text-base leading-relaxed text-ink-muted">
-                  {project.description}
-                </p>
-                <p className="mt-3 text-sm text-ink-faint">{copy.linkSoon}</p>
-              </li>
-            ))}
+            {copy.projects.map((project) => {
+              const isAxelCrm = project.name === "Axel CRM";
+              const content = (
+                <>
+                  <h3 className="font-display text-xl font-medium text-ink">
+                    {project.name}
+                  </h3>
+                  <p className="mt-3 max-w-prose font-display text-[0.95rem] italic leading-relaxed text-ink-faint">
+                    {project.wink}
+                  </p>
+                  {isAxelCrm && (
+                    <PipelineDiagram className="mt-4 h-7 w-full max-w-[240px]" />
+                  )}
+                  <p className="mt-2 max-w-prose text-base leading-relaxed text-ink-muted">
+                    {project.description}
+                  </p>
+                  <p className="mt-3 text-sm text-ink-faint">
+                    {copy.linkSoon}
+                  </p>
+                </>
+              );
+              return (
+                <li
+                  key={project.name}
+                  className="border-t border-border py-8 first:border-t-0 first:pt-0"
+                >
+                  {isAxelCrm ? (
+                    <AxelBrandSwatch>{content}</AxelBrandSwatch>
+                  ) : (
+                    content
+                  )}
+                </li>
+              );
+            })}
           </ScrollReveal>
 
           {github && (

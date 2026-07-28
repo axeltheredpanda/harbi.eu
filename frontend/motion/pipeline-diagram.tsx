@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import anime from "animejs";
 import { prefersReducedMotion } from "./prefers-reduced";
+import { AXEL_EMBER, AXEL_INK, AXEL_MAROON } from "./axel-project-palette";
 
 const STAGES = [
   { x: 16, label: "Lead" },
@@ -12,6 +13,7 @@ const STAGES = [
 
 const LINE_Y = 8;
 const DOT_RADIUS = 3.5;
+const GRADIENT_ID = "axel-crm-pipeline-gradient";
 
 /** Quiet CRM pipeline sketch: a thin line draws in, dots land as it passes. */
 export function PipelineDiagram({ className = "" }: { className?: string }) {
@@ -81,23 +83,25 @@ export function PipelineDiagram({ className = "" }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
+      <defs>
+        <linearGradient id={GRADIENT_ID} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={AXEL_EMBER} />
+          <stop offset="100%" stopColor={AXEL_MAROON} />
+        </linearGradient>
+      </defs>
       <path
         d={`M ${STAGES[0].x} ${LINE_Y} L ${STAGES[STAGES.length - 1].x} ${LINE_Y}`}
         fill="none"
-        stroke="var(--color-ink-faint)"
+        stroke={AXEL_INK}
         strokeWidth="1"
       />
-      {STAGES.map((stage, i) => (
+      {STAGES.map((stage) => (
         <circle
           key={stage.label}
           cx={stage.x}
           cy={LINE_Y}
           r={DOT_RADIUS}
-          fill={
-            i === STAGES.length - 1
-              ? "var(--color-accent)"
-              : "var(--color-ink-muted)"
-          }
+          fill={`url(#${GRADIENT_ID})`}
         />
       ))}
       {STAGES.map((stage) => (
