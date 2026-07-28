@@ -7,7 +7,9 @@ import {
   type CutoutMode,
 } from "@/backend/cutout/constants";
 
-export const maxDuration = 120;
+function parseMode(value: FormDataEntryValue | null): CutoutMode {
+  return value === "fast" ? "fast" : "quality";
+}
 
 function extensionFor(mime: string, filename: string): string {
   if (mime === "image/png") return "png";
@@ -18,10 +20,12 @@ function extensionFor(mime: string, filename: string): string {
   return fromName && fromName.length <= 5 ? fromName.toLowerCase() : "bin";
 }
 
-function parseMode(value: FormDataEntryValue | null): CutoutMode {
-  return value === "fast" ? "fast" : "quality";
-}
-
+/**
+ * Store a client-processed cutout (or return a cache hit).
+ *
+ * Cache lookup: FormData with `file` + `mode` only (no `result`).
+ * Store: FormData with `file` + `result` + `mode` + optional `contentHash`.
+ */
 export async function POST(request: Request) {
   const supabase = await createClient();
   const {
@@ -32,20 +36,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const serviceUrl = process.env.REMBG_SERVICE_URL?.replace(/\/$/, "");
-  if (!serviceUrl) {
-    return NextResponse.json(
-      {
-        error:
-          "Background removal isn’t configured yet. Set REMBG_SERVICE_URL on the server.",
-      },
-      { status: 503 },
-    );
-  }
-
   const form = await request.formData();
   const file = form.get("file");
+  const resultFile = form.get("result");
   const mode = parseMode(form.get("mode"));
+  const providedHash = String(form.get("contentHash") ?? "").trim();
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "file is required" }, { status: 400 });
@@ -55,7 +50,9 @@ export async function POST(request: Request) {
   }
   if (file.size > MAX_BG_UPLOAD_BYTES) {
     return NextResponse.json(
-      { error: `File too large (max ${Math.floor(MAX_BG_UPLOAD_BYTES / (1024 * 1024))} MB)` },
+      {
+        error: `File too large (max ${Math.floor(MAX_BG_UPLOAD_BYTES / (1024 * 1024))} MB)`,
+      },
       { status: 400 },
     );
   }
@@ -68,18 +65,72 @@ export async function POST(request: Request) {
     );
   }
 
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { createHash } = await import("node:crypto");
+  const contentHash =
+    providedHash && /^[a-f0-9]{64}$/i.test(providedHash)
+      ? providedHash.toLowerCase()
+      : createHash("sha256").update(buffer).digest("hex");
+
+  // Always check cache first
+  const { data: cached } = await supabase
+    .from("bg_removals")
+    .select("id, mode, created_at, original_name, original_path, result_path")
+    .eq("user_id", user.id)
+    .eq("content_hash", contentHash)
+    .eq("mode", mode)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (cached) {
+    const [{ data: originalSigned }, { data: resultSigned }] = await Promise.all([
+      supabase.storage
+        .from(BG_STORAGE_BUCKET)
+        .createSignedUrl(cached.original_path, 60 * 60),
+      supabase.storage
+        .from(BG_STORAGE_BUCKET)
+        .createSignedUrl(cached.result_path, 60 * 60),
+    ]);
+    if (originalSigned?.signedUrl && resultSigned?.signedUrl) {
+      return NextResponse.json({
+        id: cached.id,
+        mode: cached.mode,
+        createdAt: cached.created_at,
+        originalName: cached.original_name,
+        originalUrl: originalSigned.signedUrl,
+        resultUrl: resultSigned.signedUrl,
+        cached: true,
+        contentHash,
+      });
+    }
+  }
+
+  // Lookup-only (client will process in-browser)
+  if (!(resultFile instanceof File)) {
+    return NextResponse.json({
+      cached: false,
+      contentHash,
+      needsProcessing: true,
+    });
+  }
+
+  const resultBuffer = Buffer.from(await resultFile.arrayBuffer());
+  if (resultBuffer.length === 0) {
+    return NextResponse.json({ error: "Empty result" }, { status: 400 });
+  }
+  if (resultBuffer.length > MAX_BG_UPLOAD_BYTES * 2) {
+    return NextResponse.json({ error: "Result too large" }, { status: 400 });
+  }
+
   const id = crypto.randomUUID();
   const ext = extensionFor(mime, file.name);
   const originalPath = `${user.id}/${id}/original.${ext}`;
   const resultPath = `${user.id}/${id}/result.png`;
-  const buffer = Buffer.from(await file.arrayBuffer());
 
   const { error: originalUploadError } = await supabase.storage
     .from(BG_STORAGE_BUCKET)
-    .upload(originalPath, buffer, {
-      contentType: mime,
-      upsert: false,
-    });
+    .upload(originalPath, buffer, { contentType: mime, upsert: false });
 
   if (originalUploadError) {
     return NextResponse.json(
@@ -88,63 +139,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const outbound = new FormData();
-  outbound.append(
-    "file",
-    new Blob([new Uint8Array(buffer)], { type: mime }),
-    file.name || `upload.${ext}`,
-  );
-  outbound.append("mode", mode);
-
-  const headers: HeadersInit = {};
-  const serviceKey = process.env.REMBG_SERVICE_KEY;
-  if (serviceKey) {
-    headers.Authorization = `Bearer ${serviceKey}`;
-  }
-
-  let rembgResponse: Response;
-  try {
-    rembgResponse = await fetch(`${serviceUrl}/remove`, {
-      method: "POST",
-      headers,
-      body: outbound,
-      // Cold starts on free hosts can be long
-      signal: AbortSignal.timeout(110_000),
-    });
-  } catch (err) {
-    await supabase.storage.from(BG_STORAGE_BUCKET).remove([originalPath]);
-    const message =
-      err instanceof Error && err.name === "TimeoutError"
-        ? "The rembg service timed out — try again, or use Fast mode."
-        : "Couldn’t reach the rembg service. It may be waking up — try again in a moment.";
-    return NextResponse.json({ error: message, coldStart: true }, { status: 504 });
-  }
-
-  if (!rembgResponse.ok) {
-    await supabase.storage.from(BG_STORAGE_BUCKET).remove([originalPath]);
-    const detail = await rembgResponse.text().catch(() => "");
-    return NextResponse.json(
-      {
-        error: detail || `rembg failed (${rembgResponse.status})`,
-        coldStart: rembgResponse.status === 502 || rembgResponse.status === 503,
-      },
-      { status: 502 },
-    );
-  }
-
-  const resultBytes = Buffer.from(await rembgResponse.arrayBuffer());
-
   const { error: resultUploadError } = await supabase.storage
     .from(BG_STORAGE_BUCKET)
-    .upload(resultPath, resultBytes, {
+    .upload(resultPath, resultBuffer, {
       contentType: "image/png",
       upsert: false,
     });
 
   if (resultUploadError) {
-    await supabase.storage
-      .from(BG_STORAGE_BUCKET)
-      .remove([originalPath, resultPath]);
+    await supabase.storage.from(BG_STORAGE_BUCKET).remove([originalPath]);
     return NextResponse.json(
       { error: resultUploadError.message },
       { status: 502 },
@@ -160,6 +163,7 @@ export async function POST(request: Request) {
       original_path: originalPath,
       result_path: resultPath,
       original_name: file.name || null,
+      content_hash: contentHash,
     })
     .select("id, mode, created_at, original_name")
     .single();
@@ -188,5 +192,7 @@ export async function POST(request: Request) {
     originalName: row.original_name,
     originalUrl: originalSigned?.signedUrl ?? null,
     resultUrl: resultSigned?.signedUrl ?? null,
+    cached: false,
+    contentHash,
   });
 }

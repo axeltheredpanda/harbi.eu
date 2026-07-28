@@ -9,6 +9,10 @@ import {
   MAX_BG_UPLOAD_BYTES,
   type CutoutMode,
 } from "@/backend/cutout/constants";
+import {
+  removeBackgroundInBrowser,
+  sha256Hex,
+} from "@/frontend/cutout/remove-background";
 import { CompareSlider } from "./compare-slider";
 import { DropZone } from "./drop-zone";
 
@@ -98,7 +102,7 @@ function downloadBlob(blob: Blob, name: string) {
 }
 
 export function CutoutWorkspace({ initialHistory }: Props) {
-  const [mode, setMode] = useState<CutoutMode>("quality");
+  const [mode, setMode] = useState<CutoutMode>("fast");
   const [busy, setBusy] = useState(false);
   const [warming, setWarming] = useState(false);
   const [phraseIdx, setPhraseIdx] = useState(0);
@@ -168,16 +172,24 @@ export function CutoutWorkspace({ initialHistory }: Props) {
 
     const localPreview = URL.createObjectURL(file);
     if (abortWarm.current) window.clearTimeout(abortWarm.current);
-    abortWarm.current = window.setTimeout(() => setWarming(true), 4000);
+    abortWarm.current = window.setTimeout(() => setWarming(true), 2500);
 
     try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("mode", mode);
-      const res = await fetch("/api/remove-bg", { method: "POST", body: form });
-      const data = (await res.json()) as {
+      const contentHash = await sha256Hex(file);
+
+      // Cache lookup (no result yet)
+      const lookupForm = new FormData();
+      lookupForm.append("file", file);
+      lookupForm.append("mode", mode);
+      lookupForm.append("contentHash", contentHash);
+      const lookupRes = await fetch("/api/remove-bg", {
+        method: "POST",
+        body: lookupForm,
+      });
+      const lookup = (await lookupRes.json()) as {
         error?: string;
-        coldStart?: boolean;
+        cached?: boolean;
+        needsProcessing?: boolean;
         id?: string;
         originalUrl?: string | null;
         resultUrl?: string | null;
@@ -185,12 +197,67 @@ export function CutoutWorkspace({ initialHistory }: Props) {
         mode?: CutoutMode;
       };
 
-      if (!res.ok || !data.resultUrl || !data.originalUrl || !data.id) {
+      if (!lookupRes.ok) {
+        setError(lookup.error ?? "Something went sideways. Try again.");
+        return;
+      }
+
+      if (
+        lookup.cached &&
+        lookup.id &&
+        lookup.originalUrl &&
+        lookup.resultUrl
+      ) {
+        setResult({
+          id: lookup.id,
+          originalUrl: lookup.originalUrl,
+          resultUrl: lookup.resultUrl,
+          originalName: lookup.originalName ?? file.name,
+          mode: lookup.mode ?? mode,
+          localPreview,
+        });
+        void refreshHistory();
+        return;
+      }
+
+      // Process in the browser (ONNX) — no external service
+      const resultBlob = await removeBackgroundInBrowser(file, mode);
+
+      const storeForm = new FormData();
+      storeForm.append("file", file);
+      storeForm.append(
+        "result",
+        new File([resultBlob], "result.png", { type: "image/png" }),
+      );
+      storeForm.append("mode", mode);
+      storeForm.append("contentHash", contentHash);
+
+      const storeRes = await fetch("/api/remove-bg", {
+        method: "POST",
+        body: storeForm,
+      });
+      const data = (await storeRes.json()) as {
+        error?: string;
+        id?: string;
+        originalUrl?: string | null;
+        resultUrl?: string | null;
+        originalName?: string | null;
+        mode?: CutoutMode;
+      };
+
+      if (!storeRes.ok || !data.resultUrl || !data.originalUrl || !data.id) {
+        const localResult = URL.createObjectURL(resultBlob);
+        setResult({
+          id: "local",
+          originalUrl: localPreview,
+          resultUrl: localResult,
+          originalName: file.name,
+          mode,
+          localPreview,
+        });
         setError(
           data.error ??
-            (data.coldStart
-              ? "Service is waking up — try again in a few seconds."
-              : "Something went sideways. Try again."),
+            "Cutout worked, but saving to history failed. You can still download.",
         );
         return;
       }
@@ -204,9 +271,10 @@ export function CutoutWorkspace({ initialHistory }: Props) {
         localPreview,
       });
       void refreshHistory();
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError(
-        "Couldn’t reach the server. If the rembg service is cold, give it a moment and retry.",
+        "Couldn’t remove the background. Try a smaller image, or refresh and retry.",
       );
     } finally {
       if (abortWarm.current) window.clearTimeout(abortWarm.current);
@@ -237,7 +305,7 @@ export function CutoutWorkspace({ initialHistory }: Props) {
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-10">
       <header className="space-y-3">
         <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">
-          Private · free · rembg
+          Private · in-browser · free
         </p>
         <h1 className="font-display text-3xl font-medium tracking-tight text-ink sm:text-4xl">
           Cutout
@@ -261,7 +329,7 @@ export function CutoutWorkspace({ initialHistory }: Props) {
                   {
                     id: "fast" as const,
                     label: "Fast",
-                    tip: "Quicker pass — good for drafts and simple subjects. Uses a lighter model.",
+                    tip: "Quicker pass — good for drafts and simple subjects. Lower fidelity, lower latency.",
                   },
                   {
                     id: "quality" as const,
