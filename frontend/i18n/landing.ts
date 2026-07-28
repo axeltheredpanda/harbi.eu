@@ -19,7 +19,9 @@ export type LandingCopy = {
   contactTitle: string;
   contactBody: string;
   redbulls: string;
-  relationship: string;
+  relationshipLabel: string;
+  statusSingle: string;
+  statusDating: string;
   days: string;
   exitRally: string;
   nowTitle: string;
@@ -140,7 +142,9 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     contactBody:
       "Si quelque chose ici résonne — un poste, une collaboration, une question — envoyez un mot. Je lis tout ce qui arrive.",
     redbulls: "Red Bulls depuis le lancement",
-    relationship: "Statut relationnel · célibataire",
+    relationshipLabel: "Statut relationnel",
+    statusSingle: "célibataire",
+    statusDating: "en couple",
     days: "jours",
     exitRally: "Quitter le mode rallye",
     nowTitle: "Maintenant",
@@ -170,16 +174,8 @@ export const dictionaries: Record<Locale, LandingCopy> = {
       "Supabase, PostgreSQL, Node",
       "Vercel, Git, API Anthropic",
     ],
-    statusJokes: [
-      "(en train de perdre la tête)",
-      "(buffer émotionnel…)",
-      "(c'est compliqué avec mon agenda)",
-      "(ouvert aux suggestions, fermé aux situationships)",
-      "(quête principale : rester hydraté)",
-      "(rebondissement en attente)",
-      "(sur des vibes et du Red Bull)",
-      "(ne pas me percevoir)",
-    ],
+    // Shared English pool — intentional for both locales
+    statusJokes: [...STATUS_JOKES],
   },
   en: {
     available: "Available for opportunities",
@@ -201,7 +197,9 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     contactBody:
       "If something here resonates — a role, a collaboration, a question — send a note. I read everything that arrives.",
     redbulls: "Red Bulls since launch",
-    relationship: "Relationship status · single",
+    relationshipLabel: "Relationship status",
+    statusSingle: "single",
+    statusDating: "dating",
     days: "days",
     exitRally: "Exit rally mode",
     nowTitle: "Now",
@@ -231,16 +229,7 @@ export const dictionaries: Record<Locale, LandingCopy> = {
       "Supabase, PostgreSQL, Node",
       "Vercel, Git, Anthropic API",
     ],
-    statusJokes: [
-      "(currently losing my mind)",
-      "(emotionally buffering…)",
-      "(status: it's complicated with my calendar)",
-      "(open to suggestions, closed to situationships)",
-      "(main quest: stay hydrated)",
-      "(plot twist pending)",
-      "(running on vibes and Red Bull)",
-      "(do not perceive)",
-    ],
+    statusJokes: [...STATUS_JOKES],
   },
 };
 

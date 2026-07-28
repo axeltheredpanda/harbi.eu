@@ -9,6 +9,7 @@ import {
 } from "@/frontend/i18n/landing";
 import type { NoteMeta } from "@/backend/notes";
 import type { GithubActivity } from "@/backend/github";
+import type { RelationshipStatus } from "@/backend/supabase/types";
 import { nowItems } from "@/content/now";
 import { HeroAssemble } from "@/frontend/motion/hero-assemble";
 import { ScrollReveal } from "@/frontend/motion/scroll-reveal";
@@ -17,7 +18,6 @@ import { MonogramLogo } from "@/frontend/motion/monogram-logo";
 import { morphTheme } from "@/frontend/motion/theme-morph";
 
 const SITE_LAUNCH_MS = Date.UTC(2026, 6, 1);
-const SINGLE_SINCE_MS = Date.UTC(2026, 1, 1);
 const LOCALE_KEY = "harbi.locale";
 
 const KONAMI = [
@@ -37,6 +37,8 @@ type Props = {
   initialLocale: Locale;
   notes: NoteMeta[];
   github: GithubActivity;
+  relationshipStatus: RelationshipStatus;
+  singleSince: string;
 };
 
 function redbullCount(now = Date.now()): number {
@@ -44,30 +46,46 @@ function redbullCount(now = Date.now()): number {
   return Math.floor(8 + hours * 0.21 + Math.sin(hours / 8) * 3.1 + (hours % 13) * 0.11);
 }
 
-function daysSingle(now = Date.now()): number {
-  return Math.max(0, Math.floor((now - SINGLE_SINCE_MS) / 86_400_000));
+function daysSince(isoDate: string, now = Date.now()): number {
+  const start = Date.parse(`${isoDate}T00:00:00Z`);
+  if (!Number.isFinite(start)) return 0;
+  return Math.max(0, Math.floor((now - start) / 86_400_000));
 }
 
-function pickJoke(copy: LandingCopy): string {
-  return (
-    copy.statusJokes[Math.floor(Math.random() * copy.statusJokes.length)] ??
-    copy.statusJokes[0]
-  );
+function pickJoke(copy: LandingCopy, exclude?: string): string {
+  const pool = copy.statusJokes;
+  if (pool.length === 0) return "";
+  if (pool.length === 1) return pool[0];
+  let next = pool[Math.floor(Math.random() * pool.length)] ?? pool[0];
+  if (exclude && pool.length > 1) {
+    let guard = 0;
+    while (next === exclude && guard < 8) {
+      next = pool[Math.floor(Math.random() * pool.length)] ?? pool[0];
+      guard += 1;
+    }
+  }
+  return next;
 }
 
-export function LandingPage({ initialLocale, notes, github }: Props) {
+export function LandingPage({
+  initialLocale,
+  notes,
+  github,
+  relationshipStatus,
+  singleSince,
+}: Props) {
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [rally, setRally] = useState(false);
   const [redbulls, setRedbulls] = useState(0);
   const [singleDays, setSingleDays] = useState(0);
-  const [statusJoke, setStatusJoke] = useState(
-    dictionaries[initialLocale].statusJokes[0],
-  );
+  const [statusJoke, setStatusJoke] = useState("");
   const [clickTimes, setClickTimes] = useState<number[]>([]);
   const [themeBusy, setThemeBusy] = useState(false);
 
   const copy = dictionaries[locale];
   const numberLocale = locale === "fr" ? "fr-FR" : "en-GB";
+  const isSingle = relationshipStatus === "single";
+  const statusWord = isSingle ? copy.statusSingle : copy.statusDating;
 
   const enableRally = useCallback(async () => {
     if (themeBusy || rally) return;
@@ -121,19 +139,26 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
     const frame = requestAnimationFrame(() => {
       const now = Date.now();
       setRedbulls(redbullCount(now));
-      setSingleDays(daysSingle(now));
-      setStatusJoke(pickJoke(dictionaries[locale]));
+      if (isSingle) {
+        setSingleDays(daysSince(singleSince, now));
+        setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
+      } else {
+        setStatusJoke("");
+      }
     });
     const id = window.setInterval(() => {
       const tick = Date.now();
       setRedbulls(redbullCount(tick));
-      setSingleDays(daysSingle(tick));
+      if (isSingle) {
+        setSingleDays(daysSince(singleSince, tick));
+        setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
+      }
     }, 60_000);
     return () => {
       cancelAnimationFrame(frame);
       window.clearInterval(id);
     };
-  }, [locale]);
+  }, [locale, isSingle, singleSince]);
 
   useEffect(() => {
     let index = 0;
@@ -192,9 +217,16 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
             <CountUp value={redbulls} locale={numberLocale} />
           </p>
           <p className="text-ink-faint">
-            {copy.relationship} ·{" "}
-            <CountUp value={singleDays} locale={numberLocale} /> {copy.days}{" "}
-            <span className="text-accent">{statusJoke}</span>
+            {copy.relationshipLabel} · {statusWord}
+            {isSingle && (
+              <>
+                {" · "}
+                <CountUp value={singleDays} locale={numberLocale} /> {copy.days}{" "}
+                {statusJoke ? (
+                  <span className="text-accent">{statusJoke}</span>
+                ) : null}
+              </>
+            )}
           </p>
         </div>
       </div>

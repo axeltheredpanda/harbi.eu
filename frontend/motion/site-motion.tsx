@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import anime from "animejs";
 import { prefersReducedMotion } from "./prefers-reduced";
-import { VelocityScrollbar } from "./velocity-scrollbar";
 
 function enhanceUnderlines(root: ParentNode) {
   const reduced = prefersReducedMotion();
@@ -93,7 +92,7 @@ function wireButtonSquash() {
   };
 }
 
-/** Global polish: custom scrollbar, underline draw, button squash. */
+/** Global polish: underline draw, button squash. */
 export function SiteMotion() {
   useEffect(() => {
     enhanceUnderlines(document);
@@ -107,5 +106,5 @@ export function SiteMotion() {
     };
   }, []);
 
-  return <VelocityScrollbar />;
+  return null;
 }
