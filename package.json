@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.115.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.9",
+    "animejs": "^3.2.2",
     "highlight.js": "^11.11.1",
     "next": "16.2.12",
     "react": "19.2.4",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/animejs": "^3.1.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
