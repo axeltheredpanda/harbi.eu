@@ -1,8 +1,8 @@
--- Cutout (rembg) + relationship settings
--- Run once in Supabase SQL Editor. Safe to re-run.
+-- Cutout (transparent-background) + relationship settings
+-- Run in Supabase SQL Editor. Safe to re-run.
 
 -- ---------------------------------------------------------------------------
--- 1) Background removals (Cutout history)
+-- 1) Background removals (Cutout history + content-hash cache)
 -- ---------------------------------------------------------------------------
 create table if not exists public.bg_removals (
   id uuid primary key default gen_random_uuid(),
@@ -11,11 +11,19 @@ create table if not exists public.bg_removals (
   original_path text not null,
   result_path text not null,
   original_name text,
+  content_hash text,
   created_at timestamptz not null default now()
 );
 
+-- For DBs that already had bg_removals without content_hash:
+alter table public.bg_removals
+  add column if not exists content_hash text;
+
 create index if not exists bg_removals_user_created_idx
   on public.bg_removals (user_id, created_at desc);
+
+create index if not exists bg_removals_user_hash_mode_idx
+  on public.bg_removals (user_id, content_hash, mode);
 
 alter table public.bg_removals enable row level security;
 
@@ -30,7 +38,6 @@ create policy "bg_removals: owner write" on public.bg_removals
 create policy "bg_removals: owner delete" on public.bg_removals
   for delete using (auth.uid() = user_id);
 
--- Storage bucket for originals + transparent PNGs
 insert into storage.buckets (id, name, public)
 values ('bg-removals', 'bg-removals', false)
 on conflict (id) do nothing;
@@ -85,11 +92,9 @@ drop policy if exists "site_settings: public read" on public.site_settings;
 drop policy if exists "site_settings: auth update" on public.site_settings;
 drop policy if exists "site_settings: auth insert" on public.site_settings;
 
--- Anyone (incl. anon) can read — needed for the public landing banner
 create policy "site_settings: public read" on public.site_settings
   for select using (true);
 
--- Logged-in user can insert / update the singleton row
 create policy "site_settings: auth insert" on public.site_settings
   for insert with check (auth.uid() is not null);
 

@@ -176,11 +176,15 @@ create table if not exists public.bg_removals (
   original_path text not null,
   result_path text not null,
   original_name text,
+  content_hash text,
   created_at timestamptz not null default now()
 );
 
 create index if not exists bg_removals_user_created_idx
   on public.bg_removals (user_id, created_at desc);
+
+create index if not exists bg_removals_user_hash_mode_idx
+  on public.bg_removals (user_id, content_hash, mode);
 
 alter table public.bg_removals enable row level security;
 

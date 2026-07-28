@@ -189,6 +189,7 @@ export type Database = {
           original_path: string;
           result_path: string;
           original_name: string | null;
+          content_hash: string | null;
           created_at: string;
         };
         Insert: {
@@ -198,6 +199,7 @@ export type Database = {
           original_path: string;
           result_path: string;
           original_name?: string | null;
+          content_hash?: string | null;
           created_at?: string;
         };
         Update: {
@@ -207,6 +209,7 @@ export type Database = {
           original_path?: string;
           result_path?: string;
           original_name?: string | null;
+          content_hash?: string | null;
           created_at?: string;
         };
         Relationships: [];

@@ -98,7 +98,7 @@ function downloadBlob(blob: Blob, name: string) {
 }
 
 export function CutoutWorkspace({ initialHistory }: Props) {
-  const [mode, setMode] = useState<CutoutMode>("quality");
+  const [mode, setMode] = useState<CutoutMode>("fast");
   const [busy, setBusy] = useState(false);
   const [warming, setWarming] = useState(false);
   const [phraseIdx, setPhraseIdx] = useState(0);
@@ -237,7 +237,7 @@ export function CutoutWorkspace({ initialHistory }: Props) {
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-10">
       <header className="space-y-3">
         <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">
-          Private · free · rembg
+          Private · free · cutout
         </p>
         <h1 className="font-display text-3xl font-medium tracking-tight text-ink sm:text-4xl">
           Cutout
@@ -261,7 +261,7 @@ export function CutoutWorkspace({ initialHistory }: Props) {
                   {
                     id: "fast" as const,
                     label: "Fast",
-                    tip: "Quicker pass — good for drafts and simple subjects. Uses a lighter model.",
+                    tip: "Quicker pass — good for drafts and simple subjects. Lower fidelity, lower latency.",
                   },
                   {
                     id: "quality" as const,
