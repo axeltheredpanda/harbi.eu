@@ -54,9 +54,10 @@ Toute la logique (accès Supabase, appel Anthropic, types) vit dans `backend/` o
   upload PDF/image (`/api/claude`, `/api/claude/upload`)
 - [x] Todo list (CRUD via Supabase, RLS par `user_id`)
 - [x] Section projets (CRUD via Supabase, RLS par `user_id`)
-- [ ] Portfolio public / présentation recruteurs — redesign landing posé, descriptions
-      Axel Project / Astraia encore placeholder
-- [ ] Design final hors Claudette (skill frontend-design)
+- [x] Portfolio public — landing editorial + détails de personnalité (bio,
+      compteur café, thème rally caché, skill joke au hover, 404 motorsport,
+      intros projets, lien Login)
+- [ ] Design final hors Claudette / landing (skill frontend-design)
 
 Reste à faire avant usage réel :
 - Créer un projet Supabase, remplir `.env` depuis `.env.example`, exécuter `supabase/schema.sql`
