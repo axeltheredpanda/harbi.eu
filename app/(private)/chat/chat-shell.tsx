@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { Conversation } from "@/backend/supabase/types";
 import {
+  CHAT_MODEL,
+  type ChatModelId,
+  resolveChatModel,
+} from "@/backend/chat/constants";
+import {
   createConversation,
   deleteConversation,
   getConversationMessages,
@@ -11,6 +16,9 @@ import {
 import { ConversationSidebar } from "./conversation-sidebar";
 import { MessageList, type ChatMessage } from "./message-list";
 import { MessageInput, type PendingAttachment } from "./message-input";
+import { ModelSelect } from "./model-select";
+
+const MODEL_STORAGE_KEY = "claudette.model";
 
 type Props = {
   initialConversations: Conversation[];
@@ -70,6 +78,14 @@ export function ChatShell({ initialConversations }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [streaming, setStreaming] = useState(false);
+  const [model, setModel] = useState<ChatModelId>(() => {
+    if (typeof window === "undefined") return CHAT_MODEL;
+    try {
+      return resolveChatModel(window.localStorage.getItem(MODEL_STORAGE_KEY));
+    } catch {
+      return CHAT_MODEL;
+    }
+  });
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string | null>(null);
@@ -123,6 +139,15 @@ export function ChatShell({ initialConversations }: Props) {
       });
     });
   }, [activeId, loadMessages]);
+
+  function handleModelChange(next: ChatModelId) {
+    setModel(next);
+    try {
+      window.localStorage.setItem(MODEL_STORAGE_KEY, next);
+    } catch {
+      // ignore storage errors
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -640,6 +665,7 @@ export function ChatShell({ initialConversations }: Props) {
         content,
         attachment_ids: attachmentIds,
         edit_message_id: editId ?? undefined,
+        model,
       },
       {
         optimisticUserId: editId ? undefined : optimisticId,
@@ -695,6 +721,7 @@ export function ChatShell({ initialConversations }: Props) {
       {
         conversation_id: activeId,
         regenerate_message_id: message.id,
+        model,
       },
       { streamId },
     );
@@ -773,9 +800,16 @@ export function ChatShell({ initialConversations }: Props) {
               </h1>
             </div>
           </div>
-          {pending && (
-            <span className="shrink-0 font-mono text-xs text-ink-faint">loading…</span>
-          )}
+          <div className="flex shrink-0 items-center gap-3">
+            <ModelSelect
+              value={model}
+              disabled={streaming}
+              onChange={handleModelChange}
+            />
+            {pending && (
+              <span className="font-mono text-xs text-ink-faint">loading…</span>
+            )}
+          </div>
         </div>
 
         <MessageList
