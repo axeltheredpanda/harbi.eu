@@ -334,31 +334,3 @@ html[data-theme="rally"] body {
     #f3eee4 12px 24px
   );
 }
-
-/* Custom velocity scrollbar — hides native when active */
-html.has-custom-scrollbar {
-  scrollbar-width: none;
-}
-
-html.has-custom-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.custom-scroll-track {
-  transition: opacity 180ms ease;
-}
-
-.custom-scroll-thumb {
-  will-change: transform, height;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.has-custom-scrollbar {
-    scrollbar-width: thin;
-  }
-
-  html.has-custom-scrollbar::-webkit-scrollbar {
-    display: block;
-    width: 6px;
-  }
-}
