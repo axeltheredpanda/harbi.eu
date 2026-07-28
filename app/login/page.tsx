@@ -22,7 +22,7 @@ export default function LoginPage() {
       setStatus(error.message);
       return;
     }
-    window.location.href = "/todo";
+    window.location.href = "/chat";
   }
 
   async function handleMagicLink() {

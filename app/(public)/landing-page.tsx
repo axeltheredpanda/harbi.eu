@@ -33,7 +33,20 @@ const skills = [
 
 const JOKE_SKILL = "Excel — expert level (post-traumatic)";
 
+const STATUS_JOKES = [
+  "(currently losing my mind)",
+  "(emotionally buffering…)",
+  "(status: it's complicated with my calendar)",
+  "(open to suggestions, closed to situationships)",
+  "(main quest: stay hydrated)",
+  "(plot twist pending)",
+  "(running on vibes and Red Bull)",
+  "(do not perceive)",
+];
+
 const SITE_LAUNCH_MS = Date.UTC(2026, 6, 1); // 1 Jul 2026
+const SINGLE_SINCE_MS = Date.UTC(2026, 1, 1); // 1 Feb 2026 (01/02/2026)
+
 const KONAMI = [
   "ArrowUp",
   "ArrowUp",
@@ -47,15 +60,25 @@ const KONAMI = [
   "a",
 ] as const;
 
-function coffeeCount(now = Date.now()): number {
+function redbullCount(now = Date.now()): number {
   const hours = Math.max(0, (now - SITE_LAUNCH_MS) / 3_600_000);
-  // ~3–4 cups/day with a gentle wobble — not a real metric.
-  return Math.floor(12 + hours * 0.155 + Math.sin(hours / 9) * 2.4 + (hours % 17) * 0.08);
+  // Fake metric — slightly more aggressive than coffee, still nonsense.
+  return Math.floor(8 + hours * 0.21 + Math.sin(hours / 8) * 3.1 + (hours % 13) * 0.11);
+}
+
+function daysSingle(now = Date.now()): number {
+  return Math.max(0, Math.floor((now - SINGLE_SINCE_MS) / 86_400_000));
+}
+
+function pickJoke(): string {
+  return STATUS_JOKES[Math.floor(Math.random() * STATUS_JOKES.length)] ?? STATUS_JOKES[0];
 }
 
 export function LandingPage() {
   const [rally, setRally] = useState(false);
-  const [coffees, setCoffees] = useState(() => coffeeCount());
+  const [redbulls, setRedbulls] = useState(0);
+  const [singleDays, setSingleDays] = useState(0);
+  const [statusJoke, setStatusJoke] = useState(STATUS_JOKES[0]);
   const [clickTimes, setClickTimes] = useState<number[]>([]);
 
   const enableRally = useCallback(() => {
@@ -75,8 +98,21 @@ export function LandingPage() {
   }, []);
 
   useEffect(() => {
-    const id = window.setInterval(() => setCoffees(coffeeCount()), 60_000);
-    return () => window.clearInterval(id);
+    const frame = requestAnimationFrame(() => {
+      const now = Date.now();
+      setRedbulls(redbullCount(now));
+      setSingleDays(daysSingle(now));
+      setStatusJoke(pickJoke());
+    });
+    const id = window.setInterval(() => {
+      const tick = Date.now();
+      setRedbulls(redbullCount(tick));
+      setSingleDays(daysSingle(tick));
+    }, 60_000);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearInterval(id);
+    };
   }, []);
 
   useEffect(() => {
@@ -120,7 +156,20 @@ export function LandingPage() {
         />
       )}
 
-      <header className="relative z-10 mx-auto flex w-full max-w-2xl items-baseline justify-between gap-6 px-6 pt-10 sm:px-8">
+      <div className="relative z-10 border-b border-border bg-accent-soft/70">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-1 px-6 py-2.5 font-mono text-[11px] leading-relaxed tracking-wide text-ink-muted sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-5 sm:gap-y-1 sm:px-8 sm:text-xs">
+          <p title="Not a real metric. Wings not included.">
+            Red Bulls since launch · {redbulls.toLocaleString("en-GB")}
+          </p>
+          <p className="text-ink-faint sm:before:mr-5 sm:before:text-border sm:before:content-['·']">
+            Relationship status · single · {singleDays.toLocaleString("en-GB")}{" "}
+            days{" "}
+            <span className="text-accent">{statusJoke}</span>
+          </p>
+        </div>
+      </div>
+
+      <header className="relative z-10 mx-auto flex w-full max-w-2xl items-baseline justify-between gap-6 px-6 pt-8 sm:px-8">
         <Link
           href="/"
           className="font-display text-lg tracking-tight text-ink transition-colors hover:text-accent"
@@ -137,17 +186,14 @@ export function LandingPage() {
           <a href="#contact" className="transition-colors hover:text-ink">
             Contact
           </a>
-          <Link
-            href="/login"
-            className="transition-colors hover:text-ink"
-          >
+          <Link href="/login" className="transition-colors hover:text-ink">
             Login
           </Link>
         </nav>
       </header>
 
       <main className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 sm:px-8">
-        <section className="pb-20 pt-24 sm:pb-28 sm:pt-32">
+        <section className="pb-20 pt-20 sm:pb-28 sm:pt-28">
           <p className="animate-rise text-sm tracking-wide text-ink-faint">
             Available for opportunities
           </p>
@@ -228,7 +274,10 @@ export function LandingPage() {
           <ul className="mt-8 max-w-prose space-y-3 text-base leading-relaxed text-ink-muted">
             {skills.map((skill) => (
               <li key={skill} className="flex gap-3">
-                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+                <span
+                  className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent"
+                  aria-hidden="true"
+                />
                 <span>{skill}</span>
               </li>
             ))}
@@ -270,14 +319,8 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="relative z-10 mx-auto flex w-full max-w-2xl flex-col gap-3 px-6 pb-12 pt-4 sm:px-8">
+      <footer className="relative z-10 mx-auto w-full max-w-2xl px-6 pb-12 pt-4 sm:px-8">
         <p className="text-sm text-ink-faint">harbi.eu</p>
-        <p
-          className="font-mono text-[11px] tracking-wide text-ink-faint/80"
-          title="Not a real metric. Please do not cite in a stand-up."
-        >
-          Coffees since launch · {coffees.toLocaleString("en-GB")}
-        </p>
       </footer>
 
       {rally && (

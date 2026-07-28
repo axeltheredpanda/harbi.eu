@@ -3,11 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const links = [
-  { href: "/todo", label: "/todo" },
-  { href: "/projects", label: "/projects" },
-  { href: "/chat", label: "/chat" },
-];
+const links = [{ href: "/chat", label: "/chat" }];
 
 export function NavLinks() {
   const pathname = usePathname();
