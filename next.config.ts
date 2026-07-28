@@ -25,6 +25,13 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Silence webpack/turbopack dual-config error (Next 16 defaults to Turbopack)
+  turbopack: {
+    resolveAlias: {
+      "onnxruntime-node": { browser: "./empty-module.js" },
+      sharp: { browser: "./empty-module.js" },
+    },
+  },
 };
 
 export default nextConfig;

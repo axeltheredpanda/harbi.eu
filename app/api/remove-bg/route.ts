@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@/backend/supabase/server";
 import {
@@ -8,25 +7,8 @@ import {
   type CutoutMode,
 } from "@/backend/cutout/constants";
 
-export const maxDuration = 120;
-
-const HEALTH_WAIT_MS = 90_000;
-const HEALTH_POLL_MS = 3_000;
-const PROCESS_TIMEOUT_MS = 110_000;
-
-function cutoutServiceUrl(): string | null {
-  const raw =
-    process.env.CUTOUT_SERVICE_URL?.trim() ||
-    process.env.REMBG_SERVICE_URL?.trim();
-  return raw ? raw.replace(/\/$/, "") : null;
-}
-
-function cutoutServiceKey(): string | undefined {
-  return (
-    process.env.CUTOUT_SERVICE_KEY?.trim() ||
-    process.env.REMBG_SERVICE_KEY?.trim() ||
-    undefined
-  );
+function parseMode(value: FormDataEntryValue | null): CutoutMode {
+  return value === "fast" ? "fast" : "quality";
 }
 
 function extensionFor(mime: string, filename: string): string {
@@ -38,151 +20,12 @@ function extensionFor(mime: string, filename: string): string {
   return fromName && fromName.length <= 5 ? fromName.toLowerCase() : "bin";
 }
 
-function parseMode(value: FormDataEntryValue | null): CutoutMode {
-  return value === "fast" ? "fast" : "quality";
-}
-
-function authHeaders(): HeadersInit {
-  const key = cutoutServiceKey();
-  return key ? { Authorization: `Bearer ${key}` } : {};
-}
-
-type HealthState = { ok: boolean; ready: boolean; coldStart: boolean };
-
-async function waitForHealthy(serviceUrl: string): Promise<HealthState> {
-  const deadline = Date.now() + HEALTH_WAIT_MS;
-  let sawFailure = false;
-
-  while (Date.now() < deadline) {
-    try {
-      const res = await fetch(`${serviceUrl}/health`, {
-        method: "GET",
-        headers: authHeaders(),
-        signal: AbortSignal.timeout(8_000),
-        cache: "no-store",
-      });
-      if (res.ok) {
-        const body = (await res.json().catch(() => ({}))) as {
-          ready?: boolean;
-        };
-        if (body.ready !== false) {
-          return { ok: true, ready: true, coldStart: sawFailure };
-        }
-        // Space is up but model still loading
-        sawFailure = true;
-      } else {
-        sawFailure = true;
-      }
-    } catch {
-      sawFailure = true;
-    }
-    await new Promise((r) => setTimeout(r, HEALTH_POLL_MS));
-  }
-
-  return { ok: false, ready: false, coldStart: true };
-}
-
-type ServiceResult =
-  | { ok: true; bytes: Buffer; durationMs: number }
-  | {
-      ok: false;
-      status: number;
-      error: string;
-      kind: "validation" | "timeout" | "processing" | "unreachable";
-    };
-
-async function callRemoveOnce(
-  serviceUrl: string,
-  buffer: Buffer,
-  mime: string,
-  filename: string,
-  mode: CutoutMode,
-): Promise<ServiceResult> {
-  const outbound = new FormData();
-  outbound.append(
-    "file",
-    new Blob([new Uint8Array(buffer)], { type: mime }),
-    filename,
-  );
-  outbound.append("mode", mode);
-
-  const started = Date.now();
-  try {
-    const res = await fetch(`${serviceUrl}/remove`, {
-      method: "POST",
-      headers: authHeaders(),
-      body: outbound,
-      signal: AbortSignal.timeout(PROCESS_TIMEOUT_MS),
-    });
-
-    if (res.status === 400 || res.status === 413) {
-      const body = await res.json().catch(() => ({}));
-      const detail =
-        typeof body === "object" && body && "detail" in body
-          ? String((body as { detail: unknown }).detail)
-          : "Invalid image";
-      return { ok: false, status: res.status, error: detail, kind: "validation" };
-    }
-
-    if (res.status === 504) {
-      const body = await res.json().catch(() => ({}));
-      const detail =
-        typeof body === "object" && body && "detail" in body
-          ? String((body as { detail: unknown }).detail)
-          : "Processing took too long — try a smaller image or Fast mode.";
-      return { ok: false, status: 504, error: detail, kind: "timeout" };
-    }
-
-    if (!res.ok) {
-      return {
-        ok: false,
-        status: res.status,
-        error: "Something went wrong removing the background — try again.",
-        kind: "processing",
-      };
-    }
-
-    const bytes = Buffer.from(await res.arrayBuffer());
-    return { ok: true, bytes, durationMs: Date.now() - started };
-  } catch (err) {
-    const timedOut =
-      err instanceof Error &&
-      (err.name === "TimeoutError" || err.name === "AbortError");
-    if (timedOut) {
-      return {
-        ok: false,
-        status: 504,
-        error:
-          "Processing took too long — try a smaller image or Fast mode.",
-        kind: "timeout",
-      };
-    }
-    return {
-      ok: false,
-      status: 504,
-      error:
-        "Couldn’t reach the cutout service. It may be waking up — try again in a moment.",
-      kind: "unreachable",
-    };
-  }
-}
-
-/** One retry with backoff for transient failures only (not validation). */
-async function callRemoveWithRetry(
-  serviceUrl: string,
-  buffer: Buffer,
-  mime: string,
-  filename: string,
-  mode: CutoutMode,
-): Promise<ServiceResult> {
-  const first = await callRemoveOnce(serviceUrl, buffer, mime, filename, mode);
-  if (first.ok || first.kind === "validation" || first.kind === "timeout") {
-    return first;
-  }
-  await new Promise((r) => setTimeout(r, 1_500));
-  return callRemoveOnce(serviceUrl, buffer, mime, filename, mode);
-}
-
+/**
+ * Store a client-processed cutout (or return a cache hit).
+ *
+ * Cache lookup: FormData with `file` + `mode` only (no `result`).
+ * Store: FormData with `file` + `result` + `mode` + optional `contentHash`.
+ */
 export async function POST(request: Request) {
   const supabase = await createClient();
   const {
@@ -193,20 +36,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const serviceUrl = cutoutServiceUrl();
-  if (!serviceUrl) {
-    return NextResponse.json(
-      {
-        error:
-          "Cutout isn’t configured. Set CUTOUT_SERVICE_URL in .env.local (see services/cutout/README.md).",
-      },
-      { status: 503 },
-    );
-  }
-
   const form = await request.formData();
   const file = form.get("file");
+  const resultFile = form.get("result");
   const mode = parseMode(form.get("mode"));
+  const providedHash = String(form.get("contentHash") ?? "").trim();
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "file is required" }, { status: 400 });
@@ -232,9 +66,13 @@ export async function POST(request: Request) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const contentHash = createHash("sha256").update(buffer).digest("hex");
+  const { createHash } = await import("node:crypto");
+  const contentHash =
+    providedHash && /^[a-f0-9]{64}$/i.test(providedHash)
+      ? providedHash.toLowerCase()
+      : createHash("sha256").update(buffer).digest("hex");
 
-  // Cache hit: same user + hash + mode
+  // Always check cache first
   const { data: cached } = await supabase
     .from("bg_removals")
     .select("id, mode, created_at, original_name, original_path, result_path")
@@ -255,15 +93,6 @@ export async function POST(request: Request) {
         .createSignedUrl(cached.result_path, 60 * 60),
     ]);
     if (originalSigned?.signedUrl && resultSigned?.signedUrl) {
-      console.info(
-        JSON.stringify({
-          event: "cutout_cache_hit",
-          userId: user.id,
-          mode,
-          sizeBytes: buffer.length,
-          id: cached.id,
-        }),
-      );
       return NextResponse.json({
         id: cached.id,
         mode: cached.mode,
@@ -272,28 +101,26 @@ export async function POST(request: Request) {
         originalUrl: originalSigned.signedUrl,
         resultUrl: resultSigned.signedUrl,
         cached: true,
+        contentHash,
       });
     }
   }
 
-  const health = await waitForHealthy(serviceUrl);
-  if (!health.ok) {
-    console.warn(
-      JSON.stringify({
-        event: "cutout_cold_start_timeout",
-        userId: user.id,
-        mode,
-        sizeBytes: buffer.length,
-      }),
-    );
-    return NextResponse.json(
-      {
-        error:
-          "The cutout service is still waking up — give it a moment and try again.",
-        coldStart: true,
-      },
-      { status: 503 },
-    );
+  // Lookup-only (client will process in-browser)
+  if (!(resultFile instanceof File)) {
+    return NextResponse.json({
+      cached: false,
+      contentHash,
+      needsProcessing: true,
+    });
+  }
+
+  const resultBuffer = Buffer.from(await resultFile.arrayBuffer());
+  if (resultBuffer.length === 0) {
+    return NextResponse.json({ error: "Empty result" }, { status: 400 });
+  }
+  if (resultBuffer.length > MAX_BG_UPLOAD_BYTES * 2) {
+    return NextResponse.json({ error: "Result too large" }, { status: 400 });
   }
 
   const id = crypto.randomUUID();
@@ -303,10 +130,7 @@ export async function POST(request: Request) {
 
   const { error: originalUploadError } = await supabase.storage
     .from(BG_STORAGE_BUCKET)
-    .upload(originalPath, buffer, {
-      contentType: mime,
-      upsert: false,
-    });
+    .upload(originalPath, buffer, { contentType: mime, upsert: false });
 
   if (originalUploadError) {
     return NextResponse.json(
@@ -315,64 +139,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const filename = file.name || `upload.${ext}`;
-  const result = await callRemoveWithRetry(
-    serviceUrl,
-    buffer,
-    mime,
-    filename,
-    mode,
-  );
-
-  if (!result.ok) {
-    await supabase.storage.from(BG_STORAGE_BUCKET).remove([originalPath]);
-    console.warn(
-      JSON.stringify({
-        event: "cutout_failed",
-        userId: user.id,
-        mode,
-        sizeBytes: buffer.length,
-        kind: result.kind,
-        status: result.status,
-      }),
-    );
-    const status =
-      result.kind === "validation"
-        ? 400
-        : result.kind === "timeout"
-          ? 504
-          : 502;
-    return NextResponse.json(
-      {
-        error: result.error,
-        coldStart: result.kind === "unreachable" || health.coldStart,
-      },
-      { status },
-    );
-  }
-
-  console.info(
-    JSON.stringify({
-      event: "cutout_ok",
-      userId: user.id,
-      mode,
-      sizeBytes: buffer.length,
-      durationMs: result.durationMs,
-      coldStart: health.coldStart,
-    }),
-  );
-
   const { error: resultUploadError } = await supabase.storage
     .from(BG_STORAGE_BUCKET)
-    .upload(resultPath, result.bytes, {
+    .upload(resultPath, resultBuffer, {
       contentType: "image/png",
       upsert: false,
     });
 
   if (resultUploadError) {
-    await supabase.storage
-      .from(BG_STORAGE_BUCKET)
-      .remove([originalPath, resultPath]);
+    await supabase.storage.from(BG_STORAGE_BUCKET).remove([originalPath]);
     return NextResponse.json(
       { error: resultUploadError.message },
       { status: 502 },
@@ -418,6 +193,6 @@ export async function POST(request: Request) {
     originalUrl: originalSigned?.signedUrl ?? null,
     resultUrl: resultSigned?.signedUrl ?? null,
     cached: false,
-    coldStart: health.coldStart,
+    contentHash,
   });
 }
