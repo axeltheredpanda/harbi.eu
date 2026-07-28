@@ -81,8 +81,18 @@ export function ChatShell({ initialConversations }: Props) {
   const abortRef = useRef<AbortController | null>(null);
   const loadingConvRef = useRef<string | null>(null);
   const lastRequestRef = useRef<LastRequest | null>(null);
+  const createPromiseRef = useRef<Promise<string> | null>(null);
+  const uploadAbortRef = useRef(new Map<string, AbortController>());
+
+  function isTempConversationId(id: string) {
+    return id.startsWith("temp-");
+  }
 
   const loadMessages = useCallback(async (conversationId: string) => {
+    if (isTempConversationId(conversationId)) {
+      setMessages([]);
+      return;
+    }
     loadingConvRef.current = conversationId;
     const rows = await getConversationMessages(conversationId);
     if (loadingConvRef.current !== conversationId) return;
@@ -91,6 +101,12 @@ export function ChatShell({ initialConversations }: Props) {
 
   useEffect(() => {
     if (!activeId) {
+      startTransition(() => {
+        setMessages([]);
+      });
+      return;
+    }
+    if (isTempConversationId(activeId)) {
       startTransition(() => {
         setMessages([]);
       });
@@ -142,18 +158,63 @@ export function ChatShell({ initialConversations }: Props) {
   }
 
   async function handleCreate() {
+    if (streaming) return;
     setThreadError(null);
-    const created = await createConversation();
-    setConversations((prev) => [created, ...prev]);
-    setActiveId(created.id);
+
+    const previousId = activeId;
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+    const optimistic: Conversation = {
+      id: tempId,
+      user_id: "",
+      title: "New conversation",
+      summary: null,
+      summary_until_message_id: null,
+      created_at: now,
+      updated_at: now,
+    };
+
+    // Paint the empty chat immediately — don't wait on Supabase.
+    setConversations((prev) => [optimistic, ...prev.filter((c) => c.id !== tempId)]);
+    setActiveId(tempId);
     setMessages([]);
     clearComposer();
     setMobileOpen(false);
+
+    const promise = createConversation()
+      .then((created) => {
+        setConversations((prev) =>
+          prev.map((c) => (c.id === tempId ? created : c)),
+        );
+        setActiveId((prev) => (prev === tempId ? created.id : prev));
+        return created.id;
+      })
+      .catch((err: unknown) => {
+        setConversations((prev) => prev.filter((c) => c.id !== tempId));
+        setActiveId((prev) => (prev === tempId ? previousId : prev));
+        setThreadError({
+          message: err instanceof Error ? err.message : "Could not create chat",
+          onRetry: () => void handleCreate(),
+        });
+        throw err;
+      })
+      .finally(() => {
+        if (createPromiseRef.current === promise) {
+          createPromiseRef.current = null;
+        }
+      });
+
+    createPromiseRef.current = promise;
+    try {
+      await promise;
+    } catch {
+      // Error UI already set
+    }
   }
 
   async function handleDelete(id: string) {
     setThreadError(null);
-    await deleteConversation(id);
+    const snapshot = conversations;
     const next = conversations.filter((c) => c.id !== id);
     setConversations(next);
     if (activeId === id) {
@@ -161,46 +222,162 @@ export function ChatShell({ initialConversations }: Props) {
       setMessages([]);
       clearComposer();
     }
+
+    try {
+      if (!isTempConversationId(id)) {
+        await deleteConversation(id);
+      }
+    } catch (err) {
+      setConversations(snapshot);
+      setThreadError({
+        message: err instanceof Error ? err.message : "Could not delete chat",
+        onRetry: () => void handleDelete(id),
+      });
+    }
   }
 
   async function ensureConversation(): Promise<string> {
-    if (activeId) return activeId;
-    const created = await createConversation();
-    setConversations((prev) => [created, ...prev]);
-    setActiveId(created.id);
-    return created.id;
+    if (activeId && !isTempConversationId(activeId)) return activeId;
+    if (createPromiseRef.current) return createPromiseRef.current;
+
+    const tempId = activeId?.startsWith("temp-")
+      ? activeId
+      : `temp-${crypto.randomUUID()}`;
+
+    if (!activeId || !isTempConversationId(activeId)) {
+      const now = new Date().toISOString();
+      setConversations((prev) => [
+        {
+          id: tempId,
+          user_id: "",
+          title: "New conversation",
+          summary: null,
+          summary_until_message_id: null,
+          created_at: now,
+          updated_at: now,
+        },
+        ...prev,
+      ]);
+      setActiveId(tempId);
+    }
+
+    const promise = createConversation()
+      .then((created) => {
+        setConversations((prev) =>
+          prev.map((c) => (c.id === tempId ? created : c)),
+        );
+        setActiveId((prev) => (prev === tempId ? created.id : prev));
+        return created.id;
+      })
+      .finally(() => {
+        if (createPromiseRef.current === promise) {
+          createPromiseRef.current = null;
+        }
+      });
+
+    createPromiseRef.current = promise;
+    return promise;
   }
 
   async function handlePickFiles(files: File[] | FileList) {
     setThreadError(null);
-    const conversationId = await ensureConversation();
+    const list = Array.from(files);
+    if (list.length === 0) return;
 
-    for (const file of Array.from(files)) {
+    const staged = list.map((file) => {
+      const localId = `local-${crypto.randomUUID()}`;
       const isImage = file.type.startsWith("image/");
       const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
-      const form = new FormData();
-      form.set("file", file);
-      form.set("conversation_id", conversationId);
-      const res = await fetch("/api/claude/upload", { method: "POST", body: form });
-      const body = await res.json().catch(() => null);
-      if (!res.ok) {
-        if (previewUrl) URL.revokeObjectURL(previewUrl);
-        setThreadError({
-          message: friendlyError(body?.error ?? `Upload failed for ${file.name}`, res.status),
-          onRetry: () => void handlePickFiles([file]),
-        });
-        continue;
-      }
-      setPendingAttachments((prev) => [
-        ...prev,
-        {
-          id: body.id,
-          name: body.name ?? file.name,
-          type: body.type,
+      return {
+        localId,
+        file,
+        attachment: {
+          id: localId,
+          name: file.name,
+          type: (isImage ? "image" : "pdf") as "pdf" | "image",
           previewUrl,
-        },
-      ]);
+          uploading: true,
+        } satisfies PendingAttachment,
+      };
+    });
+
+    // Show previews immediately, upload in the background.
+    setPendingAttachments((prev) => [...prev, ...staged.map((s) => s.attachment)]);
+
+    let conversationId: string;
+    try {
+      conversationId = await ensureConversation();
+    } catch (err) {
+      for (const item of staged) {
+        if (item.attachment.previewUrl) URL.revokeObjectURL(item.attachment.previewUrl);
+      }
+      setPendingAttachments((prev) =>
+        prev.filter((a) => !staged.some((s) => s.localId === a.id)),
+      );
+      setThreadError({
+        message: err instanceof Error ? err.message : "Could not prepare chat for upload",
+        onRetry: () => void handlePickFiles(list),
+      });
+      return;
     }
+
+    await Promise.all(
+      staged.map(async ({ localId, file, attachment }) => {
+        const controller = new AbortController();
+        uploadAbortRef.current.set(localId, controller);
+
+        try {
+          const form = new FormData();
+          form.set("file", file);
+          form.set("conversation_id", conversationId);
+          const res = await fetch("/api/claude/upload", {
+            method: "POST",
+            body: form,
+            signal: controller.signal,
+          });
+          const body = await res.json().catch(() => null);
+
+          if (controller.signal.aborted) return;
+
+          if (!res.ok) {
+            if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
+            setPendingAttachments((prev) => prev.filter((a) => a.id !== localId));
+            setThreadError({
+              message: friendlyError(
+                body?.error ?? `Upload failed for ${file.name}`,
+                res.status,
+              ),
+              onRetry: () => void handlePickFiles([file]),
+            });
+            return;
+          }
+
+          setPendingAttachments((prev) =>
+            prev.map((a) =>
+              a.id === localId
+                ? {
+                    id: body.id as string,
+                    name: (body.name as string) ?? file.name,
+                    type: body.type as "pdf" | "image",
+                    previewUrl: attachment.previewUrl,
+                    uploading: false,
+                  }
+                : a,
+            ),
+          );
+        } catch (err) {
+          if ((err as Error).name === "AbortError") return;
+          if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
+          setPendingAttachments((prev) => prev.filter((a) => a.id !== localId));
+          setThreadError({
+            message: err instanceof Error ? err.message : `Upload failed for ${file.name}`,
+            onRetry: () => void handlePickFiles([file]),
+          });
+        } finally {
+          uploadAbortRef.current.delete(localId);
+        }
+      }),
+    );
   }
 
   function handleEdit(message: ChatMessage) {
@@ -370,8 +547,13 @@ export function ChatShell({ initialConversations }: Props) {
 
   async function handleSend(content: string) {
     setThreadError(null);
+    if (pendingAttachments.some((a) => a.uploading)) return;
+
     const conversationId = await ensureConversation();
-    const attachmentIds = pendingAttachments.map((a) => a.id);
+    const readyAttachments = pendingAttachments.filter(
+      (a) => !a.uploading && !a.id.startsWith("local-"),
+    );
+    const attachmentIds = readyAttachments.map((a) => a.id);
     const optimisticId = `optimistic-${crypto.randomUUID()}`;
     const streamId = `stream-${crypto.randomUUID()}`;
 
@@ -382,7 +564,7 @@ export function ChatShell({ initialConversations }: Props) {
       editMessageId: editingMessageId,
     };
 
-    const optimisticAttachments = pendingAttachments.map((a) => ({
+    const optimisticAttachments = readyAttachments.map((a) => ({
       id: a.id,
       user_id: "",
       conversation_id: conversationId,
@@ -561,6 +743,7 @@ export function ChatShell({ initialConversations }: Props) {
         onSelect={(id) => {
           if (streaming) return;
           setActiveId(id);
+          setMessages([]);
           clearComposer();
           setThreadError(null);
         }}
@@ -613,13 +796,16 @@ export function ChatShell({ initialConversations }: Props) {
           editingContent={editingContent}
           attachments={pendingAttachments}
           onCancelEdit={cancelEdit}
-          onRemoveAttachment={(id) =>
+          onRemoveAttachment={(id) => {
+            const controller = uploadAbortRef.current.get(id);
+            controller?.abort();
+            uploadAbortRef.current.delete(id);
             setPendingAttachments((prev) => {
               const target = prev.find((a) => a.id === id);
               if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
               return prev.filter((a) => a.id !== id);
-            })
-          }
+            });
+          }}
           onPickFiles={(files) => {
             void handlePickFiles(files);
           }}

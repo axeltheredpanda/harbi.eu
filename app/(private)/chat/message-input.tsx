@@ -9,6 +9,7 @@ export type PendingAttachment = {
   name: string;
   type: "pdf" | "image";
   previewUrl?: string;
+  uploading?: boolean;
 };
 
 type Props = {
@@ -107,7 +108,9 @@ export function MessageInput({
     };
   }, [value, focused]);
 
-  const canSend = Boolean(value.trim() || attachments.length > 0);
+  const canSend =
+    Boolean(value.trim() || attachments.length > 0) &&
+    !attachments.some((a) => a.uploading);
 
   function submit() {
     const trimmed = value.trim();
@@ -162,7 +165,9 @@ export function MessageInput({
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="animate-chat-pop group relative flex max-w-[11rem] items-center gap-2 overflow-hidden rounded-sm border border-border bg-surface"
+              className={`animate-chat-pop group relative flex max-w-[11rem] items-center gap-2 overflow-hidden rounded-sm border border-border bg-surface ${
+                attachment.uploading ? "opacity-70" : ""
+              }`}
             >
               {attachment.type === "image" && attachment.previewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -181,7 +186,7 @@ export function MessageInput({
                   {attachment.name}
                 </p>
                 <p className="font-mono text-[10px] text-ink-faint uppercase">
-                  {attachment.type}
+                  {attachment.uploading ? "uploading…" : attachment.type}
                 </p>
               </div>
               <button
