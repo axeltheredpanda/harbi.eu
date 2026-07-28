@@ -157,16 +157,10 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     langEn: "EN",
     projects: [
       {
-        name: "Axel Project",
-        wink: "Nommé d'après moi — pas par vanité, par responsabilité.",
+        name: "Axel CRM",
+        wink: "Le seul produit ici qui a refusé de porter ma palette.",
         description:
           "Un produit de bout en bout : schéma, interface, et la colle ennuyeuse entre les deux. La phrase publique pour qui ça sert se précise encore.",
-      },
-      {
-        name: "Astraia",
-        wink: "Le genre d'idée qui semblait simple au tableau, puis a poliment refusé.",
-        description:
-          "Travail en cours sur un problème ciblé. Stack et résultats ici dès que la forme se stabilise.",
       },
     ],
     skills: [
@@ -212,16 +206,10 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     langEn: "EN",
     projects: [
       {
-        name: "Axel Project",
-        wink: "Named after myself — not out of vanity, out of accountability.",
+        name: "Axel CRM",
+        wink: "The one product here that refused to wear my palette.",
         description:
           "An end-to-end product: schema, interface, and the boring glue between them. Still tightening the public one-liner for who it serves.",
-      },
-      {
-        name: "Astraia",
-        wink: "The kind of idea that looked simple on a whiteboard and then politely refused.",
-        description:
-          "Work in progress on a focused problem space. Stack and outcomes land here once the shape stops shifting.",
       },
     ],
     skills: [
