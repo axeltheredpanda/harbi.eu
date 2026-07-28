@@ -170,16 +170,8 @@ export const dictionaries: Record<Locale, LandingCopy> = {
       "Supabase, PostgreSQL, Node",
       "Vercel, Git, API Anthropic",
     ],
-    statusJokes: [
-      "(en train de perdre la tête)",
-      "(buffer émotionnel…)",
-      "(c'est compliqué avec mon agenda)",
-      "(ouvert aux suggestions, fermé aux situationships)",
-      "(quête principale : rester hydraté)",
-      "(rebondissement en attente)",
-      "(sur des vibes et du Red Bull)",
-      "(ne pas me percevoir)",
-    ],
+    // Shared English pool — intentional for both locales
+    statusJokes: [...STATUS_JOKES],
   },
   en: {
     available: "Available for opportunities",
@@ -231,16 +223,7 @@ export const dictionaries: Record<Locale, LandingCopy> = {
       "Supabase, PostgreSQL, Node",
       "Vercel, Git, Anthropic API",
     ],
-    statusJokes: [
-      "(currently losing my mind)",
-      "(emotionally buffering…)",
-      "(status: it's complicated with my calendar)",
-      "(open to suggestions, closed to situationships)",
-      "(main quest: stay hydrated)",
-      "(plot twist pending)",
-      "(running on vibes and Red Bull)",
-      "(do not perceive)",
-    ],
+    statusJokes: [...STATUS_JOKES],
   },
 };
 

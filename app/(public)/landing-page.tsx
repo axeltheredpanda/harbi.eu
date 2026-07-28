@@ -48,11 +48,20 @@ function daysSingle(now = Date.now()): number {
   return Math.max(0, Math.floor((now - SINGLE_SINCE_MS) / 86_400_000));
 }
 
-function pickJoke(copy: LandingCopy): string {
-  return (
-    copy.statusJokes[Math.floor(Math.random() * copy.statusJokes.length)] ??
-    copy.statusJokes[0]
-  );
+function pickJoke(copy: LandingCopy, exclude?: string): string {
+  const pool = copy.statusJokes;
+  if (pool.length === 0) return "";
+  if (pool.length === 1) return pool[0];
+  let next = pool[Math.floor(Math.random() * pool.length)] ?? pool[0];
+  // Avoid immediate repeat when the pool is large enough
+  if (exclude && pool.length > 1) {
+    let guard = 0;
+    while (next === exclude && guard < 8) {
+      next = pool[Math.floor(Math.random() * pool.length)] ?? pool[0];
+      guard += 1;
+    }
+  }
+  return next;
 }
 
 export function LandingPage({ initialLocale, notes, github }: Props) {
@@ -122,12 +131,14 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
       const now = Date.now();
       setRedbulls(redbullCount(now));
       setSingleDays(daysSingle(now));
-      setStatusJoke(pickJoke(dictionaries[locale]));
+      setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
     });
     const id = window.setInterval(() => {
       const tick = Date.now();
       setRedbulls(redbullCount(tick));
       setSingleDays(daysSingle(tick));
+      // Rotate joke periodically so reloads aren't the only shuffle
+      setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
     }, 60_000);
     return () => {
       cancelAnimationFrame(frame);
