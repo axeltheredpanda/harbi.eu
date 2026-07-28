@@ -15,6 +15,7 @@ import { HeroAssemble } from "@/frontend/motion/hero-assemble";
 import { ScrollReveal } from "@/frontend/motion/scroll-reveal";
 import { CountUp } from "@/frontend/motion/count-up";
 import { MonogramLogo } from "@/frontend/motion/monogram-logo";
+import { PipelineDiagram } from "@/frontend/motion/pipeline-diagram";
 import { morphTheme } from "@/frontend/motion/theme-morph";
 
 const SITE_LAUNCH_MS = Date.UTC(2026, 6, 1);
@@ -331,6 +332,9 @@ export function LandingPage({
                 <p className="mt-3 max-w-prose font-display text-[0.95rem] italic leading-relaxed text-ink-faint">
                   {project.wink}
                 </p>
+                {project.name === "Axel CRM" && (
+                  <PipelineDiagram className="mt-4 h-7 w-full max-w-[240px]" />
+                )}
                 <p className="mt-2 max-w-prose text-base leading-relaxed text-ink-muted">
                   {project.description}
                 </p>
