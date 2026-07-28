@@ -9,6 +9,7 @@ export type PendingAttachment = {
   name: string;
   type: "pdf" | "image";
   previewUrl?: string;
+  uploading?: boolean;
 };
 
 type Props = {
@@ -64,6 +65,7 @@ export function MessageInput({
 }: Props) {
   const [value, setValue] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [placeholderVisible, setPlaceholderVisible] = useState(true);
   const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -80,19 +82,35 @@ export function MessageInput({
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
+    const previous = el.offsetHeight;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_PX)}px`;
+    const next = Math.min(el.scrollHeight, MAX_TEXTAREA_PX);
+    el.style.height = `${previous}px`;
+    const frame = requestAnimationFrame(() => {
+      el.style.height = `${next}px`;
+    });
+    return () => cancelAnimationFrame(frame);
   }, [value]);
 
   useEffect(() => {
     if (value.trim() || focused) return;
+    let fadeTimer: number | undefined;
     const id = window.setInterval(() => {
-      setPlaceholderIndex((i) => (i + 1) % PLACEHOLDERS.length);
-    }, 4000);
-    return () => window.clearInterval(id);
+      setPlaceholderVisible(false);
+      fadeTimer = window.setTimeout(() => {
+        setPlaceholderIndex((i) => (i + 1) % PLACEHOLDERS.length);
+        setPlaceholderVisible(true);
+      }, 140);
+    }, 3500);
+    return () => {
+      window.clearInterval(id);
+      if (fadeTimer) window.clearTimeout(fadeTimer);
+    };
   }, [value, focused]);
 
-  const canSend = Boolean(value.trim() || attachments.length > 0);
+  const canSend =
+    Boolean(value.trim() || attachments.length > 0) &&
+    !attachments.some((a) => a.uploading);
 
   function submit() {
     const trimmed = value.trim();
@@ -147,7 +165,9 @@ export function MessageInput({
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="group relative flex max-w-[11rem] items-center gap-2 overflow-hidden rounded-sm border border-border bg-surface"
+              className={`animate-chat-pop group relative flex max-w-[11rem] items-center gap-2 overflow-hidden rounded-sm border border-border bg-surface ${
+                attachment.uploading ? "opacity-70" : ""
+              }`}
             >
               {attachment.type === "image" && attachment.previewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -166,7 +186,7 @@ export function MessageInput({
                   {attachment.name}
                 </p>
                 <p className="font-mono text-[10px] text-ink-faint uppercase">
-                  {attachment.type}
+                  {attachment.uploading ? "uploading…" : attachment.type}
                 </p>
               </div>
               <button
@@ -203,29 +223,41 @@ export function MessageInput({
         >
           +
         </button>
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onPaste={handlePaste}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              if (streaming) return;
-              submit();
-            }
-          }}
-          rows={1}
-          placeholder={PLACEHOLDERS[placeholderIndex]}
-          disabled={disabled}
-          className={`max-h-[176px] min-h-[42px] flex-1 resize-none rounded-md border bg-surface px-3 py-2.5 text-sm text-ink transition-[border-color,box-shadow] placeholder:text-ink-faint ${
-            focused
-              ? "border-accent shadow-[0_0_0_1px_var(--color-accent)]"
-              : "border-border"
-          }`}
-        />
+        <div className="relative min-w-0 flex-1">
+          {!value && (
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none absolute top-2.5 right-3 left-3 truncate text-sm text-ink-faint chat-crossfade ${
+                placeholderVisible ? "chat-crossfade-in" : "chat-crossfade-out"
+              }`}
+            >
+              {PLACEHOLDERS[placeholderIndex]}
+            </span>
+          )}
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onPaste={handlePaste}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (streaming) return;
+                submit();
+              }
+            }}
+            rows={1}
+            aria-label="Message Claudette"
+            disabled={disabled}
+            className={`max-h-[176px] min-h-[42px] w-full resize-none overflow-y-auto rounded-md border bg-surface px-3 py-2.5 text-sm text-ink transition-[border-color,box-shadow,height] duration-150 ease-out ${
+              focused
+                ? "border-accent shadow-[0_0_0_1px_var(--color-accent)]"
+                : "border-border"
+            }`}
+          />
+        </div>
         {streaming ? (
           <button type="button" onClick={onStop} className={buttonClass("secondary", "shrink-0")}>
             Stop
@@ -235,7 +267,7 @@ export function MessageInput({
             type="button"
             disabled={disabled || !canSend}
             onClick={submit}
-            className={`inline-flex shrink-0 items-center justify-center rounded-sm px-4 py-2 text-sm font-medium transition-colors ${
+            className={`inline-flex shrink-0 items-center justify-center rounded-sm px-4 py-2 text-sm font-medium transition-colors duration-150 ${
               canSend
                 ? "bg-accent text-canvas hover:bg-accent-strong"
                 : "cursor-not-allowed bg-surface-hover text-ink-faint"

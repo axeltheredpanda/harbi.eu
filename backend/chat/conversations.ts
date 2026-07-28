@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { createClient } from "@/backend/supabase/server";
 import type {
   Attachment,
@@ -33,7 +32,7 @@ export async function createConversation(title = "New conversation"): Promise<Co
     .single();
 
   if (error) throw error;
-  revalidatePath("/chat");
+  // Client owns sidebar state; skip revalidatePath to keep the action snappy.
   return data;
 }
 
@@ -48,14 +47,12 @@ export async function renameConversation(id: string, title: string): Promise<voi
     .eq("id", id);
 
   if (error) throw error;
-  revalidatePath("/chat");
 }
 
 export async function deleteConversation(id: string): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.from("conversations").delete().eq("id", id);
   if (error) throw error;
-  revalidatePath("/chat");
 }
 
 export async function getConversationMessages(

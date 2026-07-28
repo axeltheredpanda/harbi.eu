@@ -10,9 +10,9 @@ import {
 } from "@/backend/chat/context";
 import { summarizeMessages } from "@/backend/chat/summarize";
 import {
-  CHAT_MODEL,
   CHAT_STORAGE_BUCKET,
   MAX_TOKENS,
+  resolveChatModel,
 } from "@/backend/chat/constants";
 import { generateConversationTitle } from "@/backend/chat/title";
 import type { Attachment, Message } from "@/backend/supabase/types";
@@ -23,6 +23,7 @@ type Body = {
   attachment_ids?: string[];
   edit_message_id?: string;
   regenerate_message_id?: string;
+  model?: string;
 };
 
 function sseEncode(event: string, data: unknown): string {
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
   const editMessageId = body.edit_message_id;
   const regenerateMessageId = body.regenerate_message_id;
   const isRegenerate = Boolean(regenerateMessageId);
+  const chatModel = resolveChatModel(body.model);
 
   if (!conversationId) {
     return new Response(JSON.stringify({ error: "conversation_id is required" }), {
@@ -387,7 +389,7 @@ export async function POST(request: Request) {
       try {
         const anthropicStream = anthropic.messages.stream(
           {
-            model: CHAT_MODEL,
+            model: chatModel,
             max_tokens: MAX_TOKENS,
             system: prepared.system,
             messages: anthropicMessages,

@@ -58,7 +58,7 @@ function CopyButton({ text, onCopy }: { text: string; onCopy: (text: string) => 
         setCopied(true);
         window.setTimeout(() => setCopied(false), 1200);
       }}
-      className="font-mono text-[11px] text-ink-faint opacity-0 transition-opacity hover:text-ink group-hover:opacity-100"
+      className="font-mono text-[11px] text-ink-faint opacity-0 transition-opacity duration-150 hover:text-ink group-hover:opacity-100"
     >
       {copied ? "copied" : "copy"}
     </button>
@@ -81,10 +81,14 @@ export function MessageList({
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el || !stickToBottom) {
-      setShowJump(!stickToBottom && messages.some((m) => m.streaming));
+      setShowJump(!stickToBottom && (streaming || messages.some((m) => m.streaming)));
       return;
     }
-    el.scrollTop = el.scrollHeight;
+    // Instant during stream so tokens don't lag behind; smooth only feels good off-stream
+    el.scrollTo({
+      top: el.scrollHeight,
+      behavior: streaming ? "auto" : "smooth",
+    });
     setShowJump(false);
   }, [messages, stickToBottom, streaming, threadError]);
 
@@ -101,7 +105,7 @@ export function MessageList({
   function jumpToLatest() {
     const el = scrollerRef.current;
     if (!el) return;
-    el.scrollTop = el.scrollHeight;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     setStickToBottom(true);
     setShowJump(false);
   }
@@ -116,7 +120,7 @@ export function MessageList({
         className="absolute inset-0 flex flex-col gap-5 overflow-y-auto px-4 py-6 sm:px-6"
       >
         {empty && (
-          <div className="mx-auto flex max-w-lg flex-col gap-6 py-10 text-center sm:py-16">
+          <div className="animate-chat-enter mx-auto flex max-w-lg flex-col gap-6 py-10 text-center sm:py-16">
             <div>
               <h2 className="font-display text-2xl font-medium tracking-tight text-ink">
                 Claudette
@@ -131,7 +135,7 @@ export function MessageList({
                   <button
                     type="button"
                     onClick={() => onSuggestedPrompt(prompt)}
-                    className="w-full rounded-sm border border-border bg-surface px-4 py-3 text-left text-sm text-ink-muted transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-ink"
+                    className="w-full rounded-sm border border-border bg-surface px-4 py-3 text-left text-sm text-ink-muted transition-[color,background-color,border-color] duration-150 hover:border-accent/40 hover:bg-accent-soft hover:text-ink"
                   >
                     {prompt}
                   </button>
@@ -149,13 +153,15 @@ export function MessageList({
           return (
             <div
               key={message.id}
-              className={`group flex flex-col gap-1.5 ${isUser ? "items-end" : "items-start"}`}
+              className={`group flex flex-col gap-1.5 ${
+                message.pending || message.streaming ? "animate-chat-enter" : ""
+              } ${isUser ? "items-end" : "items-start"}`}
             >
               <span className="font-mono text-[11px] tracking-wider text-ink-faint uppercase">
                 {isUser ? "you" : "claudette"}
               </span>
               <div
-                className={`max-w-[min(100%,42rem)] px-3.5 py-2.5 ${
+                className={`max-w-[min(100%,42rem)] px-3.5 py-2.5 transition-colors duration-150 ${
                   isUser
                     ? "rounded-md bg-surface text-ink"
                     : "rounded-md border border-border/70 bg-transparent"
@@ -183,14 +189,14 @@ export function MessageList({
                       <button
                         type="button"
                         onClick={() => onEdit(message)}
-                        className="font-mono text-[11px] text-ink-faint opacity-0 transition-opacity hover:text-ink group-hover:opacity-100"
+                        className="font-mono text-[11px] text-ink-faint opacity-0 transition-opacity duration-150 hover:text-ink group-hover:opacity-100"
                       >
                         edit
                       </button>
                       <button
                         type="button"
                         onClick={() => onRegenerate(message)}
-                        className="font-mono text-[11px] text-ink-faint opacity-0 transition-opacity hover:text-ink group-hover:opacity-100"
+                        className="font-mono text-[11px] text-ink-faint opacity-0 transition-opacity duration-150 hover:text-ink group-hover:opacity-100"
                       >
                         regenerate
                       </button>
@@ -199,7 +205,7 @@ export function MessageList({
                     <button
                       type="button"
                       onClick={() => onRegenerate(message)}
-                      className="font-mono text-[11px] text-ink-faint opacity-0 transition-opacity hover:text-ink group-hover:opacity-100"
+                      className="font-mono text-[11px] text-ink-faint opacity-0 transition-opacity duration-150 hover:text-ink group-hover:opacity-100"
                     >
                       regenerate
                     </button>
@@ -211,12 +217,12 @@ export function MessageList({
         })}
 
         {threadError && (
-          <div className="mx-auto w-full max-w-lg rounded-md border border-border bg-accent-soft/60 px-4 py-3">
+          <div className="animate-chat-enter mx-auto w-full max-w-lg rounded-md border border-border bg-accent-soft/60 px-4 py-3">
             <p className="font-display text-sm text-ink">{threadError.message}</p>
             <button
               type="button"
               onClick={threadError.onRetry}
-              className="mt-2 font-mono text-xs text-accent hover:text-accent-strong"
+              className="mt-2 font-mono text-xs text-accent transition-colors duration-150 hover:text-accent-strong"
             >
               retry
             </button>
@@ -228,7 +234,7 @@ export function MessageList({
         <button
           type="button"
           onClick={jumpToLatest}
-          className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border bg-canvas px-3 py-1.5 font-mono text-xs text-accent shadow-sm transition-colors hover:bg-accent-soft"
+          className="animate-chat-pop absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border bg-canvas px-3 py-1.5 font-mono text-xs text-accent shadow-sm transition-colors duration-150 hover:bg-accent-soft"
         >
           ↓ new message
         </button>

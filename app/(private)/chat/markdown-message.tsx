@@ -50,18 +50,28 @@ export function MarkdownMessage({ content, streaming = false }: Props) {
 
 export function ThinkingIndicator() {
   const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
+    let fadeTimer: number | undefined;
     const id = window.setInterval(() => {
-      setIndex((i) => (i + 1) % THINKING_PHRASES.length);
-    }, 2500);
-    return () => window.clearInterval(id);
+      setVisible(false);
+      fadeTimer = window.setTimeout(() => {
+        setIndex((i) => (i + 1) % THINKING_PHRASES.length);
+        setVisible(true);
+      }, 140);
+    }, 2000);
+    return () => {
+      window.clearInterval(id);
+      if (fadeTimer) window.clearTimeout(fadeTimer);
+    };
   }, []);
 
   return (
     <p
-      key={index}
-      className="animate-rise font-display text-sm italic text-ink-muted"
+      className={`chat-crossfade font-display text-sm italic text-ink-muted ${
+        visible ? "chat-crossfade-in" : "chat-crossfade-out"
+      }`}
     >
       {THINKING_PHRASES[index]}
       <span className="streaming-cursor ml-0.5" aria-hidden="true" />
