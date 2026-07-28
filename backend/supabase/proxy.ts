@@ -31,14 +31,18 @@ export async function updateSession(request: NextRequest) {
 
   if (
     request.nextUrl.pathname === "/claude" ||
-    request.nextUrl.pathname.startsWith("/claude/")
+    request.nextUrl.pathname.startsWith("/claude/") ||
+    request.nextUrl.pathname === "/claudette" ||
+    request.nextUrl.pathname.startsWith("/claudette/")
   ) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = request.nextUrl.pathname.replace(/^\/claude/, "/claudette");
+    redirectUrl.pathname = request.nextUrl.pathname
+      .replace(/^\/claudette/, "/chat")
+      .replace(/^\/claude/, "/chat");
     return NextResponse.redirect(redirectUrl);
   }
 
-  const privatePaths = ["/todo", "/projects", "/claudette"];
+  const privatePaths = ["/todo", "/projects", "/chat", "/claudette"];
   const isPrivateRoute = privatePaths.some(
     (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`),
   );
