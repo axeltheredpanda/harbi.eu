@@ -2,50 +2,18 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import {
+  dictionaries,
+  type LandingCopy,
+  type Locale,
+} from "@/frontend/i18n/landing";
+import type { NoteMeta } from "@/backend/notes";
+import type { GithubActivity } from "@/backend/github";
+import { nowItems } from "@/content/now";
 
-type Project = {
-  name: string;
-  wink: string;
-  description: string;
-  url?: string;
-};
-
-const projects: Project[] = [
-  {
-    name: "Axel Project",
-    wink: "Named after myself — not out of vanity, out of accountability.",
-    description:
-      "An end-to-end product: schema, interface, and the boring glue between them. Still tightening the public one-liner for who it serves.",
-  },
-  {
-    name: "Astraia",
-    wink: "The kind of idea that looked simple on a whiteboard and then politely refused.",
-    description:
-      "Work in progress on a focused problem space. Stack and outcomes land here once the shape stops shifting.",
-  },
-];
-
-const skills = [
-  "Next.js, React, TypeScript, Tailwind",
-  "Supabase, PostgreSQL, Node",
-  "Vercel, Git, Anthropic API",
-];
-
-const JOKE_SKILL = "Excel — expert level (post-traumatic)";
-
-const STATUS_JOKES = [
-  "(currently losing my mind)",
-  "(emotionally buffering…)",
-  "(status: it's complicated with my calendar)",
-  "(open to suggestions, closed to situationships)",
-  "(main quest: stay hydrated)",
-  "(plot twist pending)",
-  "(running on vibes and Red Bull)",
-  "(do not perceive)",
-];
-
-const SITE_LAUNCH_MS = Date.UTC(2026, 6, 1); // 1 Jul 2026
-const SINGLE_SINCE_MS = Date.UTC(2026, 1, 1); // 1 Feb 2026 (01/02/2026)
+const SITE_LAUNCH_MS = Date.UTC(2026, 6, 1);
+const SINGLE_SINCE_MS = Date.UTC(2026, 1, 1);
+const LOCALE_KEY = "harbi.locale";
 
 const KONAMI = [
   "ArrowUp",
@@ -60,9 +28,14 @@ const KONAMI = [
   "a",
 ] as const;
 
+type Props = {
+  initialLocale: Locale;
+  notes: NoteMeta[];
+  github: GithubActivity;
+};
+
 function redbullCount(now = Date.now()): number {
   const hours = Math.max(0, (now - SITE_LAUNCH_MS) / 3_600_000);
-  // Fake metric — slightly more aggressive than coffee, still nonsense.
   return Math.floor(8 + hours * 0.21 + Math.sin(hours / 8) * 3.1 + (hours % 13) * 0.11);
 }
 
@@ -70,16 +43,20 @@ function daysSingle(now = Date.now()): number {
   return Math.max(0, Math.floor((now - SINGLE_SINCE_MS) / 86_400_000));
 }
 
-function pickJoke(): string {
-  return STATUS_JOKES[Math.floor(Math.random() * STATUS_JOKES.length)] ?? STATUS_JOKES[0];
+function pickJoke(copy: LandingCopy): string {
+  return copy.statusJokes[Math.floor(Math.random() * copy.statusJokes.length)] ??
+    copy.statusJokes[0];
 }
 
-export function LandingPage() {
+export function LandingPage({ initialLocale, notes, github }: Props) {
+  const [locale, setLocale] = useState<Locale>(initialLocale);
   const [rally, setRally] = useState(false);
   const [redbulls, setRedbulls] = useState(0);
   const [singleDays, setSingleDays] = useState(0);
-  const [statusJoke, setStatusJoke] = useState(STATUS_JOKES[0]);
+  const [statusJoke, setStatusJoke] = useState(dictionaries[initialLocale].statusJokes[0]);
   const [clickTimes, setClickTimes] = useState<number[]>([]);
+
+  const copy = dictionaries[locale];
 
   const enableRally = useCallback(() => {
     setRally(true);
@@ -89,6 +66,18 @@ export function LandingPage() {
   const disableRally = useCallback(() => {
     setRally(false);
     delete document.documentElement.dataset.theme;
+  }, []);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      try {
+        const stored = window.localStorage.getItem(LOCALE_KEY);
+        if (stored === "fr" || stored === "en") setLocale(stored);
+      } catch {
+        // ignore
+      }
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
@@ -102,7 +91,7 @@ export function LandingPage() {
       const now = Date.now();
       setRedbulls(redbullCount(now));
       setSingleDays(daysSingle(now));
-      setStatusJoke(pickJoke());
+      setStatusJoke(pickJoke(dictionaries[locale]));
     });
     const id = window.setInterval(() => {
       const tick = Date.now();
@@ -113,7 +102,7 @@ export function LandingPage() {
       cancelAnimationFrame(frame);
       window.clearInterval(id);
     };
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     let index = 0;
@@ -137,6 +126,15 @@ export function LandingPage() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [enableRally]);
 
+  function handleLocale(next: Locale) {
+    setLocale(next);
+    try {
+      window.localStorage.setItem(LOCALE_KEY, next);
+    } catch {
+      // ignore
+    }
+  }
+
   function handleNameClick() {
     const now = Date.now();
     const recent = [...clickTimes.filter((t) => now - t < 700), now];
@@ -159,11 +157,11 @@ export function LandingPage() {
       <div className="relative z-10 border-b border-border bg-accent-soft/70">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-1 px-6 py-2.5 font-mono text-[11px] leading-relaxed tracking-wide text-ink-muted sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-5 sm:gap-y-1 sm:px-8 sm:text-xs">
           <p title="Not a real metric. Wings not included.">
-            Red Bulls since launch · {redbulls.toLocaleString("en-GB")}
+            {copy.redbulls} · {redbulls.toLocaleString(locale === "fr" ? "fr-FR" : "en-GB")}
           </p>
-          <p className="text-ink-faint sm:before:mr-5 sm:before:text-border sm:before:content-['·']">
-            Relationship status · single · {singleDays.toLocaleString("en-GB")}{" "}
-            days{" "}
+          <p className="text-ink-faint">
+            {copy.relationship} · {singleDays.toLocaleString(locale === "fr" ? "fr-FR" : "en-GB")}{" "}
+            {copy.days}{" "}
             <span className="text-accent">{statusJoke}</span>
           </p>
         </div>
@@ -176,26 +174,48 @@ export function LandingPage() {
         >
           harbi.eu
         </Link>
-        <nav className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 text-sm text-ink-muted">
+        <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm text-ink-muted sm:gap-x-5">
           <a href="#work" className="transition-colors hover:text-ink">
-            Work
+            {copy.navWork}
+          </a>
+          <a href="#now" className="transition-colors hover:text-ink">
+            {copy.navNow}
           </a>
           <a href="#notes" className="transition-colors hover:text-ink">
-            Notes
+            {copy.navNotes}
           </a>
           <a href="#contact" className="transition-colors hover:text-ink">
-            Contact
+            {copy.navContact}
           </a>
           <Link href="/login" className="transition-colors hover:text-ink">
-            Login
+            {copy.navLogin}
           </Link>
+          <span className="inline-flex items-center gap-1 font-mono text-xs">
+            <button
+              type="button"
+              onClick={() => handleLocale("fr")}
+              className={locale === "fr" ? "text-accent" : "text-ink-faint hover:text-ink"}
+              aria-pressed={locale === "fr"}
+            >
+              {copy.langFr}
+            </button>
+            <span className="text-border">/</span>
+            <button
+              type="button"
+              onClick={() => handleLocale("en")}
+              className={locale === "en" ? "text-accent" : "text-ink-faint hover:text-ink"}
+              aria-pressed={locale === "en"}
+            >
+              {copy.langEn}
+            </button>
+          </span>
         </nav>
       </header>
 
       <main className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 sm:px-8">
         <section className="pb-20 pt-20 sm:pb-28 sm:pt-28">
           <p className="animate-rise text-sm tracking-wide text-ink-faint">
-            Available for opportunities
+            {copy.available}
           </p>
           <h1 className="animate-rise-delay mt-5 font-display text-[2.75rem] leading-[1.1] font-medium tracking-tight text-ink sm:text-6xl">
             <button
@@ -203,49 +223,38 @@ export function LandingPage() {
               onClick={handleNameClick}
               className="cursor-default text-left transition-colors hover:text-accent focus-visible:rounded-sm"
               aria-label="Arthur Reichard"
-              title={rally ? "Already in rally mode" : undefined}
             >
               Arthur Reichard
             </button>
           </h1>
           <p className="animate-rise-delay-2 mt-8 max-w-xl text-lg leading-[1.7] text-ink-muted sm:text-xl sm:leading-[1.75]">
-            Fresh off a digital / e-commerce internship, currently arguing with
-            an internal AI tool that keeps losing. I still build software the
-            careful way — schema to screen — and care about naming, structure,
-            and the sentence a product leaves behind.
+            {copy.bio}
           </p>
           <p className="animate-rise-delay-2 mt-6 flex flex-wrap gap-x-6 gap-y-2 text-base">
             <a href="#contact" className="link-underline">
-              Write to me
+              {copy.writeToMe}
             </a>
             <a href="/resume.pdf" className="link-underline">
-              Read the résumé
+              {copy.readResume}
             </a>
           </p>
         </section>
 
         <section id="work" className="border-t border-border py-16 sm:py-20">
           <h2 className="font-display text-2xl font-medium tracking-tight text-ink sm:text-3xl">
-            Selected work
+            {copy.workTitle}
           </h2>
           <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-muted">
-            A short shelf. Each piece is something I shaped myself, or nearly so.
+            {copy.workIntro}
           </p>
-
           <ul className="mt-12 flex flex-col">
-            {projects.map((project) => (
+            {copy.projects.map((project) => (
               <li
                 key={project.name}
                 className="border-t border-border py-8 first:border-t-0 first:pt-0"
               >
                 <h3 className="font-display text-xl font-medium text-ink">
-                  {project.url ? (
-                    <a href={project.url} className="link-underline">
-                      {project.name}
-                    </a>
-                  ) : (
-                    project.name
-                  )}
+                  {project.name}
                 </h3>
                 <p className="mt-3 max-w-prose font-display text-[0.95rem] italic leading-relaxed text-ink-faint">
                   {project.wink}
@@ -253,31 +262,91 @@ export function LandingPage() {
                 <p className="mt-2 max-w-prose text-base leading-relaxed text-ink-muted">
                   {project.description}
                 </p>
-                {!project.url && (
-                  <p className="mt-3 text-sm text-ink-faint">Link soon.</p>
-                )}
+                <p className="mt-3 text-sm text-ink-faint">{copy.linkSoon}</p>
+              </li>
+            ))}
+          </ul>
+
+          {github && (
+            <p className="mt-10 border-t border-border pt-6 font-mono text-xs leading-relaxed text-ink-faint">
+              {copy.githubActivity} ·{" "}
+              <a href={github.url} className="text-ink-muted transition-colors hover:text-accent">
+                {github.repo}
+              </a>
+              {" — "}
+              <span className="text-ink-muted">{github.message}</span>
+            </p>
+          )}
+        </section>
+
+        <section id="now" className="border-t border-border py-16 sm:py-20">
+          <h2 className="font-display text-2xl font-medium tracking-tight text-ink sm:text-3xl">
+            {copy.nowTitle}
+          </h2>
+          <ul className="mt-8 max-w-prose space-y-4 text-base leading-relaxed text-ink-muted">
+            {nowItems.map((item) => (
+              <li key={item.id} className="flex gap-3">
+                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+                <span>{locale === "fr" ? item.fr : item.en}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section id="notes" className="border-t border-border py-16 sm:py-20">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="font-display text-2xl font-medium tracking-tight text-ink sm:text-3xl">
+              {copy.notesTitle}
+            </h2>
+            <Link href="/notes" className="font-mono text-xs text-accent hover:text-accent-strong">
+              {copy.notesAll}
+            </Link>
+          </div>
+          <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-muted">
+            {copy.notesIntro}
+          </p>
+          <ul className="mt-10 flex flex-col">
+            {notes.map((note) => (
+              <li
+                key={note.slug}
+                className="border-t border-border py-6 first:border-t-0 first:pt-0"
+              >
+                <p className="font-mono text-[11px] tracking-wide text-ink-faint">
+                  {note.date}
+                </p>
+                <h3 className="mt-2 font-display text-xl font-medium text-ink">
+                  <Link href={`/notes/${note.slug}`} className="hover:text-accent">
+                    {note.title}
+                  </Link>
+                </h3>
+                <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">
+                  {note.excerpt}
+                </p>
+                <Link
+                  href={`/notes/${note.slug}`}
+                  className="link-underline mt-3 inline-block text-sm"
+                >
+                  {copy.notesRead}
+                </Link>
               </li>
             ))}
           </ul>
         </section>
 
         <section
-          id="notes"
+          id="skills"
           className="group/skills border-t border-border py-16 sm:py-20"
         >
           <h2 className="font-display text-2xl font-medium tracking-tight text-ink sm:text-3xl">
-            How I work
+            {copy.skillsTitle}
           </h2>
           <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-muted">
-            The stack I reach for when the problem is real.
+            {copy.skillsIntro}
           </p>
           <ul className="mt-8 max-w-prose space-y-3 text-base leading-relaxed text-ink-muted">
-            {skills.map((skill) => (
+            {copy.skills.map((skill) => (
               <li key={skill} className="flex gap-3">
-                <span
-                  className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent"
-                  aria-hidden="true"
-                />
+                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true" />
                 <span>{skill}</span>
               </li>
             ))}
@@ -286,18 +355,17 @@ export function LandingPage() {
               aria-hidden="true"
             >
               <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent" />
-              <span>{JOKE_SKILL}</span>
+              <span>{copy.jokeSkill}</span>
             </li>
           </ul>
         </section>
 
         <section id="contact" className="border-t border-border py-16 sm:py-24">
           <h2 className="font-display text-2xl font-medium tracking-tight text-ink sm:text-3xl">
-            Let&apos;s talk
+            {copy.contactTitle}
           </h2>
           <p className="mt-4 max-w-prose text-base leading-relaxed text-ink-muted">
-            If something here resonates — a role, a collaboration, a question —
-            send a note. I read everything that arrives.
+            {copy.contactBody}
           </p>
           <p className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-base">
             <a href="mailto:hello@harbi.eu" className="link-underline">
@@ -329,7 +397,7 @@ export function LandingPage() {
           onClick={disableRally}
           className="fixed right-4 bottom-4 z-20 rounded-sm border border-border bg-canvas px-3 py-2 font-mono text-[11px] tracking-wide text-ink shadow-sm transition-colors hover:bg-accent-soft sm:right-6 sm:bottom-6"
         >
-          Exit rally mode
+          {copy.exitRally}
         </button>
       )}
     </div>

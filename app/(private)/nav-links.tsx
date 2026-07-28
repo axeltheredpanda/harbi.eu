@@ -3,13 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const links = [{ href: "/chat", label: "/chat" }];
+const links = [
+  { href: "/chat", label: "/chat" },
+  { href: "/market", label: "/market" },
+  { href: "/garage", label: "/garage" },
+];
 
 export function NavLinks() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-5 font-mono text-sm">
+    <nav className="flex flex-wrap gap-5 font-mono text-sm">
       {links.map((link) => {
         const isActive = pathname === link.href;
         return (

@@ -142,6 +142,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      vehicles: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          price: number | null;
+          mileage: number | null;
+          year: number | null;
+          url: string | null;
+          note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          price?: number | null;
+          mileage?: number | null;
+          year?: number | null;
+          url?: string | null;
+          note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          price?: number | null;
+          mileage?: number | null;
+          year?: number | null;
+          url?: string | null;
+          note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -151,6 +190,7 @@ export type Database = {
 export type Conversation = Database["public"]["Tables"]["conversations"]["Row"];
 export type Message = Database["public"]["Tables"]["messages"]["Row"];
 export type Attachment = Database["public"]["Tables"]["attachments"]["Row"];
+export type Vehicle = Database["public"]["Tables"]["vehicles"]["Row"];
 
 export type MessageWithAttachments = Message & {
   attachments: Attachment[];
