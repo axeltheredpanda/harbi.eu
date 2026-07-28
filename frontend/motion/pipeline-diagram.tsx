@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import anime from "animejs";
 import { prefersReducedMotion } from "./prefers-reduced";
-import { AXEL_EMBER, AXEL_INK, AXEL_MAROON } from "./axel-project-palette";
 
 const STAGES = [
   { x: 16, label: "Lead" },
@@ -12,10 +11,9 @@ const STAGES = [
 ] as const;
 
 const LINE_Y = 8;
-const DOT_RADIUS = 3.5;
-const GRADIENT_ID = "axel-crm-pipeline-gradient";
+const DOT_RADIUS = 2.5;
 
-/** Quiet CRM pipeline sketch: a thin line draws in, dots land as it passes. */
+/** Quiet CRM pipeline sketch in neutral ink — secondary catalog detail. */
 export function PipelineDiagram({ className = "" }: { className?: string }) {
   const ref = useRef<SVGSVGElement>(null);
 
@@ -79,21 +77,16 @@ export function PipelineDiagram({ className = "" }: { className?: string }) {
   return (
     <svg
       ref={ref}
-      viewBox="0 0 240 30"
+      viewBox="0 0 240 28"
       className={className}
       aria-hidden="true"
     >
-      <defs>
-        <linearGradient id={GRADIENT_ID} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={AXEL_EMBER} />
-          <stop offset="100%" stopColor={AXEL_MAROON} />
-        </linearGradient>
-      </defs>
       <path
         d={`M ${STAGES[0].x} ${LINE_Y} L ${STAGES[STAGES.length - 1].x} ${LINE_Y}`}
         fill="none"
-        stroke={AXEL_INK}
+        stroke="var(--color-ink-faint)"
         strokeWidth="1"
+        opacity="0.55"
       />
       {STAGES.map((stage) => (
         <circle
@@ -101,18 +94,20 @@ export function PipelineDiagram({ className = "" }: { className?: string }) {
           cx={stage.x}
           cy={LINE_Y}
           r={DOT_RADIUS}
-          fill={`url(#${GRADIENT_ID})`}
+          fill="var(--color-ink-faint)"
+          opacity="0.7"
         />
       ))}
       {STAGES.map((stage) => (
         <text
           key={stage.label}
           x={stage.x}
-          y={LINE_Y + 15}
+          y={LINE_Y + 14}
           textAnchor="middle"
           fill="var(--color-ink-faint)"
-          fontSize="7"
+          fontSize="6.5"
           fontFamily="var(--font-mono)"
+          letterSpacing="0.12em"
         >
           {stage.label}
         </text>

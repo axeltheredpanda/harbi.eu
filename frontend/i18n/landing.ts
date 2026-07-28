@@ -12,7 +12,8 @@ export type LandingCopy = {
   navLogin: string;
   workTitle: string;
   workIntro: string;
-  linkSoon: string;
+  notYetOnView: string;
+  studioCredit: string;
   skillsTitle: string;
   skillsIntro: string;
   jokeSkill: string;
@@ -36,6 +37,8 @@ export type LandingCopy = {
     name: string;
     wink: string;
     description: string;
+    stack?: string[];
+    years?: string;
   }[];
   skills: string[];
   statusJokes: string[];
@@ -134,7 +137,9 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     navLogin: "Connexion",
     workTitle: "Travaux choisis",
     workIntro: "Une courte étagère. Chaque pièce est quelque chose que j'ai façonné moi-même, ou presque.",
-    linkSoon: "Lien bientôt.",
+    notYetOnView: "Pas encore exposé.",
+    studioCredit:
+      "Les pièces de cette étagère sont construites sous Axel Project, un studio à deux.",
     skillsTitle: "Comment je travaille",
     skillsIntro: "La stack que j'utilise quand le problème est réel.",
     jokeSkill: "Excel — niveau expert (post-traumatique)",
@@ -160,7 +165,7 @@ export const dictionaries: Record<Locale, LandingCopy> = {
         name: "Axel CRM",
         wink: "Le seul produit ici qui a refusé de porter ma palette.",
         description:
-          "Un produit de bout en bout : schéma, interface, et la colle ennuyeuse entre les deux. La phrase publique pour qui ça sert se précise encore.",
+          "Un CRM pour les PME qui ont dépassé les tableurs sans être prêtes pour l'entreprise. Backend Java, frontend React, Supabase et Stripe en dessous. Construit et utilisé avec de vrais clients, pas conçu dans le vide.",
       },
     ],
     skills: [
@@ -183,7 +188,9 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     navLogin: "Login",
     workTitle: "Selected work",
     workIntro: "A short shelf. Each piece is something I shaped myself, or nearly so.",
-    linkSoon: "Link soon.",
+    notYetOnView: "Not yet on view.",
+    studioCredit:
+      "Pieces on this shelf are built under Axel Project, a two-person studio.",
     skillsTitle: "How I work",
     skillsIntro: "The stack I reach for when the problem is real.",
     jokeSkill: "Excel — expert level (post-traumatic)",
@@ -209,7 +216,7 @@ export const dictionaries: Record<Locale, LandingCopy> = {
         name: "Axel CRM",
         wink: "The one product here that refused to wear my palette.",
         description:
-          "An end-to-end product: schema, interface, and the boring glue between them. Still tightening the public one-liner for who it serves.",
+          "A CRM built for SMBs who've outgrown spreadsheets but aren't ready for enterprise software. Java backend, React frontend, Supabase and Stripe underneath. Built and used alongside real customers, not designed in a vacuum.",
       },
     ],
     skills: [
