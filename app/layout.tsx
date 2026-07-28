@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Geist_Mono, Public_Sans } from "next/font/google";
+import { SiteMotion } from "@/frontend/motion/site-motion";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -35,7 +36,10 @@ export default function RootLayout({
       lang="en"
       className={`${fraunces.variable} ${publicSans.variable} ${geistMono.variable} h-full`}
     >
-      <body className="flex min-h-full flex-col font-body antialiased">{children}</body>
+      <body className="flex min-h-full flex-col font-body antialiased">
+        <SiteMotion />
+        {children}
+      </body>
     </html>
   );
 }

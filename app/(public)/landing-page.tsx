@@ -10,6 +10,11 @@ import {
 import type { NoteMeta } from "@/backend/notes";
 import type { GithubActivity } from "@/backend/github";
 import { nowItems } from "@/content/now";
+import { HeroAssemble } from "@/frontend/motion/hero-assemble";
+import { ScrollReveal } from "@/frontend/motion/scroll-reveal";
+import { CountUp } from "@/frontend/motion/count-up";
+import { MonogramLogo } from "@/frontend/motion/monogram-logo";
+import { morphTheme } from "@/frontend/motion/theme-morph";
 
 const SITE_LAUNCH_MS = Date.UTC(2026, 6, 1);
 const SINGLE_SINCE_MS = Date.UTC(2026, 1, 1);
@@ -44,8 +49,10 @@ function daysSingle(now = Date.now()): number {
 }
 
 function pickJoke(copy: LandingCopy): string {
-  return copy.statusJokes[Math.floor(Math.random() * copy.statusJokes.length)] ??
-    copy.statusJokes[0];
+  return (
+    copy.statusJokes[Math.floor(Math.random() * copy.statusJokes.length)] ??
+    copy.statusJokes[0]
+  );
 }
 
 export function LandingPage({ initialLocale, notes, github }: Props) {
@@ -53,20 +60,30 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
   const [rally, setRally] = useState(false);
   const [redbulls, setRedbulls] = useState(0);
   const [singleDays, setSingleDays] = useState(0);
-  const [statusJoke, setStatusJoke] = useState(dictionaries[initialLocale].statusJokes[0]);
+  const [statusJoke, setStatusJoke] = useState(
+    dictionaries[initialLocale].statusJokes[0],
+  );
   const [clickTimes, setClickTimes] = useState<number[]>([]);
+  const [themeBusy, setThemeBusy] = useState(false);
 
   const copy = dictionaries[locale];
+  const numberLocale = locale === "fr" ? "fr-FR" : "en-GB";
 
-  const enableRally = useCallback(() => {
+  const enableRally = useCallback(async () => {
+    if (themeBusy || rally) return;
+    setThemeBusy(true);
     setRally(true);
-    document.documentElement.dataset.theme = "rally";
-  }, []);
+    await morphTheme(true);
+    setThemeBusy(false);
+  }, [themeBusy, rally]);
 
-  const disableRally = useCallback(() => {
+  const disableRally = useCallback(async () => {
+    if (themeBusy || !rally) return;
+    setThemeBusy(true);
     setRally(false);
-    delete document.documentElement.dataset.theme;
-  }, []);
+    await morphTheme(false);
+    setThemeBusy(false);
+  }, [themeBusy, rally]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -83,6 +100,20 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
   useEffect(() => {
     return () => {
       delete document.documentElement.dataset.theme;
+      for (const key of [
+        "--color-canvas",
+        "--color-surface",
+        "--color-surface-hover",
+        "--color-border",
+        "--color-ink",
+        "--color-ink-muted",
+        "--color-ink-faint",
+        "--color-accent",
+        "--color-accent-strong",
+        "--color-accent-soft",
+      ]) {
+        document.documentElement.style.removeProperty(key);
+      }
     };
   }, []);
 
@@ -116,7 +147,7 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
         index += 1;
         if (index === KONAMI.length) {
           index = 0;
-          enableRally();
+          void enableRally();
         }
       } else {
         index = key === KONAMI[0] ? 1 : 0;
@@ -141,7 +172,7 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
     setClickTimes(recent);
     if (recent.length >= 3) {
       setClickTimes([]);
-      enableRally();
+      void enableRally();
     }
   }
 
@@ -157,11 +188,12 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
       <div className="relative z-10 border-b border-border bg-accent-soft/70">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-1 px-6 py-2.5 font-mono text-[11px] leading-relaxed tracking-wide text-ink-muted sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-5 sm:gap-y-1 sm:px-8 sm:text-xs">
           <p title="Not a real metric. Wings not included.">
-            {copy.redbulls} · {redbulls.toLocaleString(locale === "fr" ? "fr-FR" : "en-GB")}
+            {copy.redbulls} ·{" "}
+            <CountUp value={redbulls} locale={numberLocale} />
           </p>
           <p className="text-ink-faint">
-            {copy.relationship} · {singleDays.toLocaleString(locale === "fr" ? "fr-FR" : "en-GB")}{" "}
-            {copy.days}{" "}
+            {copy.relationship} ·{" "}
+            <CountUp value={singleDays} locale={numberLocale} /> {copy.days}{" "}
             <span className="text-accent">{statusJoke}</span>
           </p>
         </div>
@@ -170,9 +202,10 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
       <header className="relative z-10 mx-auto flex w-full max-w-2xl items-baseline justify-between gap-6 px-6 pt-8 sm:px-8">
         <Link
           href="/"
-          className="font-display text-lg tracking-tight text-ink transition-colors hover:text-accent"
+          className="inline-flex items-center gap-2 font-display text-lg tracking-tight text-ink transition-colors hover:text-accent"
         >
-          harbi.eu
+          <MonogramLogo className="h-5 w-5 text-accent" />
+          <span>harbi.eu</span>
         </Link>
         <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm text-ink-muted sm:gap-x-5">
           <a href="#work" className="transition-colors hover:text-ink">
@@ -194,7 +227,9 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
             <button
               type="button"
               onClick={() => handleLocale("fr")}
-              className={locale === "fr" ? "text-accent" : "text-ink-faint hover:text-ink"}
+              className={
+                locale === "fr" ? "text-accent" : "text-ink-faint hover:text-ink"
+              }
               aria-pressed={locale === "fr"}
             >
               {copy.langFr}
@@ -203,7 +238,9 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
             <button
               type="button"
               onClick={() => handleLocale("en")}
-              className={locale === "en" ? "text-accent" : "text-ink-faint hover:text-ink"}
+              className={
+                locale === "en" ? "text-accent" : "text-ink-faint hover:text-ink"
+              }
               aria-pressed={locale === "en"}
             >
               {copy.langEn}
@@ -217,15 +254,13 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
           <p className="animate-rise text-sm tracking-wide text-ink-faint">
             {copy.available}
           </p>
-          <h1 className="animate-rise-delay mt-5 font-display text-[2.75rem] leading-[1.1] font-medium tracking-tight text-ink sm:text-6xl">
-            <button
-              type="button"
-              onClick={handleNameClick}
-              className="cursor-default text-left transition-colors hover:text-accent focus-visible:rounded-sm"
+          <h1 className="mt-5 font-display text-[2.75rem] leading-[1.1] font-medium tracking-tight text-ink sm:text-6xl">
+            <HeroAssemble
+              text="Arthur Reichard"
+              onActivate={handleNameClick}
               aria-label="Arthur Reichard"
-            >
-              Arthur Reichard
-            </button>
+              className="cursor-default text-left transition-colors hover:text-accent focus-visible:rounded-sm"
+            />
           </h1>
           <p className="animate-rise-delay-2 mt-8 max-w-xl text-lg leading-[1.7] text-ink-muted sm:text-xl sm:leading-[1.75]">
             {copy.bio}
@@ -247,7 +282,12 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
           <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-muted">
             {copy.workIntro}
           </p>
-          <ul className="mt-12 flex flex-col">
+          <ScrollReveal
+            as="ul"
+            className="mt-12 flex list-none flex-col"
+            selector=":scope > li"
+            stagger={80}
+          >
             {copy.projects.map((project) => (
               <li
                 key={project.name}
@@ -265,12 +305,15 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
                 <p className="mt-3 text-sm text-ink-faint">{copy.linkSoon}</p>
               </li>
             ))}
-          </ul>
+          </ScrollReveal>
 
           {github && (
             <p className="mt-10 border-t border-border pt-6 font-mono text-xs leading-relaxed text-ink-faint">
               {copy.githubActivity} ·{" "}
-              <a href={github.url} className="text-ink-muted transition-colors hover:text-accent">
+              <a
+                href={github.url}
+                className="text-ink-muted transition-colors hover:text-accent"
+              >
                 {github.repo}
               </a>
               {" — "}
@@ -283,14 +326,22 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
           <h2 className="font-display text-2xl font-medium tracking-tight text-ink sm:text-3xl">
             {copy.nowTitle}
           </h2>
-          <ul className="mt-8 max-w-prose space-y-4 text-base leading-relaxed text-ink-muted">
+          <ScrollReveal
+            as="ul"
+            className="mt-8 list-none max-w-prose space-y-4 text-base leading-relaxed text-ink-muted"
+            selector=":scope > li"
+            stagger={60}
+          >
             {nowItems.map((item) => (
               <li key={item.id} className="flex gap-3">
-                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+                <span
+                  className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent"
+                  aria-hidden="true"
+                />
                 <span>{locale === "fr" ? item.fr : item.en}</span>
               </li>
             ))}
-          </ul>
+          </ScrollReveal>
         </section>
 
         <section id="notes" className="border-t border-border py-16 sm:py-20">
@@ -298,14 +349,22 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
             <h2 className="font-display text-2xl font-medium tracking-tight text-ink sm:text-3xl">
               {copy.notesTitle}
             </h2>
-            <Link href="/notes" className="font-mono text-xs text-accent hover:text-accent-strong">
+            <Link
+              href="/notes"
+              className="font-mono text-xs text-accent hover:text-accent-strong"
+            >
               {copy.notesAll}
             </Link>
           </div>
           <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-muted">
             {copy.notesIntro}
           </p>
-          <ul className="mt-10 flex flex-col">
+          <ScrollReveal
+            as="ul"
+            className="mt-10 flex list-none flex-col"
+            selector=":scope > li"
+            stagger={70}
+          >
             {notes.map((note) => (
               <li
                 key={note.slug}
@@ -330,7 +389,7 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
                 </Link>
               </li>
             ))}
-          </ul>
+          </ScrollReveal>
         </section>
 
         <section
@@ -343,10 +402,18 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
           <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-muted">
             {copy.skillsIntro}
           </p>
-          <ul className="mt-8 max-w-prose space-y-3 text-base leading-relaxed text-ink-muted">
+          <ScrollReveal
+            as="ul"
+            className="mt-8 list-none max-w-prose space-y-3 text-base leading-relaxed text-ink-muted"
+            selector=":scope > li:not([aria-hidden])"
+            stagger={55}
+          >
             {copy.skills.map((skill) => (
               <li key={skill} className="flex gap-3">
-                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+                <span
+                  className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent"
+                  aria-hidden="true"
+                />
                 <span>{skill}</span>
               </li>
             ))}
@@ -357,7 +424,7 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
               <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent" />
               <span>{copy.jokeSkill}</span>
             </li>
-          </ul>
+          </ScrollReveal>
         </section>
 
         <section id="contact" className="border-t border-border py-16 sm:py-24">
@@ -394,7 +461,8 @@ export function LandingPage({ initialLocale, notes, github }: Props) {
       {rally && (
         <button
           type="button"
-          onClick={disableRally}
+          onClick={() => void disableRally()}
+          disabled={themeBusy}
           className="fixed right-4 bottom-4 z-20 rounded-sm border border-border bg-canvas px-3 py-2 font-mono text-[11px] tracking-wide text-ink shadow-sm transition-colors hover:bg-accent-soft sm:right-6 sm:bottom-6"
         >
           {copy.exitRally}

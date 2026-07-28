@@ -82,18 +82,30 @@ body {
   }
 }
 
-/* Editorial underline link */
+/* Editorial underline link — anime.js drives --underline-scale on hover */
 .link-underline {
   color: var(--color-accent);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.28em;
-  transition: color 160ms ease, text-decoration-thickness 160ms ease;
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+}
+
+.link-underline-animated {
+  --underline-scale: 0;
+  background-size: calc(var(--underline-scale) * 100%) 1px;
+  transition: color 160ms ease;
 }
 
 .link-underline:hover {
   color: var(--color-accent-strong);
-  text-decoration-thickness: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link-underline-animated {
+    --underline-scale: 1;
+  }
 }
 
 /* Claudette markdown — light paper */
@@ -321,4 +333,32 @@ html[data-theme="rally"] body {
     #14110e 0 12px,
     #f3eee4 12px 24px
   );
+}
+
+/* Custom velocity scrollbar — hides native when active */
+html.has-custom-scrollbar {
+  scrollbar-width: none;
+}
+
+html.has-custom-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-scroll-track {
+  transition: opacity 180ms ease;
+}
+
+.custom-scroll-thumb {
+  will-change: transform, height;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.has-custom-scrollbar {
+    scrollbar-width: thin;
+  }
+
+  html.has-custom-scrollbar::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
 }
