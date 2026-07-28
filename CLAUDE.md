@@ -20,6 +20,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `app/(private)/cutout/` — remove background (rembg)
 - `app/(private)/market/` — watchlist actions US tech
 - `app/(private)/garage/` — tracker recherche voiture (CRUD Supabase)
+- `app/(private)/settings/` — réglages site (ex. relationship status)
 - `app/(private)/command-palette.tsx` — Cmd/Ctrl+K
 - `services/rembg/` — FastAPI + rembg (fast=u2net, quality=birefnet-general)
 - `content/now.ts` — lignes "now" éditables
@@ -27,12 +28,13 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `app/opengraph-image.tsx` (+ notes OG)
 
 ## État actuel
-- [x] Auth + proxy (`/chat` `/cutout` `/market` `/garage`)
+- [x] Auth + proxy (`/chat` `/cutout` `/market` `/garage` `/settings`)
 - [x] Claudette (streaming, modèles, uploads, UX)
 - [x] Cutout (rembg microservice + before/after + history) — déployer `services/rembg` + SQL `bg_removals` / bucket
+- [x] Settings (relationship status single/dating → bannière publique)
 - [x] Landing personnalité + FR/EN + now + notes + GitHub subtle + OG + Umami hook
 - [x] Market widget + garage tracker + command palette
-- [ ] Brancher Supabase (schema à jour avec `vehicles` + `bg_removals`) + env Umami / REMBG_*
+- [ ] Brancher Supabase (schema à jour avec `vehicles` + `bg_removals` + `site_settings`) + env Umami / REMBG_*
 - [ ] Contenu projets / LinkedIn encore placeholders
 
 ## Notes

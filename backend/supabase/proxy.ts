@@ -42,7 +42,14 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  const privatePaths = ["/chat", "/claudette", "/cutout", "/market", "/garage"];
+  const privatePaths = [
+    "/chat",
+    "/claudette",
+    "/cutout",
+    "/market",
+    "/garage",
+    "/settings",
+  ];
   const isPrivateRoute = privatePaths.some(
     (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`),
   );

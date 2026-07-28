@@ -191,6 +191,31 @@ create policy "bg_removals: owner write" on public.bg_removals
 create policy "bg_removals: owner delete" on public.bg_removals
   for delete using (auth.uid() = user_id);
 
+-- Public site settings (singleton) — readable by everyone, writable when logged in
+create table if not exists public.site_settings (
+  id text primary key default 'default' check (id = 'default'),
+  relationship_status text not null default 'single'
+    check (relationship_status in ('single', 'dating')),
+  single_since date not null default '2026-02-01',
+  updated_at timestamptz not null default now()
+);
+
+alter table public.site_settings enable row level security;
+
+create policy "site_settings: public read" on public.site_settings
+  for select using (true);
+
+create policy "site_settings: auth update" on public.site_settings
+  for update using (auth.uid() is not null)
+  with check (auth.uid() is not null);
+
+create policy "site_settings: auth insert" on public.site_settings
+  for insert with check (auth.uid() is not null);
+
+insert into public.site_settings (id, relationship_status, single_since)
+values ('default', 'single', '2026-02-01')
+on conflict (id) do nothing;
+
 -- Storage bucket for Claudette attachments (private).
 -- Create in Dashboard or via:
 insert into storage.buckets (id, name, public)

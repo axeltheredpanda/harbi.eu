@@ -19,7 +19,9 @@ export type LandingCopy = {
   contactTitle: string;
   contactBody: string;
   redbulls: string;
-  relationship: string;
+  relationshipLabel: string;
+  statusSingle: string;
+  statusDating: string;
   days: string;
   exitRally: string;
   nowTitle: string;
@@ -140,7 +142,9 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     contactBody:
       "Si quelque chose ici résonne — un poste, une collaboration, une question — envoyez un mot. Je lis tout ce qui arrive.",
     redbulls: "Red Bulls depuis le lancement",
-    relationship: "Statut relationnel · célibataire",
+    relationshipLabel: "Statut relationnel",
+    statusSingle: "célibataire",
+    statusDating: "en couple",
     days: "jours",
     exitRally: "Quitter le mode rallye",
     nowTitle: "Maintenant",
@@ -193,7 +197,9 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     contactBody:
       "If something here resonates — a role, a collaboration, a question — send a note. I read everything that arrives.",
     redbulls: "Red Bulls since launch",
-    relationship: "Relationship status · single",
+    relationshipLabel: "Relationship status",
+    statusSingle: "single",
+    statusDating: "dating",
     days: "days",
     exitRally: "Exit rally mode",
     nowTitle: "Now",

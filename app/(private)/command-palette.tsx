@@ -8,6 +8,7 @@ const COMMANDS = [
   { id: "cutout", label: "Cutout · remove background", href: "/cutout", keywords: "rembg background remove png cutout" },
   { id: "market", label: "Market · watchlist", href: "/market", keywords: "stocks tickers prices" },
   { id: "garage", label: "Garage · vehicle tracker", href: "/garage", keywords: "cars vehicles search" },
+  { id: "settings", label: "Settings", href: "/settings", keywords: "relationship status single dating" },
   { id: "home", label: "Public site", href: "/", keywords: "landing portfolio" },
 ] as const;
 

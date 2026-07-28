@@ -211,6 +211,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      site_settings: {
+        Row: {
+          id: string;
+          relationship_status: "single" | "dating";
+          single_since: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          relationship_status?: "single" | "dating";
+          single_since?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          relationship_status?: "single" | "dating";
+          single_since?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -222,6 +243,8 @@ export type Message = Database["public"]["Tables"]["messages"]["Row"];
 export type Attachment = Database["public"]["Tables"]["attachments"]["Row"];
 export type Vehicle = Database["public"]["Tables"]["vehicles"]["Row"];
 export type BgRemoval = Database["public"]["Tables"]["bg_removals"]["Row"];
+export type SiteSettings = Database["public"]["Tables"]["site_settings"]["Row"];
+export type RelationshipStatus = SiteSettings["relationship_status"];
 
 export type MessageWithAttachments = Message & {
   attachments: Attachment[];
