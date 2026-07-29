@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Attachment, MessageWithAttachments } from "@/backend/supabase/types";
+import { formatQuietCostUsd } from "@/frontend/chat/format-cost";
 import { MarkdownMessage, ThinkingIndicator } from "./markdown-message";
 import { SUGGESTED_PROMPTS } from "./chat-phrases";
 
@@ -9,6 +10,9 @@ export type ChatMessage = MessageWithAttachments & {
   pending?: boolean;
   streaming?: boolean;
   error?: boolean;
+  costUsd?: number | null;
+  copySegments?: { label: string; text: string }[];
+  copySegmentsLoading?: boolean;
 };
 
 export type ThreadError = {
@@ -61,6 +65,33 @@ function CopyButton({ text, onCopy }: { text: string; onCopy: (text: string) => 
       className="font-mono text-[11px] text-ink-faint opacity-0 transition-opacity duration-150 hover:text-ink group-hover:opacity-100"
     >
       {copied ? "copied" : "copy"}
+    </button>
+  );
+}
+
+function SegmentCopyButton({
+  label,
+  text,
+  onCopy,
+}: {
+  label: string;
+  text: string;
+  onCopy: (text: string) => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  return (
+    <button
+      type="button"
+      title={text.length > 120 ? `${text.slice(0, 120)}…` : text}
+      onClick={() => {
+        onCopy(text);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1200);
+      }}
+      className="font-mono text-[11px] text-ink-faint transition-colors hover:text-accent"
+    >
+      {copied ? "copied" : `copy · ${label}`}
     </button>
   );
 }
@@ -126,7 +157,8 @@ export function MessageList({
                 Claudette
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-ink-muted">
-                A quiet place to think with Claude — persistent chats, files welcome.
+                Nouveau fil — il n’apparaît dans la sidebar qu’après le premier
+                message.
               </p>
             </div>
             <ul className="flex flex-col gap-2 text-left">
@@ -149,6 +181,8 @@ export function MessageList({
           const isUser = message.role === "user";
           const thinking = Boolean(message.streaming && !message.content);
           const actionsDisabled = streaming || Boolean(message.pending);
+          const costLabel = formatQuietCostUsd(message.costUsd);
+          const segments = message.copySegments ?? [];
 
           return (
             <div
@@ -182,7 +216,7 @@ export function MessageList({
                 <AttachmentChips attachments={message.attachments} />
               </div>
               {!actionsDisabled && (
-                <div className="flex items-center gap-3">
+                <div className="flex max-w-[min(100%,42rem)] flex-wrap items-center gap-x-3 gap-y-1">
                   <CopyButton text={message.content} onCopy={onCopy} />
                   {isUser ? (
                     <>
@@ -210,6 +244,31 @@ export function MessageList({
                       regenerate
                     </button>
                   )}
+                  {!isUser && costLabel ? (
+                    <span
+                      className="font-mono text-[10px] tabular-nums text-ink-faint/80"
+                      title="Estimated turn cost (approx.)"
+                    >
+                      {costLabel}
+                    </span>
+                  ) : null}
+                </div>
+              )}
+              {!isUser && !actionsDisabled && (
+                <div className="flex max-w-[min(100%,42rem)] flex-wrap items-center gap-x-3 gap-y-1">
+                  {message.copySegmentsLoading ? (
+                    <span className="font-mono text-[10px] text-ink-faint/70">
+                      spotting copy…
+                    </span>
+                  ) : null}
+                  {segments.map((segment) => (
+                    <SegmentCopyButton
+                      key={`${segment.label}-${segment.text.slice(0, 24)}`}
+                      label={segment.label}
+                      text={segment.text}
+                      onCopy={onCopy}
+                    />
+                  ))}
                 </div>
               )}
             </div>

@@ -7,8 +7,6 @@ import { openNewsDrawer } from "@/frontend/news/news-provider";
 const links = [
   { href: "/chat", label: "/chat" },
   { href: "/cutout", label: "/cutout" },
-  { href: "/market", label: "/market" },
-  { href: "/garage", label: "/garage" },
   { href: "/analytics", label: "/analytics" },
   { href: "/settings", label: "/settings" },
 ];

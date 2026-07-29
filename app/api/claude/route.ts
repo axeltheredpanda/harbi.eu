@@ -562,6 +562,7 @@ export async function POST(request: Request) {
         assistant_message_id: assistantId,
         content: assistantText,
         aborted,
+        model: chatModel,
         usage: {
           input_tokens: inputTokens,
           output_tokens: outputTokens,

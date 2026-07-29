@@ -32,18 +32,6 @@ const COMMANDS: Command[] = [
     keywords: "rembg background remove png cutout",
   },
   {
-    id: "market",
-    label: "Market · watchlist",
-    href: "/market",
-    keywords: "stocks tickers prices",
-  },
-  {
-    id: "garage",
-    label: "Garage · vehicle tracker",
-    href: "/garage",
-    keywords: "cars vehicles search",
-  },
-  {
     id: "analytics",
     label: "Analytics · usage report",
     href: "/analytics",
