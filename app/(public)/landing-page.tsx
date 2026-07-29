@@ -236,33 +236,59 @@ export function LandingPage({
       )}
 
       <div className="relative z-10 border-b border-border bg-accent-soft/70">
-        <div className="mx-auto flex min-h-[4.75rem] w-full max-w-2xl flex-col justify-center gap-1 px-6 py-2.5 font-mono text-[11px] leading-relaxed tracking-wide text-ink-muted sm:min-h-[2.75rem] sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-5 sm:gap-y-1 sm:px-8 sm:text-xs">
-          <p title="Not a real metric. Wings not included.">
-            {copy.redbulls} ·{" "}
-            <CountUp value={redbulls} locale={numberLocale} />
-          </p>
-          <p className="text-ink-faint">
-            {copy.relationshipLabel} · {statusWord}
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 px-6 py-3 font-mono text-[11px] leading-relaxed tracking-wide sm:flex-row sm:items-baseline sm:justify-between sm:gap-8 sm:px-8 sm:py-2.5 sm:text-xs">
+          <p className="min-w-0 flex-1 text-ink-muted sm:pr-2">
+            <span className="text-ink-faint">{copy.relationshipLabel}</span>
+            <span className="text-ink-faint" aria-hidden="true">
+              {" · "}
+            </span>
+            <span className="text-ink">{statusWord}</span>
             {isSingle && (
               <>
-                {" · "}
-                <CountUp value={singleDays} locale={numberLocale} /> {copy.days}{" "}
+                <span className="text-ink-faint" aria-hidden="true">
+                  {" · "}
+                </span>
+                <CountUp value={singleDays} locale={numberLocale} />{" "}
+                <span className="text-ink-faint">{copy.days}</span>
                 {statusJoke ? (
-                  <span className="text-accent">{statusJoke}</span>
+                  <>
+                    {" "}
+                    <span className="text-accent">{statusJoke}</span>
+                  </>
                 ) : null}
               </>
             )}
           </p>
-          {fuel ? (
-            <FuelStatusLine
-              price={fuel}
-              locale={locale}
-              label={copy.fuelLabel}
-              unit={copy.fuelUnit}
-              rangeLabel={copy.fuelRange}
-              trendLabel={copy.fuelTrend}
-            />
-          ) : null}
+
+          <div className="flex shrink-0 flex-wrap items-baseline gap-x-4 gap-y-1 sm:justify-end sm:gap-x-5">
+            <p
+              className="inline-flex items-baseline gap-x-1.5 text-ink-muted"
+              title={
+                locale === "fr"
+                  ? "Depuis le lancement. Pas une vraie métrique — ailes non incluses."
+                  : "Since launch. Not a real metric. Wings not included."
+              }
+            >
+              <span className="text-ink-faint">{copy.redbulls}</span>
+              <CountUp value={redbulls} locale={numberLocale} />
+            </p>
+            {fuel ? (
+              <>
+                <span
+                  className="hidden h-3 w-px bg-border sm:inline-block"
+                  aria-hidden="true"
+                />
+                <FuelStatusLine
+                  price={fuel}
+                  locale={locale}
+                  label={copy.fuelLabel}
+                  unit={copy.fuelUnit}
+                  rangeLabel={copy.fuelRange}
+                  trendLabel={copy.fuelTrend}
+                />
+              </>
+            ) : null}
+          </div>
         </div>
       </div>
 
