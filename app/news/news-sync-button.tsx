@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { buttonClass } from "@/frontend/components/button-variants";
 
-/** Manual sync — works when logged in (owner) + service role configured. */
+/** Manual sync for logged-in owner — free, no cron plan needed. */
 export function NewsSyncButton() {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [note, setNote] = useState<string | null>(null);
 
@@ -12,7 +14,11 @@ export function NewsSyncButton() {
     setNote(null);
     startTransition(async () => {
       try {
-        const res = await fetch("/api/news/sync", { method: "POST" });
+        const res = await fetch("/api/news/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+        });
         const data = (await res.json()) as {
           error?: string;
           upserted?: number;
@@ -25,9 +31,10 @@ export function NewsSyncButton() {
         const failed = data.errors?.length ?? 0;
         setNote(
           failed > 0
-            ? `Synced ~${data.upserted ?? 0} items (${failed} feed error${failed > 1 ? "s" : ""}). Refresh.`
-            : `Synced ~${data.upserted ?? 0} items. Refresh the page.`,
+            ? `Synced ~${data.upserted ?? 0} (${failed} feed error${failed > 1 ? "s" : ""})`
+            : `Synced ~${data.upserted ?? 0} items`,
         );
+        router.refresh();
       } catch {
         setNote("Network error");
       }
@@ -42,7 +49,7 @@ export function NewsSyncButton() {
         disabled={pending}
         onClick={sync}
       >
-        {pending ? "Syncing feeds…" : "Sync feeds now"}
+        {pending ? "Syncing…" : "Sync now"}
       </button>
       {note && (
         <p className="text-xs text-ink-muted" role="status">

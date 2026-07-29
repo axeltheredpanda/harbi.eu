@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { NEWS_FEEDS, NEWS_TAG_LABELS } from "@/content/news-feeds";
 import { listNewsItemsPublic } from "@/backend/news/sync";
+import { createClient } from "@/backend/supabase/server";
 import { NewsSyncButton } from "./news-sync-button";
 
 type Props = {
@@ -28,10 +29,16 @@ function formatDate(iso: string | null): string {
 export default async function NewsPage({ searchParams }: Props) {
   const { tag } = await searchParams;
   const activeTag = tag && NEWS_TAG_LABELS[tag] ? tag : undefined;
-  const items = await listNewsItemsPublic({
-    tag: activeTag,
-    limit: 48,
-  });
+  const [items, supabase] = await Promise.all([
+    listNewsItemsPublic({
+      tag: activeTag,
+      limit: 48,
+    }),
+    createClient(),
+  ]);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const availableTags = Array.from(
     new Set(NEWS_FEEDS.flatMap((f) => f.tags)),
@@ -58,7 +65,7 @@ export default async function NewsPage({ searchParams }: Props) {
           Headlines from a short RSS shelf — French general news, motorsport,
           and tech. Not a firehose.
         </p>
-        <NewsSyncButton />
+        {user ? <NewsSyncButton /> : null}
       </header>
 
       <nav className="mt-8 flex flex-wrap gap-2 border-y border-border py-3">
@@ -86,9 +93,9 @@ export default async function NewsPage({ searchParams }: Props) {
       {items.length === 0 ? (
         <p className="mt-12 text-sm text-ink-muted">
           Nothing here yet. Run the SQL migration, set{" "}
-          <code className="font-mono text-xs">SUPABASE_SERVICE_ROLE_KEY</code>,
-          then sync feeds (button above if you&apos;re logged in, or Vercel
-          Cron).
+          <code className="font-mono text-xs">SUPABASE_SERVICE_ROLE_KEY</code>{" "}
+          + <code className="font-mono text-xs">CRON_SECRET</code>, then sync
+          (logged-in &quot;Sync now&quot;, or GitHub Actions every 3h).
         </p>
       ) : (
         <ul className="mt-8 divide-y divide-border border-t border-border">
