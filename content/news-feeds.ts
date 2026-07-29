@@ -13,6 +13,21 @@ export type NewsFeed = {
  * Prefer official feeds over scrapers.
  */
 export const NEWS_FEEDS: NewsFeed[] = [
+  // General French news (TF1 has no public RSS — franceinfo is the closest reliable titre feed)
+  {
+    id: "franceinfo",
+    name: "franceinfo",
+    url: "https://www.franceinfo.fr/titres.rss",
+    tags: ["france", "general"],
+    limit: 15,
+  },
+  {
+    id: "le-monde",
+    name: "Le Monde",
+    url: "https://www.lemonde.fr/rss/une.xml",
+    tags: ["france", "general"],
+    limit: 12,
+  },
   {
     id: "racefans",
     name: "RaceFans",
@@ -58,6 +73,8 @@ export const NEWS_FEEDS: NewsFeed[] = [
 ];
 
 export const NEWS_TAG_LABELS: Record<string, string> = {
+  france: "France",
+  general: "General",
   motorsport: "Motorsport",
   f1: "F1",
   wrc: "WRC",

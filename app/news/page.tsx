@@ -55,8 +55,8 @@ export default async function NewsPage({ searchParams }: Props) {
           </Link>
         </div>
         <p className="max-w-prose text-base leading-relaxed text-ink-muted">
-          Headlines pulled from a short list of RSS feeds — motorsport and tech
-          first. Not a firehose; a shelf.
+          Headlines from a short RSS shelf — French general news, motorsport,
+          and tech. Not a firehose.
         </p>
         <NewsSyncButton />
       </header>
