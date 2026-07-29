@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import {
+  bootstrapNewsIfEmpty,
   listFeedItemsPublic,
   listFeedsPublic,
 } from "@/backend/news/sync";
+
+export const maxDuration = 60;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -11,13 +14,19 @@ export async function GET(request: Request) {
     ? feedParam.split(",").map((s) => s.trim()).filter(Boolean)
     : undefined;
   const limit = Number(searchParams.get("limit") ?? "120");
+  const safeLimit = Number.isFinite(limit) ? Math.min(limit, 200) : 120;
 
   try {
+    // After news.sql, tables exist but are empty until a sync runs.
+    // Bootstrap once with the service role so opening the drawer fills the shelf
+    // without requiring a logged-in Refresh click.
+    await bootstrapNewsIfEmpty();
+
     const [feeds, items] = await Promise.all([
       listFeedsPublic(),
       listFeedItemsPublic({
         feedIds,
-        limit: Number.isFinite(limit) ? Math.min(limit, 200) : 120,
+        limit: safeLimit,
       }),
     ]);
 

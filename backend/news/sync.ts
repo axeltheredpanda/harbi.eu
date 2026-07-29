@@ -322,9 +322,59 @@ export async function listFeedsPublic(): Promise<FeedRow[]> {
     .order("name");
   if (error) {
     console.warn("listFeedsPublic", error.message);
-    return [];
+    throw new Error(
+      error.message.includes("schema cache") || error.code === "42P01"
+        ? "Table feeds missing — run supabase/news.sql in the Supabase SQL editor."
+        : error.message,
+    );
   }
   return (data ?? []) as FeedRow[];
+}
+
+/** Upsert curated feed rows (no RSS fetch). Uses service role when available. */
+export async function ensureFeedsSeeded(): Promise<void> {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return;
+  try {
+    const supabase = createServiceClient();
+    const feedRows = NEWS_FEEDS.map((f) => ({
+      id: f.id,
+      url: f.url,
+      name: f.name,
+      favicon_url: faviconForUrl(f.url) || null,
+      tags: f.tags,
+    }));
+    const { error } = await supabase.from("feeds").upsert(feedRows, {
+      onConflict: "id",
+    });
+    if (error) console.warn("ensureFeedsSeeded", error.message);
+  } catch (err) {
+    console.warn("ensureFeedsSeeded", err);
+  }
+}
+
+/**
+ * First open: if shelves have no articles yet, pull RSS once (service role).
+ * Avoids requiring login just to populate after running news.sql.
+ */
+export async function bootstrapNewsIfEmpty(): Promise<boolean> {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return false;
+  try {
+    await ensureFeedsSeeded();
+    const supabase = createServiceClient();
+    const { count, error } = await supabase
+      .from("feed_items")
+      .select("id", { count: "exact", head: true });
+    if (error) {
+      console.warn("bootstrapNewsIfEmpty count", error.message);
+      return false;
+    }
+    if ((count ?? 0) > 0) return false;
+    await syncNewsFeeds();
+    return true;
+  } catch (err) {
+    console.warn("bootstrapNewsIfEmpty", err);
+    return false;
+  }
 }
 
 export async function listFeedItemsPublic(options?: {
@@ -348,6 +398,16 @@ export async function listFeedItemsPublic(options?: {
   const { data, error } = await query;
   if (error) {
     console.warn("listFeedItemsPublic", error.message);
+    // Missing relation / empty join — surface clearly upstream when feeds also fail
+    if (
+      error.message.includes("schema cache") ||
+      error.code === "42P01" ||
+      error.message.includes("feed_items")
+    ) {
+      throw new Error(
+        "Table feed_items missing — run supabase/news.sql in the Supabase SQL editor.",
+      );
+    }
     return [];
   }
 

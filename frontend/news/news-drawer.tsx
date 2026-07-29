@@ -194,7 +194,11 @@ export function NewsDrawer() {
         errors?: { feedId: string; message: string }[];
       };
       if (!res.ok) {
-        setNote(data.error ?? "Sync failed");
+        setNote(
+          res.status === 401
+            ? "Sign in to refresh (or reopen the drawer — first load syncs alone)."
+            : (data.error ?? "Sync failed"),
+        );
         return;
       }
       const failed = data.errors?.length ?? 0;
@@ -532,7 +536,7 @@ export function NewsDrawer() {
           <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
             {loading && items.length === 0 ? (
               <p className="px-5 py-10 font-mono text-xs text-ink-faint">
-                Loading shelf…
+                Pulling feeds… first open can take a few seconds.
               </p>
             ) : visibleItems.length === 0 ? (
               <div className="px-5 py-12 text-center">
@@ -541,7 +545,9 @@ export function NewsDrawer() {
                 </p>
                 <p className="mt-2 text-sm text-ink-muted">
                   {feeds.length === 0
-                    ? "Run the SQL migration, then hit Refresh (or wait for the scheduled sync)."
+                    ? note
+                      ? note
+                      : "SQL is in place, but nothing was synced yet. Hit Refresh while signed in, or set SUPABASE_SERVICE_ROLE_KEY so the first open can pull feeds."
                     : "Quiet for now — flip a source back on, or hit Refresh."}
                 </p>
               </div>
