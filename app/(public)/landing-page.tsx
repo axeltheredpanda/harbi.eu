@@ -54,8 +54,8 @@ type Props = {
 };
 
 function redbullCount(now = Date.now()): number {
-  const hours = Math.max(0, (now - SITE_LAUNCH_MS) / 3_600_000);
-  return Math.floor(8 + hours * 0.21 + Math.sin(hours / 8) * 3.1 + (hours % 13) * 0.11);
+  const elapsed = Math.max(0, now - SITE_LAUNCH_MS);
+  return REDBULL_BASE + Math.floor(elapsed / REDBULL_EVERY_MS);
 }
 
 function daysSince(isoDate: string, now = Date.now()): number {
@@ -77,14 +77,6 @@ function pickJoke(copy: LandingCopy, exclude?: string): string {
     }
   }
   return next;
-}
-
-/** Stable per UTC day — same on SSR and first client paint (avoids CLS). */
-function jokeOfDay(copy: LandingCopy, now = Date.now()): string {
-  const pool = copy.statusJokes;
-  if (pool.length === 0) return "";
-  const day = Math.floor(now / 86_400_000);
-  return pool[day % pool.length] ?? pool[0];
 }
 
 export function LandingPage({
