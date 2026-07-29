@@ -10,7 +10,10 @@ type Props = {
   className?: string;
 };
 
-/** Count to target without layout shift — tabular nums + reserved width. */
+/**
+ * Count from 0 to target. Width is reserved up front (tabular + minWidth)
+ * so the animation does not shove the banner layout around.
+ */
 export function CountUp({ value, locale, className }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
   const shown = useRef(false);
@@ -31,6 +34,7 @@ export function CountUp({ value, locale, className }: Props) {
       : 0;
     shown.current = true;
     const state = { n: from };
+    el.textContent = from.toLocaleString(locale);
     const anim = anime({
       targets: state,
       n: value,
@@ -49,7 +53,7 @@ export function CountUp({ value, locale, className }: Props) {
       className={`inline-block tabular-nums ${className ?? ""}`}
       style={{ minWidth: `${Math.max(formatted.length, 1)}ch` }}
     >
-      {formatted}
+      0
     </span>
   );
 }

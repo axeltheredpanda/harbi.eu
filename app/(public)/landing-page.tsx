@@ -73,14 +73,6 @@ function pickJoke(copy: LandingCopy, exclude?: string): string {
   return next;
 }
 
-/** Stable per UTC day — same on SSR and first client paint (avoids CLS). */
-function jokeOfDay(copy: LandingCopy, now = Date.now()): string {
-  const pool = copy.statusJokes;
-  if (pool.length === 0) return "";
-  const day = Math.floor(now / 86_400_000);
-  return pool[day % pool.length] ?? pool[0];
-}
-
 export function LandingPage({
   initialLocale,
   notes,
@@ -94,11 +86,7 @@ export function LandingPage({
   const [singleDays, setSingleDays] = useState(() =>
     relationshipStatus === "single" ? daysSince(singleSince) : 0,
   );
-  const [statusJoke, setStatusJoke] = useState(() =>
-    relationshipStatus === "single"
-      ? jokeOfDay(dictionaries[initialLocale])
-      : "",
-  );
+  const [statusJoke, setStatusJoke] = useState("");
   const [clickTimes, setClickTimes] = useState<number[]>([]);
   const [themeBusy, setThemeBusy] = useState(false);
 
@@ -156,29 +144,28 @@ export function LandingPage({
   }, []);
 
   useEffect(() => {
-    if (!isSingle) {
-      setStatusJoke("");
-      return;
-    }
-    setStatusJoke(jokeOfDay(dictionaries[locale]));
-  }, [locale, isSingle]);
-
-  useEffect(() => {
-    const tick = () => {
+    const frame = requestAnimationFrame(() => {
       const now = Date.now();
       setRedbulls(redbullCount(now));
       if (isSingle) {
         setSingleDays(daysSince(singleSince, now));
+        setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
+      } else {
+        setStatusJoke("");
       }
-    };
-    tick();
+    });
     const id = window.setInterval(() => {
-      tick();
+      const tick = Date.now();
+      setRedbulls(redbullCount(tick));
       if (isSingle) {
+        setSingleDays(daysSince(singleSince, tick));
         setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
       }
     }, 60_000);
-    return () => window.clearInterval(id);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearInterval(id);
+    };
   }, [locale, isSingle, singleSince]);
 
   useEffect(() => {
