@@ -76,6 +76,29 @@ export type AnalyticsReport = {
   };
 };
 
+/** Bucket “when you show up” in Paris local time (not UTC). */
+const ANALYTICS_TZ = "Europe/Paris";
+
+const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+
+function zonedHour(iso: string, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "numeric",
+    hourCycle: "h23",
+  }).formatToParts(new Date(iso));
+  return Number(parts.find((p) => p.type === "hour")?.value ?? 0);
+}
+
+function zonedWeekday(iso: string, timeZone: string): number {
+  const day = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    weekday: "short",
+  }).format(new Date(iso));
+  const idx = WEEKDAY_SHORT.indexOf(day as (typeof WEEKDAY_SHORT)[number]);
+  return idx >= 0 ? idx : 0;
+}
+
 function startOfPeriod(period: ReportPeriod, now = new Date()): Date | null {
   if (period === "all") return null;
   const d = new Date(now);
@@ -324,14 +347,14 @@ export async function buildAnalyticsReport(
     value: 0,
   }));
   for (const row of claudeRows) {
-    const h = new Date(row.created_at).getUTCHours();
+    const h = zonedHour(row.created_at, ANALYTICS_TZ);
     byHour[h]!.value += 1;
   }
 
   const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const byWeekday = weekdayNames.map((day) => ({ day, value: 0 }));
   for (const row of claudeRows) {
-    const d = new Date(row.created_at).getUTCDay();
+    const d = zonedWeekday(row.created_at, ANALYTICS_TZ);
     byWeekday[d]!.value += 1;
   }
 
