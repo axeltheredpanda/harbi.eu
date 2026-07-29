@@ -16,6 +16,10 @@ import {
 } from "@/backend/chat/constants";
 import { generateConversationTitle } from "@/backend/chat/title";
 import { getClaudetteSettings } from "@/backend/claudette/settings";
+import {
+  recordClaudeUsage,
+  recordServiceEvent,
+} from "@/backend/analytics/record";
 import type { Attachment, Message } from "@/backend/supabase/types";
 
 type Body = {
@@ -385,7 +389,11 @@ export async function POST(request: Request) {
   let assistantText = "";
   let inputTokens: number | null = null;
   let outputTokens: number | null = null;
+  let cacheCreationTokens: number | null = null;
+  let cacheReadTokens: number | null = null;
   let aborted = false;
+  const streamStartedAt = Date.now();
+  let firstTokenAt: number | null = null;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -430,6 +438,7 @@ export async function POST(request: Request) {
         });
 
         anthropicStream.on("text", (text) => {
+          if (firstTokenAt == null) firstTokenAt = Date.now();
           assistantText += text;
           send("delta", { text });
         });
@@ -437,17 +446,45 @@ export async function POST(request: Request) {
         const finalMessage = await anthropicStream.finalMessage();
         inputTokens = finalMessage.usage?.input_tokens ?? null;
         outputTokens = finalMessage.usage?.output_tokens ?? null;
+        const usage = finalMessage.usage as {
+          cache_creation_input_tokens?: number;
+          cache_read_input_tokens?: number;
+        } | undefined;
+        cacheCreationTokens = usage?.cache_creation_input_tokens ?? null;
+        cacheReadTokens = usage?.cache_read_input_tokens ?? null;
       } catch (error) {
         if (request.signal.aborted || (error instanceof Error && error.name === "AbortError")) {
           aborted = true;
         } else if (error instanceof Anthropic.APIError) {
+          await recordServiceEvent({
+            userId: user.id,
+            service: "claude",
+            kind: "error",
+            detail: error.message,
+            meta: { model: chatModel },
+          });
+          await recordClaudeUsage({
+            userId: user.id,
+            conversationId,
+            model: chatModel,
+            webSearch: allowWebSearch,
+            error: error.message,
+            totalMs: Date.now() - streamStartedAt,
+          });
           send("error", { message: error.message });
           controller.close();
           return;
         } else {
-          send("error", {
-            message: error instanceof Error ? error.message : "Stream failed",
+          const message =
+            error instanceof Error ? error.message : "Stream failed";
+          await recordServiceEvent({
+            userId: user.id,
+            service: "claude",
+            kind: "error",
+            detail: message,
+            meta: { model: chatModel },
           });
+          send("error", { message });
           controller.close();
           return;
         }
@@ -470,6 +507,21 @@ export async function POST(request: Request) {
         assistantId = assistantRow?.id ?? null;
       }
 
+      await recordClaudeUsage({
+        userId: user.id,
+        conversationId,
+        messageId: assistantId,
+        model: chatModel,
+        inputTokens,
+        outputTokens,
+        cacheCreationTokens,
+        cacheReadTokens,
+        ttftMs: firstTokenAt != null ? firstTokenAt - streamStartedAt : null,
+        totalMs: Date.now() - streamStartedAt,
+        webSearch: allowWebSearch,
+        aborted,
+      });
+
       await supabase
         .from("conversations")
         .update({ updated_at: new Date().toISOString() })
@@ -477,13 +529,18 @@ export async function POST(request: Request) {
 
       if (shouldGenerateTitle && !aborted && assistantText.trim()) {
         try {
-          const title = await generateConversationTitle(
+          const { title, topic } = await generateConversationTitle(
             userMessageContent,
             assistantText,
           );
           await supabase
             .from("conversations")
-            .update({ title, updated_at: new Date().toISOString() })
+            .update({
+              title,
+              topic,
+              topic_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
             .eq("id", conversationId);
           send("title", { title });
         } catch {
@@ -495,7 +552,12 @@ export async function POST(request: Request) {
         assistant_message_id: assistantId,
         content: assistantText,
         aborted,
-        usage: { input_tokens: inputTokens, output_tokens: outputTokens },
+        usage: {
+          input_tokens: inputTokens,
+          output_tokens: outputTokens,
+          cache_creation_input_tokens: cacheCreationTokens,
+          cache_read_input_tokens: cacheReadTokens,
+        },
       });
       controller.close();
     },

@@ -59,6 +59,8 @@ export type Database = {
           title: string;
           summary: string | null;
           summary_until_message_id: string | null;
+          topic: string | null;
+          topic_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -68,6 +70,8 @@ export type Database = {
           title?: string;
           summary?: string | null;
           summary_until_message_id?: string | null;
+          topic?: string | null;
+          topic_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -77,6 +81,8 @@ export type Database = {
           title?: string;
           summary?: string | null;
           summary_until_message_id?: string | null;
+          topic?: string | null;
+          topic_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -190,6 +196,9 @@ export type Database = {
           result_path: string;
           original_name: string | null;
           content_hash: string | null;
+          duration_ms: number | null;
+          cache_hit: boolean;
+          failed: boolean;
           created_at: string;
         };
         Insert: {
@@ -200,6 +209,9 @@ export type Database = {
           result_path: string;
           original_name?: string | null;
           content_hash?: string | null;
+          duration_ms?: number | null;
+          cache_hit?: boolean;
+          failed?: boolean;
           created_at?: string;
         };
         Update: {
@@ -210,6 +222,9 @@ export type Database = {
           result_path?: string;
           original_name?: string | null;
           content_hash?: string | null;
+          duration_ms?: number | null;
+          cache_hit?: boolean;
+          failed?: boolean;
           created_at?: string;
         };
         Relationships: [];
@@ -327,6 +342,93 @@ export type Database = {
           content_snippet?: string | null;
           full_content?: string | null;
           read_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      claude_usage: {
+        Row: {
+          id: string;
+          user_id: string;
+          conversation_id: string | null;
+          message_id: string | null;
+          model: string;
+          input_tokens: number | null;
+          output_tokens: number | null;
+          cache_creation_tokens: number | null;
+          cache_read_tokens: number | null;
+          ttft_ms: number | null;
+          total_ms: number | null;
+          web_search: boolean;
+          aborted: boolean;
+          error: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          conversation_id?: string | null;
+          message_id?: string | null;
+          model: string;
+          input_tokens?: number | null;
+          output_tokens?: number | null;
+          cache_creation_tokens?: number | null;
+          cache_read_tokens?: number | null;
+          ttft_ms?: number | null;
+          total_ms?: number | null;
+          web_search?: boolean;
+          aborted?: boolean;
+          error?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          conversation_id?: string | null;
+          message_id?: string | null;
+          model?: string;
+          input_tokens?: number | null;
+          output_tokens?: number | null;
+          cache_creation_tokens?: number | null;
+          cache_read_tokens?: number | null;
+          ttft_ms?: number | null;
+          total_ms?: number | null;
+          web_search?: boolean;
+          aborted?: boolean;
+          error?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      service_events: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          service: "claude" | "cutout" | "news" | "umami" | "other";
+          kind: "success" | "error" | "timeout" | "info";
+          detail: string | null;
+          duration_ms: number | null;
+          meta: Record<string, unknown>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          service: "claude" | "cutout" | "news" | "umami" | "other";
+          kind: "success" | "error" | "timeout" | "info";
+          detail?: string | null;
+          duration_ms?: number | null;
+          meta?: Record<string, unknown>;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          service?: "claude" | "cutout" | "news" | "umami" | "other";
+          kind?: "success" | "error" | "timeout" | "info";
+          detail?: string | null;
+          duration_ms?: number | null;
+          meta?: Record<string, unknown>;
           created_at?: string;
         };
         Relationships: [];

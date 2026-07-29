@@ -41,6 +41,11 @@ export async function POST(request: Request) {
   const resultFile = form.get("result");
   const mode = parseMode(form.get("mode"));
   const providedHash = String(form.get("contentHash") ?? "").trim();
+  const durationRaw = Number(form.get("durationMs"));
+  const durationMs =
+    Number.isFinite(durationRaw) && durationRaw >= 0
+      ? Math.round(durationRaw)
+      : null;
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "file is required" }, { status: 400 });
@@ -93,6 +98,16 @@ export async function POST(request: Request) {
         .createSignedUrl(cached.result_path, 60 * 60),
     ]);
     if (originalSigned?.signedUrl && resultSigned?.signedUrl) {
+      const { recordServiceEvent } = await import("@/backend/analytics/record");
+      await recordServiceEvent({
+        userId: user.id,
+        service: "cutout",
+        kind: "info",
+        detail: "cache_hit",
+        durationMs: 0,
+        meta: { mode, contentHash },
+      });
+
       return NextResponse.json({
         id: cached.id,
         mode: cached.mode,
@@ -164,6 +179,9 @@ export async function POST(request: Request) {
       result_path: resultPath,
       original_name: file.name || null,
       content_hash: contentHash,
+      duration_ms: durationMs,
+      cache_hit: false,
+      failed: false,
     })
     .select("id, mode, created_at, original_name")
     .single();

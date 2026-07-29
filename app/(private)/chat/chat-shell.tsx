@@ -217,6 +217,8 @@ export function ChatShell({ initialConversations }: Props) {
       title: "New conversation",
       summary: null,
       summary_until_message_id: null,
+      topic: null,
+      topic_at: null,
       created_at: now,
       updated_at: now,
     };
@@ -300,6 +302,8 @@ export function ChatShell({ initialConversations }: Props) {
           title: "New conversation",
           summary: null,
           summary_until_message_id: null,
+          topic: null,
+          topic_at: null,
           created_at: now,
           updated_at: now,
         },
