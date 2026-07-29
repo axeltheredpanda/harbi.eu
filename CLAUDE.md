@@ -14,9 +14,8 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
   sync serveur toutes les 30 min (GitHub Actions) + Refresh manuel (connecté),
   raccourcis Windows (Ctrl+K palette, Ctrl+Shift+Y news, j/k/Enter/m/r)
 - Market quotes via `/api/market` (Yahoo chart, revalidate ~5 min)
-- Analytics optionnel : Umami (`NEXT_PUBLIC_UMAMI_*`) + rapport privé `/analytics`
-  (`claude_usage`, `service_events` — SQL `supabase/analytics.sql`)
-- Déploiement : Vercel
+- Rapport privé `/analytics` (`claude_usage`, `service_events` — SQL `supabase/analytics.sql`)
+- Déploiement : Vercel (+ Speed Insights)
 
 ## Structure
 - `app/(public)/` — landing FR/EN, sections work / now / notes / skills / contact
@@ -40,14 +39,14 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [x] Claudette (streaming, modèles, uploads, UX, web search per-message)
 - [x] Cutout in-browser (imgly) + history/cache Supabase — SQL `cutout-and-settings.sql`
 - [x] Settings (relationship status single/dating → bannière publique)
-- [x] Landing personnalité + FR/EN + now + notes + GitHub subtle + OG + Umami hook
+- [x] Landing personnalité + FR/EN + now + notes + GitHub subtle + OG
 - [x] Market widget + garage tracker + command palette
 - [x] Selected work en cartes museum specimen (Axel CRM Nº 01 ; crédit studio Axel Project)
 - [x] News drawer RSS + sync GitHub Actions
 - [x] Rapport `/analytics` (tokens, coût, cutout, news, patterns) — SQL `analytics.sql`
-- [ ] Brancher Supabase (SQL à jour) + env Umami API si besoin pour traffic in-app
+- [x] Vercel Speed Insights
+- [ ] Brancher Supabase (SQL à jour) si besoin
 - [ ] Contenu projets / LinkedIn encore placeholders
-- [ ] Search Console / geo France fine — pas branché (Umami country only)
 ## Notes
 - Pas de todo/projects UI (retirés volontairement).
 - Mettre à jour cette section à chaque session.

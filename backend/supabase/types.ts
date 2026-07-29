@@ -404,7 +404,7 @@ export type Database = {
         Row: {
           id: string;
           user_id: string | null;
-          service: "claude" | "cutout" | "news" | "umami" | "other";
+          service: "claude" | "cutout" | "news" | "other";
           kind: "success" | "error" | "timeout" | "info";
           detail: string | null;
           duration_ms: number | null;
@@ -414,7 +414,7 @@ export type Database = {
         Insert: {
           id?: string;
           user_id?: string | null;
-          service: "claude" | "cutout" | "news" | "umami" | "other";
+          service: "claude" | "cutout" | "news" | "other";
           kind: "success" | "error" | "timeout" | "info";
           detail?: string | null;
           duration_ms?: number | null;
@@ -424,7 +424,7 @@ export type Database = {
         Update: {
           id?: string;
           user_id?: string | null;
-          service?: "claude" | "cutout" | "news" | "umami" | "other";
+          service?: "claude" | "cutout" | "news" | "other";
           kind?: "success" | "error" | "timeout" | "info";
           detail?: string | null;
           duration_ms?: number | null;

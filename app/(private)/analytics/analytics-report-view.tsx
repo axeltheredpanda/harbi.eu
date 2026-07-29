@@ -33,7 +33,7 @@ const PERIODS: { id: ReportPeriod; label: string }[] = [
 
 export function AnalyticsReportView({ report }: Props) {
   const router = useRouter();
-  const { claude, cutout, news, patterns, health, traffic, extras } = report;
+  const { claude, cutout, news, patterns, health, extras } = report;
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-14">
@@ -277,76 +277,6 @@ export function AnalyticsReportView({ report }: Props) {
           {health.newsErrors}
         </p>
         <p className="text-sm text-ink-faint">{health.note}</p>
-      </section>
-
-      {/* Traffic */}
-      <section className="space-y-6 border-t border-border pt-10">
-        <h2 className="font-display text-2xl font-medium tracking-tight text-ink">
-          Public traffic
-        </h2>
-        {traffic.available ? (
-          <>
-            <p className="font-display text-3xl tracking-tight text-ink sm:text-4xl">
-              {(traffic.pageviews ?? 0).toLocaleString("en-GB")}{" "}
-              <span className="text-ink-muted">pageviews</span>
-            </p>
-            <p className="text-sm text-ink-muted">
-              {(traffic.visitors ?? 0).toLocaleString("en-GB")} unique visitors
-            </p>
-            {traffic.topPages && traffic.topPages.length > 0 && (
-              <ul className="divide-y divide-border border-t border-border text-sm">
-                {traffic.topPages.map((p) => (
-                  <li
-                    key={p.path}
-                    className="flex justify-between gap-4 py-2 text-ink-muted"
-                  >
-                    <span className="truncate font-mono text-xs text-ink">
-                      {p.path}
-                    </span>
-                    <span>{p.views}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {traffic.referrers && traffic.referrers.length > 0 && (
-              <div>
-                <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-ink-faint">
-                  Referrers
-                </p>
-                <ul className="space-y-1 text-sm text-ink-muted">
-                  {traffic.referrers.map((r) => (
-                    <li key={r.referrer}>
-                      {r.referrer}{" "}
-                      <span className="font-mono text-[11px] text-ink-faint">
-                        · {r.views}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {traffic.countries && traffic.countries.length > 0 && (
-              <div>
-                <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-ink-faint">
-                  Countries
-                </p>
-                <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
-                  {traffic.countries.map((c) => (
-                    <li key={c.country}>
-                      {c.country}{" "}
-                      <span className="font-mono text-[11px] text-ink-faint">
-                        · {c.visitors}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <p className="text-sm text-ink-faint">{traffic.note}</p>
-          </>
-        ) : (
-          <p className="text-sm leading-relaxed text-ink-muted">{traffic.note}</p>
-        )}
       </section>
 
       <footer className="border-t border-border pt-6">

@@ -42,7 +42,7 @@ export async function recordClaudeUsage(row: ClaudeUsageInsert): Promise<void> {
 
 export async function recordServiceEvent(input: {
   userId?: string | null;
-  service: "claude" | "cutout" | "news" | "umami" | "other";
+  service: "claude" | "cutout" | "news" | "other";
   kind: "success" | "error" | "timeout" | "info";
   detail?: string;
   durationMs?: number | null;
