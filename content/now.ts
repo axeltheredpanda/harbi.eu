@@ -8,13 +8,13 @@ export type NowItem = {
 export const nowItems: NowItem[] = [
   {
     id: "work",
-    en: "Wrapping a digital / e-commerce internship and looking for what comes next.",
-    fr: "Je termine un stage digital / e-commerce et je cherche la suite.",
+    en: "Intern @ Remy Cointreau as Digital Web & E-Commerce Officer.",
+    fr: "Stagiaire @ Rémy Cointreau — Digital Web & E-Commerce Officer.",
   },
   {
-    id: "build",
-    en: "Building Claudette and harbi.eu as a personal workspace that actually sticks.",
-    fr: "Je construis Claudette et harbi.eu comme un espace de travail perso qui tienne vraiment.",
+    id: "axel",
+    en: "Making Axel Project somewhat profitable.",
+    fr: "Je rends Axel Project un peu rentable.",
   },
   {
     id: "cars",
