@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Geist_Mono, Public_Sans } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SiteMotion } from "@/frontend/motion/site-motion";
 import { NewsShell } from "@/frontend/news/news-shell";
 import "./globals.css";
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col font-body antialiased">
         <SiteMotion />
         <NewsShell>{children}</NewsShell>
+        <SpeedInsights />
       </body>
     </html>
   );
