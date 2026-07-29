@@ -57,7 +57,8 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [x] Soft-nav SWR : `experimental.staleTimes` 30 min + `SoftNavRefresh` (cache immédiat, maj en fond)
 - [x] Landing : badge tech footer + now-playing sous la meta bar (desktop only) — SQL `now-playing.sql`
 - [ ] Brancher Supabase (SQL à jour) si besoin — dont `supabase/now-playing.sql`
-- [ ] Contenu projets / LinkedIn encore placeholders
+- [ ] Contenu projets encore placeholders
+- [x] Contact : arthur.reichard@essec.edu · GitHub · LinkedIn
 ## Notes
 - Pas de todo/projects / market / garage UI (retirés volontairement).
 - Mettre à jour cette section à chaque session.
