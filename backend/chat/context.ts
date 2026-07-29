@@ -1,5 +1,10 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import type { Attachment, Message } from "@/backend/supabase/types";
+import {
+  formatProfileForPrompt,
+  profileHasContent,
+  type ClaudetteProfile,
+} from "@/backend/claudette/profile";
 import { BASE_SYSTEM_PROMPT, CONTEXT_WINDOW } from "@/backend/chat/constants";
 
 export type ContextMessage = Message & { attachments: Attachment[] };
@@ -45,7 +50,6 @@ export function collectPdfTexts(
       }
     }
   }
-  // Also include PDFs from older (summarized) turns: caller should pass full history PDFs
   void summaryUntilMessageId;
   return texts;
 }
@@ -53,6 +57,7 @@ export function collectPdfTexts(
 export function buildSystemBlocks(
   summary: string | null,
   pdfTexts: string[],
+  profile?: ClaudetteProfile | null,
 ): Anthropic.TextBlockParam[] {
   const blocks: Anthropic.TextBlockParam[] = [
     {
@@ -61,6 +66,17 @@ export function buildSystemBlocks(
       cache_control: { type: "ephemeral" },
     },
   ];
+
+  if (profile && profileHasContent(profile)) {
+    const formatted = formatProfileForPrompt(profile);
+    if (formatted) {
+      blocks.push({
+        type: "text",
+        text: `Private user profile (use only when relevant to the current message):\n${formatted}`,
+        cache_control: { type: "ephemeral" },
+      });
+    }
+  }
 
   if (summary?.trim()) {
     blocks.push({
@@ -149,6 +165,7 @@ export function prepareContext(
   allMessages: ContextMessage[],
   summary: string | null,
   summaryUntilMessageId: string | null,
+  profile?: ClaudetteProfile | null,
 ): BuiltContext {
   const { older, window } = splitContextWindow(allMessages);
 
@@ -165,7 +182,7 @@ export function prepareContext(
   const needsSummaryRefresh = unsummarizedOlder.length > 0;
 
   return {
-    system: buildSystemBlocks(summary, pdfTexts),
+    system: buildSystemBlocks(summary, pdfTexts, profile),
     messages: [],
     olderMessages: older,
     windowMessages: window,

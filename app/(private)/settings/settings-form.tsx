@@ -48,7 +48,7 @@ export function SettingsForm({ initial }: Props) {
   }
 
   return (
-    <form onSubmit={handleSave} className="mx-auto w-full max-w-lg space-y-8">
+    <form onSubmit={handleSave} className="space-y-8">
       <header className="space-y-3">
         <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">
           Private · settings
@@ -57,8 +57,8 @@ export function SettingsForm({ initial }: Props) {
           Settings
         </h1>
         <p className="max-w-prose text-base leading-relaxed text-ink-muted">
-          Quiet dials for the public site. More later — for now, the
-          relationship line on the landing banner.
+          Public banner dials and Claudette’s private brief — who you are, how
+          she talks, whether she may search the web.
         </p>
       </header>
 
@@ -140,7 +140,7 @@ export function SettingsForm({ initial }: Props) {
           disabled={pending}
           className={buttonClass("primary")}
         >
-          {pending ? "Saving…" : "Save"}
+          {pending ? "Saving…" : "Save relationship"}
         </button>
         {message && (
           <p className="text-sm text-accent" role="status">

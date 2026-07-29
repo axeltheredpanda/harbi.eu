@@ -15,6 +15,7 @@ import {
   resolveChatModel,
 } from "@/backend/chat/constants";
 import { generateConversationTitle } from "@/backend/chat/title";
+import { getClaudetteSettings } from "@/backend/claudette/settings";
 import type { Attachment, Message } from "@/backend/supabase/types";
 
 type Body = {
@@ -288,10 +289,18 @@ export async function POST(request: Request) {
     attachments: byMessage.get(message.id) ?? [],
   }));
 
+  const claudette = await getClaudetteSettings();
+  const profile = claudette.profile;
+  const webSearchEnabled = claudette.webSearchEnabled;
+  // Managed web search is unreliable on Haiku — keep tools for Sonnet/Opus family
+  const allowWebSearch =
+    webSearchEnabled && !chatModel.toLowerCase().includes("haiku");
+
   let prepared = prepareContext(
     contextMessages,
     conversation.summary,
     conversation.summary_until_message_id,
+    profile,
   );
 
   let summary = conversation.summary;
@@ -330,7 +339,7 @@ export async function POST(request: Request) {
 
         prepared = {
           ...prepared,
-          system: buildSystemBlocks(summary, pdfTexts),
+          system: buildSystemBlocks(summary, pdfTexts, profile),
           needsSummaryRefresh: false,
         };
       } catch {
@@ -387,15 +396,32 @@ export async function POST(request: Request) {
       }
 
       try {
-        const anthropicStream = anthropic.messages.stream(
-          {
-            model: chatModel,
-            max_tokens: MAX_TOKENS,
-            system: prepared.system,
-            messages: anthropicMessages,
-          },
-          { signal: request.signal },
-        );
+        const streamParams: Anthropic.MessageCreateParams = {
+          model: chatModel,
+          max_tokens: MAX_TOKENS,
+          system: prepared.system,
+          messages: anthropicMessages,
+        };
+
+        if (allowWebSearch) {
+          streamParams.tools = [
+            {
+              type: "web_search_20250305",
+              name: "web_search",
+              max_uses: 5,
+              user_location: {
+                type: "approximate",
+                country: "FR",
+                city: "Rueil-Malmaison",
+                timezone: "Europe/Paris",
+              },
+            },
+          ];
+        }
+
+        const anthropicStream = anthropic.messages.stream(streamParams, {
+          signal: request.signal,
+        });
 
         anthropicStream.on("text", (text) => {
           assistantText += text;
