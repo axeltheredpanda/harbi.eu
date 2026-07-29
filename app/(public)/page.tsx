@@ -7,6 +7,21 @@ import { getPublicSiteSettings } from "@/backend/settings";
 import { detectLocale } from "@/frontend/i18n/landing";
 import { LandingPage } from "./landing-page";
 
+function shortCommitSha(): string | null {
+  const sha = process.env.VERCEL_GIT_COMMIT_SHA?.trim();
+  if (!sha) return null;
+  return sha.slice(0, 7);
+}
+
+function buildDateLabel(): string {
+  const raw = process.env.BUILD_TIME ?? new Date().toISOString();
+  const parsed = Date.parse(raw);
+  if (!Number.isFinite(parsed)) {
+    return new Date().toISOString().slice(0, 10);
+  }
+  return new Date(parsed).toISOString().slice(0, 10);
+}
+
 export default async function HomePage() {
   const headerList = await headers();
   const [notes, github, settings, fuel, milestones] = await Promise.all([
@@ -26,6 +41,9 @@ export default async function HomePage() {
       singleSince={settings.singleSince}
       fuel={fuel}
       milestones={milestones}
+      nowPlaying={settings.nowPlaying}
+      commitSha={shortCommitSha()}
+      buildDate={buildDateLabel()}
     />
   );
 }

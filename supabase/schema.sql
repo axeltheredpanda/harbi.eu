@@ -201,6 +201,10 @@ create table if not exists public.site_settings (
   relationship_status text not null default 'single'
     check (relationship_status in ('single', 'dating')),
   single_since date not null default '2026-02-01',
+  louis_joke_mode boolean not null default false,
+  now_playing_title text,
+  now_playing_artist text,
+  now_playing_url text,
   updated_at timestamptz not null default now()
 );
 

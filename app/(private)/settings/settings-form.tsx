@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { buttonClass } from "@/frontend/components/button-variants";
 import {
   updateLouisJokeMode,
+  updateNowPlayingSettings,
   updateRelationshipSettings,
   type PublicSiteSettings,
 } from "@/backend/settings";
@@ -20,6 +21,9 @@ export function SettingsForm({ initial }: Props) {
   );
   const [singleSince, setSingleSince] = useState(initial.singleSince);
   const [louisJoke, setLouisJoke] = useState(initial.louisJokeMode);
+  const [npTitle, setNpTitle] = useState(initial.nowPlaying.title);
+  const [npArtist, setNpArtist] = useState(initial.nowPlaying.artist);
+  const [npUrl, setNpUrl] = useState(initial.nowPlaying.url);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -46,6 +50,29 @@ export function SettingsForm({ initial }: Props) {
         );
       } catch (err) {
         setError(err instanceof Error ? err.message : "Couldn’t save settings");
+      }
+    });
+  }
+
+  function handleNowPlayingSave(e: React.FormEvent) {
+    e.preventDefault();
+    setMessage(null);
+    setError(null);
+    startTransition(async () => {
+      try {
+        const next = await updateNowPlayingSettings({
+          title: npTitle,
+          artist: npArtist,
+          url: npUrl,
+        });
+        setNpTitle(next.nowPlaying.title);
+        setNpArtist(next.nowPlaying.artist);
+        setNpUrl(next.nowPlaying.url);
+        setMessage("Saved — now playing updated on the public banner.");
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Couldn’t save now playing",
+        );
       }
     });
   }
@@ -153,6 +180,65 @@ export function SettingsForm({ initial }: Props) {
             {pending ? "Saving…" : "Save relationship"}
           </button>
         </div>
+      </form>
+
+      <form
+        onSubmit={handleNowPlayingSave}
+        className="space-y-4 border-t border-border pt-8"
+      >
+        <h2 className="font-display text-xl font-medium text-ink">
+          Now playing
+        </h2>
+        <p className="text-sm leading-relaxed text-ink-muted">
+          Shown on the public landing meta bar. Leave blank to fall back to the
+          placeholders in{" "}
+          <code className="text-ink-faint">content/now-playing.ts</code>.
+        </p>
+        <div className="grid max-w-lg gap-3">
+          <label className="block space-y-1.5">
+            <span className="font-mono text-[11px] uppercase tracking-wide text-ink-faint">
+              Title
+            </span>
+            <input
+              type="text"
+              value={npTitle}
+              onChange={(e) => setNpTitle(e.target.value)}
+              className="block w-full border border-border bg-canvas px-3 py-2 text-sm text-ink"
+              placeholder="Track title"
+            />
+          </label>
+          <label className="block space-y-1.5">
+            <span className="font-mono text-[11px] uppercase tracking-wide text-ink-faint">
+              Artist
+            </span>
+            <input
+              type="text"
+              value={npArtist}
+              onChange={(e) => setNpArtist(e.target.value)}
+              className="block w-full border border-border bg-canvas px-3 py-2 text-sm text-ink"
+              placeholder="Artist"
+            />
+          </label>
+          <label className="block space-y-1.5">
+            <span className="font-mono text-[11px] uppercase tracking-wide text-ink-faint">
+              URL
+            </span>
+            <input
+              type="url"
+              value={npUrl}
+              onChange={(e) => setNpUrl(e.target.value)}
+              className="block w-full border border-border bg-canvas px-3 py-2 text-sm text-ink"
+              placeholder="https://…"
+            />
+          </label>
+        </div>
+        <button
+          type="submit"
+          disabled={pending}
+          className={buttonClass("primary")}
+        >
+          {pending ? "Saving…" : "Save now playing"}
+        </button>
       </form>
 
       <section className="space-y-4 border-t border-border pt-8">

@@ -27,6 +27,8 @@ export type LandingCopy = {
   contactBody: string;
   redbulls: string;
   relationshipLabel: string;
+  listeningTo: string;
+  onlineSince: string;
   statusSingle: string;
   statusDating: string;
   days: string;
@@ -165,6 +167,8 @@ export const dictionaries: Record<Locale, LandingCopy> = {
       "Si quelque chose ici résonne — un poste, une collaboration, une question — envoyez un mot. Je lis tout ce qui arrive.",
     redbulls: "Red Bulls",
     relationshipLabel: "Statut",
+    listeningTo: "J'écoute",
+    onlineSince: "en ligne depuis",
     statusSingle: "célibataire",
     statusDating: "en couple",
     days: "jours",
@@ -227,6 +231,8 @@ export const dictionaries: Record<Locale, LandingCopy> = {
       "If something here resonates — a role, a collaboration, a question — send a note. I read everything that arrives.",
     redbulls: "Red Bulls",
     relationshipLabel: "Status",
+    listeningTo: "Listening to",
+    onlineSince: "online for",
     statusSingle: "single",
     statusDating: "dating",
     days: "days",

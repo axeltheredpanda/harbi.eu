@@ -13,6 +13,7 @@ import type { NationalFuelPrice } from "@/backend/fuel";
 import type { CvMilestone } from "@/backend/cv/types";
 import type { RelationshipStatus } from "@/backend/supabase/types";
 import { nowItems } from "@/content/now";
+import type { NowPlaying } from "@/content/now-playing";
 import { HeroAssemble } from "@/frontend/motion/hero-assemble";
 import { ScrollReveal } from "@/frontend/motion/scroll-reveal";
 import { CountUp } from "@/frontend/motion/count-up";
@@ -54,6 +55,9 @@ type Props = {
   singleSince: string;
   fuel: NationalFuelPrice | null;
   milestones: CvMilestone[];
+  nowPlaying: NowPlaying;
+  commitSha: string | null;
+  buildDate: string;
 };
 
 function redbullCount(now = Date.now()): number {
@@ -90,6 +94,9 @@ export function LandingPage({
   singleSince,
   fuel,
   milestones,
+  nowPlaying,
+  commitSha,
+  buildDate,
 }: Props) {
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [rally, setRally] = useState(false);
@@ -105,6 +112,11 @@ export function LandingPage({
   const numberLocale = locale === "fr" ? "fr-FR" : "en-GB";
   const isSingle = relationshipStatus === "single";
   const statusWord = isSingle ? copy.statusSingle : copy.statusDating;
+  const onlineDays = daysSince(
+    new Date(SITE_LAUNCH_MS).toISOString().slice(0, 10),
+  );
+  const commitLabel = commitSha ? commitSha.slice(0, 7) : "dev";
+  const nowPlayingLine = `${nowPlaying.title} — ${nowPlaying.artist}`;
 
   const enableRally = useCallback(async () => {
     if (themeBusy || rally) return;
@@ -255,6 +267,53 @@ export function LandingPage({
           </p>
 
           <div className="flex shrink-0 flex-wrap items-baseline gap-x-4 gap-y-1 sm:justify-end sm:gap-x-5">
+            <a
+              href={nowPlaying.url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-ink-muted transition-colors hover:text-accent"
+              title={nowPlayingLine}
+            >
+              <span className="text-ink-faint">{copy.listeningTo}</span>
+              <svg
+                viewBox="0 0 16 16"
+                className="eq-icon h-3 w-3 shrink-0"
+                aria-hidden="true"
+                fill="none"
+              >
+                <line
+                  className="eq-bar eq-bar-1"
+                  x1="3.5"
+                  y1="12"
+                  x2="3.5"
+                  y2="5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <line
+                  className="eq-bar eq-bar-2"
+                  x1="8"
+                  y1="12"
+                  x2="8"
+                  y2="3"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <line
+                  className="eq-bar eq-bar-3"
+                  x1="12.5"
+                  y1="12"
+                  x2="12.5"
+                  y2="6"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="min-w-0 truncate">{nowPlayingLine}</span>
+            </a>
             <p
               className="inline-flex items-baseline gap-x-1.5 text-ink-muted"
               title={
@@ -575,6 +634,15 @@ export function LandingPage({
 
       <footer className="relative z-10 mx-auto w-full max-w-2xl px-6 pb-12 pt-4 sm:px-8">
         <p className="text-sm text-ink-faint">harbi.eu</p>
+        <p className="mt-1 font-mono text-[11px] text-ink-faint">
+          <span>{commitLabel}</span>
+          <span aria-hidden="true">{" · "}</span>
+          <span>{buildDate}</span>
+          <span aria-hidden="true">{" · "}</span>
+          <span>
+            {copy.onlineSince} {onlineDays} {copy.days}
+          </span>
+        </p>
       </footer>
 
       {rally && (
