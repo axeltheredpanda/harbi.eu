@@ -28,6 +28,9 @@ const AXEL_CRM_STACK = ["Java", "React", "Supabase", "Stripe"] as const;
 const AXEL_CRM_YEARS = "2025—";
 
 const SITE_LAUNCH_MS = Date.UTC(2026, 6, 1);
+/** One Red Bull every 8 hours from launch (= 3/day). */
+const REDBULL_EVERY_MS = 8 * 3_600_000;
+const REDBULL_BASE = 8;
 const LOCALE_KEY = "harbi.locale";
 
 const KONAMI = [
@@ -54,8 +57,8 @@ type Props = {
 };
 
 function redbullCount(now = Date.now()): number {
-  const hours = Math.max(0, (now - SITE_LAUNCH_MS) / 3_600_000);
-  return Math.floor(8 + hours * 0.21 + Math.sin(hours / 8) * 3.1 + (hours % 13) * 0.11);
+  const elapsed = Math.max(0, now - SITE_LAUNCH_MS);
+  return REDBULL_BASE + Math.floor(elapsed / REDBULL_EVERY_MS);
 }
 
 function daysSince(isoDate: string, now = Date.now()): number {
@@ -79,14 +82,6 @@ function pickJoke(copy: LandingCopy, exclude?: string): string {
   return next;
 }
 
-/** Stable per UTC day — same on SSR and first client paint (avoids CLS). */
-function jokeOfDay(copy: LandingCopy, now = Date.now()): string {
-  const pool = copy.statusJokes;
-  if (pool.length === 0) return "";
-  const day = Math.floor(now / 86_400_000);
-  return pool[day % pool.length] ?? pool[0];
-}
-
 export function LandingPage({
   initialLocale,
   notes,
@@ -102,11 +97,7 @@ export function LandingPage({
   const [singleDays, setSingleDays] = useState(() =>
     relationshipStatus === "single" ? daysSince(singleSince) : 0,
   );
-  const [statusJoke, setStatusJoke] = useState(() =>
-    relationshipStatus === "single"
-      ? jokeOfDay(dictionaries[initialLocale])
-      : "",
-  );
+  const [statusJoke, setStatusJoke] = useState("");
   const [clickTimes, setClickTimes] = useState<number[]>([]);
   const [themeBusy, setThemeBusy] = useState(false);
 
@@ -164,29 +155,28 @@ export function LandingPage({
   }, []);
 
   useEffect(() => {
-    if (!isSingle) {
-      setStatusJoke("");
-      return;
-    }
-    setStatusJoke(jokeOfDay(dictionaries[locale]));
-  }, [locale, isSingle]);
-
-  useEffect(() => {
-    const tick = () => {
+    const frame = requestAnimationFrame(() => {
       const now = Date.now();
       setRedbulls(redbullCount(now));
       if (isSingle) {
         setSingleDays(daysSince(singleSince, now));
+        setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
+      } else {
+        setStatusJoke("");
       }
-    };
-    tick();
+    });
     const id = window.setInterval(() => {
-      tick();
+      const tick = Date.now();
+      setRedbulls(redbullCount(tick));
       if (isSingle) {
+        setSingleDays(daysSince(singleSince, tick));
         setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
       }
     }, 60_000);
-    return () => window.clearInterval(id);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearInterval(id);
+    };
   }, [locale, isSingle, singleSince]);
 
   useEffect(() => {
