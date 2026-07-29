@@ -25,6 +25,10 @@ export type LandingCopy = {
   statusSingle: string;
   statusDating: string;
   days: string;
+  fuelLabel: string;
+  fuelUnit: string;
+  fuelRange: string;
+  fuelTrend: string;
   exitRally: string;
   nowTitle: string;
   notesTitle: string;
@@ -153,6 +157,10 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     statusSingle: "célibataire",
     statusDating: "en couple",
     days: "jours",
+    fuelLabel: "E10 France",
+    fuelUnit: "€/L",
+    fuelRange: "fourchette",
+    fuelTrend: "1j",
     exitRally: "Quitter le mode rallye",
     nowTitle: "Maintenant",
     notesTitle: "Notes",
@@ -205,6 +213,10 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     statusSingle: "single",
     statusDating: "dating",
     days: "days",
+    fuelLabel: "E10 France",
+    fuelUnit: "€/L",
+    fuelRange: "range",
+    fuelTrend: "1d",
     exitRally: "Exit rally mode",
     nowTitle: "Now",
     notesTitle: "Notes",

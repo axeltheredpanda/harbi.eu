@@ -9,6 +9,7 @@ import {
 } from "@/frontend/i18n/landing";
 import type { NoteMeta } from "@/backend/notes";
 import type { GithubActivity } from "@/backend/github";
+import type { NationalFuelPrice } from "@/backend/fuel";
 import type { RelationshipStatus } from "@/backend/supabase/types";
 import { nowItems } from "@/content/now";
 import { HeroAssemble } from "@/frontend/motion/hero-assemble";
@@ -18,6 +19,7 @@ import { MonogramLogo } from "@/frontend/motion/monogram-logo";
 import { PipelineDiagram } from "@/frontend/motion/pipeline-diagram";
 import { morphTheme } from "@/frontend/motion/theme-morph";
 import { openNewsDrawer } from "@/frontend/news/news-provider";
+import { FuelStatusLine } from "./fuel-status-line";
 import { SpecimenCard } from "./specimen-card";
 
 const AXEL_CRM_STACK = ["Java", "React", "Supabase", "Stripe"] as const;
@@ -45,6 +47,7 @@ type Props = {
   github: GithubActivity;
   relationshipStatus: RelationshipStatus;
   singleSince: string;
+  fuel: NationalFuelPrice | null;
 };
 
 function redbullCount(now = Date.now()): number {
@@ -87,6 +90,7 @@ export function LandingPage({
   github,
   relationshipStatus,
   singleSince,
+  fuel,
 }: Props) {
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [rally, setRally] = useState(false);
@@ -232,7 +236,7 @@ export function LandingPage({
       )}
 
       <div className="relative z-10 border-b border-border bg-accent-soft/70">
-        <div className="mx-auto flex min-h-[3.25rem] w-full max-w-2xl flex-col justify-center gap-1 px-6 py-2.5 font-mono text-[11px] leading-relaxed tracking-wide text-ink-muted sm:min-h-[2.5rem] sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-5 sm:gap-y-1 sm:px-8 sm:text-xs">
+        <div className="mx-auto flex min-h-[4.75rem] w-full max-w-2xl flex-col justify-center gap-1 px-6 py-2.5 font-mono text-[11px] leading-relaxed tracking-wide text-ink-muted sm:min-h-[2.75rem] sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-5 sm:gap-y-1 sm:px-8 sm:text-xs">
           <p title="Not a real metric. Wings not included.">
             {copy.redbulls} ·{" "}
             <CountUp value={redbulls} locale={numberLocale} />
@@ -249,6 +253,16 @@ export function LandingPage({
               </>
             )}
           </p>
+          {fuel ? (
+            <FuelStatusLine
+              price={fuel}
+              locale={locale}
+              label={copy.fuelLabel}
+              unit={copy.fuelUnit}
+              rangeLabel={copy.fuelRange}
+              trendLabel={copy.fuelTrend}
+            />
+          ) : null}
         </div>
       </div>
 

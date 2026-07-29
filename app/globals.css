@@ -108,6 +108,41 @@ body {
   }
 }
 
+/* Status banner — fuel ticker settles in after the joke lines */
+@keyframes fuel-settle {
+  from {
+    opacity: 0;
+    transform: translateY(0.2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fuel-arrow-nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(0.12em);
+  }
+  70% {
+    transform: translateY(-0.06em);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fuel-ticker {
+    animation: fuel-settle 0.55s ease-out 0.18s both;
+  }
+
+  .fuel-trend-arrow {
+    animation: fuel-arrow-nudge 1.1s ease-out 0.45s 1 both;
+  }
+}
+
 /* Claudette markdown — light paper */
 .markdown-body p {
   margin: 0.4em 0;
