@@ -9,10 +9,14 @@ export type LandingCopy = {
   navNotes: string;
   navNews: string;
   navNow: string;
+  navCv: string;
   navContact: string;
   navLogin: string;
   workTitle: string;
   workIntro: string;
+  cvTitle: string;
+  cvIntro: string;
+  cvPdf: string;
   notYetOnView: string;
   studioCredit: string;
   skillsTitle: string;
@@ -139,10 +143,15 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     navNotes: "Notes",
     navNews: "News",
     navNow: "Maintenant",
+    navCv: "CV",
     navContact: "Contact",
     navLogin: "Connexion",
     workTitle: "Travaux choisis",
     workIntro: "Une courte étagère. Chaque pièce est quelque chose que j'ai façonné moi-même, ou presque.",
+    cvTitle: "Parcours",
+    cvIntro:
+      "Quelques jalons — faites défiler pour avancer sur la frise. Le PDF reste disponible si vous préférez la version plate.",
+    cvPdf: "Télécharger le PDF",
     notYetOnView: "Pas encore exposé.",
     studioCredit:
       "Les pièces de cette étagère sont construites sous Axel Project, un studio à deux.",
@@ -195,10 +204,15 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     navNotes: "Notes",
     navNews: "News",
     navNow: "Now",
+    navCv: "CV",
     navContact: "Contact",
     navLogin: "Login",
     workTitle: "Selected work",
     workIntro: "A short shelf. Each piece is something I shaped myself, or nearly so.",
+    cvTitle: "Path",
+    cvIntro:
+      "A few milestones — keep scrolling to move along the track. The PDF is still there if you want the flat version.",
+    cvPdf: "Download PDF",
     notYetOnView: "Not yet on view.",
     studioCredit:
       "Pieces on this shelf are built under Axel Project, a two-person studio.",

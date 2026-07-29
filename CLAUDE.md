@@ -6,7 +6,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 
 ## Stack
 - Next.js 16 (App Router), TypeScript, Tailwind 4
-- Supabase : auth + DB (chat + `vehicles` + `bg_removals` + `site_settings`) + Storage
+- Supabase : auth + DB (chat + `vehicles` + `bg_removals` + `site_settings` + `cv_milestones`) + Storage
 - API Anthropic serveur (`/api/claude`, `/api/claude/upload`)
 - Cutout : `@imgly/background-removal` **dans le navigateur** (ONNX) + stockage /
   cache hash via `/api/remove-bg` — pas de microservice Python
@@ -16,6 +16,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - Market quotes via `/api/market` (Yahoo chart, revalidate ~5 min)
 - Prix E10 national via Mon Plein Pas Cher (`backend/fuel.ts`, banner publique)
 - Rapport privé `/analytics` (`claude_usage`, `service_events` — SQL `supabase/analytics.sql`)
+- CV timeline publique (scroll horizontal pin) + CRUD Settings — SQL `supabase/cv-milestones.sql`
 - Déploiement : Vercel (+ Analytics + Speed Insights)
 
 ## Structure
@@ -27,8 +28,10 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `app/(private)/market/` — watchlist actions US tech
 - `app/(private)/garage/` — tracker recherche voiture (CRUD Supabase)
 - `app/(private)/analytics/` — rapport d’usage / santé du site
-- `app/(private)/settings/` — réglages site (ex. relationship status)
+- `app/(private)/settings/` — réglages site (relationship, CV milestones, Claudette)
 - `app/(private)/command-palette.tsx` — Ctrl+K
+- `app/(public)/cv-timeline.tsx` — frise CV scroll-pin
+- `backend/cv/milestones.ts` — CRUD milestones + logos Storage
 - `frontend/cutout/remove-background.ts` — wrapper imgly
 - `backend/analytics/` — agrégation + pricing approx
 - `content/now.ts` — lignes "now" éditables
@@ -47,6 +50,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [x] Rapport `/analytics` (tokens, coût, cutout, news, patterns) — SQL `analytics.sql`
 - [x] Vercel Analytics + Speed Insights
 - [x] Banner E10 nationale (Mon Plein Pas Cher — moyenne, tendance 1j, min–max)
+- [x] CV timeline dynamique (`#cv` + Settings milestones FR/EN) — SQL `cv-milestones.sql`
 - [ ] Brancher Supabase (SQL à jour) si besoin
 - [ ] Contenu projets / LinkedIn encore placeholders
 ## Notes

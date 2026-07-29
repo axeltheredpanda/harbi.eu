@@ -1,7 +1,7 @@
 # Dynamic CV timeline — design
 
 Date: 2026-07-29  
-Status: draft for review  
+Status: approved  
 Scope: public horizontal CV section + Settings CRUD (FR/EN milestones with optional image)
 
 ## Goal

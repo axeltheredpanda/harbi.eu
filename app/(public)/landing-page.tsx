@@ -10,6 +10,7 @@ import {
 import type { NoteMeta } from "@/backend/notes";
 import type { GithubActivity } from "@/backend/github";
 import type { NationalFuelPrice } from "@/backend/fuel";
+import type { CvMilestone } from "@/backend/cv/milestones";
 import type { RelationshipStatus } from "@/backend/supabase/types";
 import { nowItems } from "@/content/now";
 import { HeroAssemble } from "@/frontend/motion/hero-assemble";
@@ -20,6 +21,7 @@ import { PipelineDiagram } from "@/frontend/motion/pipeline-diagram";
 import { morphTheme } from "@/frontend/motion/theme-morph";
 import { openNewsDrawer } from "@/frontend/news/news-provider";
 import { FuelStatusLine } from "./fuel-status-line";
+import { CvTimeline } from "./cv-timeline";
 import { SpecimenCard } from "./specimen-card";
 
 const AXEL_CRM_STACK = ["Java", "React", "Supabase", "Stripe"] as const;
@@ -48,6 +50,7 @@ type Props = {
   relationshipStatus: RelationshipStatus;
   singleSince: string;
   fuel: NationalFuelPrice | null;
+  milestones: CvMilestone[];
 };
 
 function redbullCount(now = Date.now()): number {
@@ -91,6 +94,7 @@ export function LandingPage({
   relationshipStatus,
   singleSince,
   fuel,
+  milestones,
 }: Props) {
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [rally, setRally] = useState(false);
@@ -278,6 +282,11 @@ export function LandingPage({
           <a href="#work" className="transition-colors hover:text-ink">
             {copy.navWork}
           </a>
+          {milestones.length > 0 ? (
+            <a href="#cv" className="transition-colors hover:text-ink">
+              {copy.navCv}
+            </a>
+          ) : null}
           <a href="#now" className="transition-colors hover:text-ink">
             {copy.navNow}
           </a>
@@ -343,7 +352,10 @@ export function LandingPage({
             <a href="#contact" className="link-underline">
               {copy.writeToMe}
             </a>
-            <a href="/resume.pdf" className="link-underline">
+            <a
+              href={milestones.length > 0 ? "#cv" : "/resume.pdf"}
+              className="link-underline"
+            >
               {copy.readResume}
             </a>
           </p>
@@ -404,6 +416,16 @@ export function LandingPage({
             </p>
           )}
         </section>
+
+        {milestones.length > 0 ? (
+          <CvTimeline
+            milestones={milestones}
+            locale={locale}
+            title={copy.cvTitle}
+            intro={copy.cvIntro}
+            pdfLabel={copy.cvPdf}
+          />
+        ) : null}
 
         <section id="now" className="border-t border-border py-16 sm:py-20">
           <h2 className="font-display text-2xl font-medium tracking-tight text-ink sm:text-3xl">
