@@ -32,6 +32,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `frontend/cv/milestone-image.ts` — URL logos bucket
 - `frontend/cutout/remove-background.ts` — wrapper imgly
 - `backend/analytics/` — agrégation + pricing approx
+- `frontend/navigation/soft-nav-refresh.tsx` — revisit → show router cache, refresh RSC
 - `content/now.ts` — lignes "now" éditables
 - `frontend/i18n/landing.ts` — dictionnaires FR/EN
 - `app/opengraph-image.tsx` (+ notes OG)
@@ -52,6 +53,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [x] Mode blague Louis (toggle Settings, quiz login, bloc Claudette) — SQL `louis-joke-mode.sql`
 - [x] Claudette : draft chat au landing, coût turn discret, copy-segments Haiku (hover discret sur extraits)
 - [x] Market + garage retirés de l’UI (nav / routes / API) — tables DB éventuellement encore présentes
+- [x] Soft-nav SWR : `experimental.staleTimes` 30 min + `SoftNavRefresh` (cache immédiat, maj en fond)
 - [ ] Brancher Supabase (SQL à jour) si besoin
 - [ ] Contenu projets / LinkedIn encore placeholders
 ## Notes

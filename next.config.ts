@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Keep last soft-nav payload while browsing the site so revisits paint
+    // instantly; SoftNavRefresh then router.refresh()s in the background.
+    staleTimes: {
+      dynamic: 1800, // 30 min — session-ish while still on the site
+      static: 1800,
+    },
+  },
   async redirects() {
     return [
       {
