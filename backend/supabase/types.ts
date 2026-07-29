@@ -250,6 +250,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      cv_milestones: {
+        Row: {
+          id: string;
+          period: string;
+          title_fr: string;
+          title_en: string;
+          place_fr: string;
+          place_en: string;
+          summary_fr: string;
+          summary_en: string;
+          image_path: string | null;
+          sort_order: number;
+          published: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          period: string;
+          title_fr: string;
+          title_en: string;
+          place_fr?: string;
+          place_en?: string;
+          summary_fr: string;
+          summary_en: string;
+          image_path?: string | null;
+          sort_order?: number;
+          published?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          period?: string;
+          title_fr?: string;
+          title_en?: string;
+          place_fr?: string;
+          place_en?: string;
+          summary_fr?: string;
+          summary_en?: string;
+          image_path?: string | null;
+          sort_order?: number;
+          published?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       claudette_settings: {
         Row: {
           user_id: string;
