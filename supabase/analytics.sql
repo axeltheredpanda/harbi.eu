@@ -48,7 +48,7 @@ alter table public.conversations
 alter table public.conversations
   add column if not exists topic_at timestamptz;
 
--- Cutout timing / cache (client ONNX — no HF Space)
+-- Cutout timing / cache (client ONNX - no HF Space)
 alter table public.bg_removals
   add column if not exists duration_ms integer;
 

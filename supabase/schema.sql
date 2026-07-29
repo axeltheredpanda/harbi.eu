@@ -195,7 +195,7 @@ create policy "bg_removals: owner write" on public.bg_removals
 create policy "bg_removals: owner delete" on public.bg_removals
   for delete using (auth.uid() = user_id);
 
--- Public site settings (singleton) — readable by everyone, writable when logged in
+-- Public site settings (singleton) - readable by everyone, writable when logged in
 create table if not exists public.site_settings (
   id text primary key default 'default' check (id = 'default'),
   relationship_status text not null default 'single'
