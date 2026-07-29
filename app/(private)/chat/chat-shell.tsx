@@ -13,6 +13,7 @@ import {
   getConversationMessages,
   listConversations,
 } from "@/backend/chat/conversations";
+import { estimateCostUsd } from "@/backend/analytics/pricing";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { MessageList, type ChatMessage } from "./message-list";
 import { MessageInput, type PendingAttachment } from "./message-input";
@@ -81,9 +82,8 @@ export function ChatShell({
   claudetteBlockMessage,
 }: Props) {
   const [conversations, setConversations] = useState(initialConversations);
-  const [activeId, setActiveId] = useState<string | null>(
-    initialConversations[0]?.id ?? null,
-  );
+  // Claude.ai style: land on a blank draft; persist only after first send.
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -193,9 +193,8 @@ export function ChatShell({
     setConversations(list);
     if (selectId) {
       setActiveId(selectId);
-    } else if (list.length && !list.some((c) => c.id === activeId)) {
-      setActiveId(list[0].id);
-    } else if (!list.length) {
+    } else if (activeId && !list.some((c) => c.id === activeId)) {
+      // Active chat deleted elsewhere — back to blank draft
       setActiveId(null);
     }
   }
@@ -214,58 +213,13 @@ export function ChatShell({
   async function handleCreate() {
     if (streaming) return;
     setThreadError(null);
-
-    const previousId = activeId;
-    const tempId = `temp-${crypto.randomUUID()}`;
-    const now = new Date().toISOString();
-    const optimistic: Conversation = {
-      id: tempId,
-      user_id: "",
-      title: "New conversation",
-      summary: null,
-      summary_until_message_id: null,
-      topic: null,
-      topic_at: null,
-      created_at: now,
-      updated_at: now,
-    };
-
-    // Paint the empty chat immediately — don't wait on Supabase.
-    setConversations((prev) => [optimistic, ...prev.filter((c) => c.id !== tempId)]);
-    setActiveId(tempId);
+    // Drop any optimistic temp row; stay on an unsaved draft.
+    setConversations((prev) => prev.filter((c) => !isTempConversationId(c.id)));
+    setActiveId(null);
     setMessages([]);
     clearComposer();
     setMobileOpen(false);
-
-    const promise = createConversation()
-      .then((created) => {
-        setConversations((prev) =>
-          prev.map((c) => (c.id === tempId ? created : c)),
-        );
-        setActiveId((prev) => (prev === tempId ? created.id : prev));
-        return created.id;
-      })
-      .catch((err: unknown) => {
-        setConversations((prev) => prev.filter((c) => c.id !== tempId));
-        setActiveId((prev) => (prev === tempId ? previousId : prev));
-        setThreadError({
-          message: err instanceof Error ? err.message : "Could not create chat",
-          onRetry: () => void handleCreate(),
-        });
-        throw err;
-      })
-      .finally(() => {
-        if (createPromiseRef.current === promise) {
-          createPromiseRef.current = null;
-        }
-      });
-
-    createPromiseRef.current = promise;
-    try {
-      await promise;
-    } catch {
-      // Error UI already set
-    }
+    createPromiseRef.current = null;
   }
 
   async function handleDelete(id: string) {
@@ -274,7 +228,7 @@ export function ChatShell({
     const next = conversations.filter((c) => c.id !== id);
     setConversations(next);
     if (activeId === id) {
-      setActiveId(next[0]?.id ?? null);
+      setActiveId(null);
       setMessages([]);
       clearComposer();
     }
@@ -536,6 +490,29 @@ export function ChatShell({
               typeof payload.assistant_message_id === "string"
                 ? payload.assistant_message_id
                 : options.streamId;
+            const finalContent =
+              typeof payload.content === "string" ? payload.content : undefined;
+            const usage = payload.usage as
+              | {
+                  input_tokens?: number | null;
+                  output_tokens?: number | null;
+                  cache_creation_input_tokens?: number | null;
+                  cache_read_input_tokens?: number | null;
+                }
+              | undefined;
+            const doneModel =
+              typeof payload.model === "string" ? payload.model : model;
+            const costUsd =
+              usage != null
+                ? estimateCostUsd({
+                    model: doneModel,
+                    inputTokens: usage.input_tokens,
+                    outputTokens: usage.output_tokens,
+                    cacheCreationTokens: usage.cache_creation_input_tokens,
+                    cacheReadTokens: usage.cache_read_input_tokens,
+                  })
+                : null;
+
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === options.streamId
@@ -543,12 +520,62 @@ export function ChatShell({
                       ...m,
                       id: assistantId,
                       streaming: false,
-                      content:
-                        typeof payload.content === "string" ? payload.content : m.content,
+                      content: finalContent ?? m.content,
+                      costUsd,
+                      copySegmentsLoading: true,
+                      copySegments: [],
                     }
                   : m,
               ),
             );
+
+            const textForSegments = finalContent;
+            if (textForSegments && textForSegments.trim().length >= 48) {
+              void fetch("/api/claude/copy-segments", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content: textForSegments }),
+              })
+                .then(async (res) => {
+                  if (!res.ok) return { segments: [] as { label: string; text: string }[] };
+                  return (await res.json()) as {
+                    segments?: { label: string; text: string }[];
+                  };
+                })
+                .then((body) => {
+                  const segments = Array.isArray(body.segments)
+                    ? body.segments
+                    : [];
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantId
+                        ? {
+                            ...m,
+                            copySegments: segments,
+                            copySegmentsLoading: false,
+                          }
+                        : m,
+                    ),
+                  );
+                })
+                .catch(() => {
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantId
+                        ? { ...m, copySegmentsLoading: false }
+                        : m,
+                    ),
+                  );
+                });
+            } else {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId
+                    ? { ...m, copySegmentsLoading: false }
+                    : m,
+                ),
+              );
+            }
           }
 
           if (event === "error") {
@@ -797,7 +824,9 @@ export function ChatShell({
   }
 
   const activeTitle =
-    conversations.find((c) => c.id === activeId)?.title ?? "Claudette";
+    activeId == null
+      ? "New conversation"
+      : (conversations.find((c) => c.id === activeId)?.title ?? "Claudette");
 
   return (
     <div className="-mx-6 -my-10 flex h-[calc(100dvh-4.25rem)] min-h-0 flex-1 sm:-mx-10">

@@ -53,6 +53,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [x] Banner E10 nationale (Mon Plein Pas Cher — moyenne, tendance 1j, min–max)
 - [x] CV timeline (`#cv` sticky track + Settings onglet CV deux panneaux) — SQL `cv-milestones.sql`
 - [x] Mode blague Louis (toggle Settings, quiz login, bloc Claudette) — SQL `louis-joke-mode.sql`
+- [x] Claudette : draft chat au landing, coût turn discret, copy-segments Haiku
 - [ ] Brancher Supabase (SQL à jour) si besoin
 - [ ] Contenu projets / LinkedIn encore placeholders
 ## Notes
