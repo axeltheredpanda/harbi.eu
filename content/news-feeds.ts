@@ -9,7 +9,7 @@ export type NewsFeed = {
 };
 
 /**
- * Curated RSS/Atom sources — edit this list to change what gets imported.
+ * Curated RSS/Atom sources — seed for the `feeds` table on sync.
  * Prefer official feeds over scrapers.
  */
 export const NEWS_FEEDS: NewsFeed[] = [

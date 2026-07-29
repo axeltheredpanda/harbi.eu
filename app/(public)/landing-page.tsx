@@ -16,6 +16,7 @@ import { ScrollReveal } from "@/frontend/motion/scroll-reveal";
 import { CountUp } from "@/frontend/motion/count-up";
 import { MonogramLogo } from "@/frontend/motion/monogram-logo";
 import { morphTheme } from "@/frontend/motion/theme-morph";
+import { openNewsDrawer } from "@/frontend/news/news-provider";
 
 const SITE_LAUNCH_MS = Date.UTC(2026, 6, 1);
 const LOCALE_KEY = "harbi.locale";
@@ -249,9 +250,13 @@ export function LandingPage({
           <a href="#notes" className="transition-colors hover:text-ink">
             {copy.navNotes}
           </a>
-          <Link href="/news" className="transition-colors hover:text-ink">
+          <button
+            type="button"
+            onClick={() => openNewsDrawer()}
+            className="transition-colors hover:text-ink"
+          >
             {copy.navNews}
-          </Link>
+          </button>
           <a href="#contact" className="transition-colors hover:text-ink">
             {copy.navContact}
           </a>

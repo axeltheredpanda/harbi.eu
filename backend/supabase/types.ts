@@ -256,17 +256,53 @@ export type Database = {
         };
         Relationships: [];
       };
-      news_items: {
+      feeds: {
+        Row: {
+          id: string;
+          url: string;
+          name: string;
+          favicon_url: string | null;
+          last_fetched_at: string | null;
+          status: "ok" | "unreachable";
+          consecutive_failures: number;
+          tags: string[];
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          url: string;
+          name: string;
+          favicon_url?: string | null;
+          last_fetched_at?: string | null;
+          status?: "ok" | "unreachable";
+          consecutive_failures?: number;
+          tags?: string[];
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          url?: string;
+          name?: string;
+          favicon_url?: string | null;
+          last_fetched_at?: string | null;
+          status?: "ok" | "unreachable";
+          consecutive_failures?: number;
+          tags?: string[];
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      feed_items: {
         Row: {
           id: string;
           feed_id: string;
           guid: string;
           title: string;
           url: string;
-          source_name: string;
-          summary: string | null;
           published_at: string | null;
-          tags: string[];
+          content_snippet: string | null;
+          full_content: string | null;
+          read_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -275,10 +311,10 @@ export type Database = {
           guid: string;
           title: string;
           url: string;
-          source_name: string;
-          summary?: string | null;
           published_at?: string | null;
-          tags?: string[];
+          content_snippet?: string | null;
+          full_content?: string | null;
+          read_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -287,10 +323,10 @@ export type Database = {
           guid?: string;
           title?: string;
           url?: string;
-          source_name?: string;
-          summary?: string | null;
           published_at?: string | null;
-          tags?: string[];
+          content_snippet?: string | null;
+          full_content?: string | null;
+          read_at?: string | null;
           created_at?: string;
         };
         Relationships: [];

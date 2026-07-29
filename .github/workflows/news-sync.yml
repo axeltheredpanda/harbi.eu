@@ -1,4 +1,4 @@
-# Free RSS sync — runs every 3 hours via GitHub Actions (Hobby-friendly).
+# Free RSS sync every 30 minutes via GitHub Actions (Hobby-friendly).
 # Setup: repo Settings → Secrets → Actions → add CRON_SECRET (same value as Vercel).
 # Optional: Variables → NEWS_SYNC_URL (defaults to https://harbi.eu).
 
@@ -6,7 +6,7 @@ name: News sync
 
 on:
   schedule:
-    - cron: "0 */3 * * *"
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 jobs:

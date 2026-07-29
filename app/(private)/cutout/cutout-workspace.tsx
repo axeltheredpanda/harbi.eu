@@ -367,8 +367,7 @@ export function CutoutWorkspace({ initialHistory }: Props) {
           <p className="font-display text-xl text-ink">Drop an image here</p>
           <p className="max-w-sm text-sm leading-relaxed text-ink-muted">
             or click to browse · or paste with{" "}
-            <kbd className="font-mono text-xs text-ink">Ctrl</kbd>/
-            <kbd className="font-mono text-xs text-ink">⌘</kbd>+
+            <kbd className="font-mono text-xs text-ink">Ctrl</kbd>+
             <kbd className="font-mono text-xs text-ink">V</kbd>
           </p>
           <p className="font-mono text-[11px] text-ink-faint">

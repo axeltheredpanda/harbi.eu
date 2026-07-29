@@ -8,7 +8,6 @@ function authorized(request: Request, userId: string | undefined): boolean {
   const cronSecret = process.env.CRON_SECRET?.trim();
   const header = request.headers.get("authorization");
   if (cronSecret && header === `Bearer ${cronSecret}`) return true;
-  // Logged-in owner can trigger a manual sync from /news
   return Boolean(userId);
 }
 
@@ -17,7 +16,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Set SUPABASE_SERVICE_ROLE_KEY (and CRON_SECRET for Vercel Cron) to sync feeds.",
+          "Set SUPABASE_SERVICE_ROLE_KEY (and CRON_SECRET for scheduled sync).",
       },
       { status: 503 },
     );
@@ -49,7 +48,6 @@ export async function POST(request: Request) {
   }
 }
 
-/** Vercel Cron uses GET by default on some setups — accept both. */
 export async function GET(request: Request) {
   return POST(request);
 }
