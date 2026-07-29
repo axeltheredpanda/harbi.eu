@@ -3,7 +3,8 @@ import { getClaudetteSettings } from "@/backend/claudette/settings";
 import { listAllMilestones } from "@/backend/cv/milestones";
 import { SettingsForm } from "./settings-form";
 import { ClaudetteSettingsSection } from "./claudette-settings";
-import { CvMilestonesSection } from "./cv-milestones-section";
+import { CvSettingsPanel } from "./cv-settings-panel";
+import { SettingsShell } from "./settings-shell";
 
 export default async function SettingsPage() {
   const [site, claudette, milestones] = await Promise.all([
@@ -13,10 +14,10 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-2 pb-16">
-      <SettingsForm initial={site} />
-      <CvMilestonesSection initial={milestones} />
-      <ClaudetteSettingsSection initial={claudette} />
-    </div>
+    <SettingsShell
+      site={<SettingsForm initial={site} />}
+      cv={<CvSettingsPanel initial={milestones} />}
+      claudette={<ClaudetteSettingsSection initial={claudette} />}
+    />
   );
 }

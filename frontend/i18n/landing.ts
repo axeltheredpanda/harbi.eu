@@ -17,6 +17,7 @@ export type LandingCopy = {
   cvTitle: string;
   cvIntro: string;
   cvPdf: string;
+  cvScrollHint: string;
   notYetOnView: string;
   studioCredit: string;
   skillsTitle: string;
@@ -150,8 +151,9 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     workIntro: "Une courte étagère. Chaque pièce est quelque chose que j'ai façonné moi-même, ou presque.",
     cvTitle: "Parcours",
     cvIntro:
-      "Quelques jalons — faites défiler pour avancer sur la frise. Le PDF reste disponible si vous préférez la version plate.",
+      "Quelques jalons sur une frise — continuez à scroller pour avancer. Le PDF reste disponible à côté.",
     cvPdf: "Télécharger le PDF",
+    cvScrollHint: "Scroller pour explorer",
     notYetOnView: "Pas encore exposé.",
     studioCredit:
       "Les pièces de cette étagère sont construites sous Axel Project, un studio à deux.",
@@ -211,8 +213,9 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     workIntro: "A short shelf. Each piece is something I shaped myself, or nearly so.",
     cvTitle: "Path",
     cvIntro:
-      "A few milestones — keep scrolling to move along the track. The PDF is still there if you want the flat version.",
+      "A few milestones on a track — keep scrolling to move along. The PDF is still available beside the section.",
     cvPdf: "Download PDF",
+    cvScrollHint: "Scroll to explore",
     notYetOnView: "Not yet on view.",
     studioCredit:
       "Pieces on this shelf are built under Axel Project, a two-person studio.",
