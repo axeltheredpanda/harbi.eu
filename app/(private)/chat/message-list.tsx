@@ -69,33 +69,6 @@ function CopyButton({ text, onCopy }: { text: string; onCopy: (text: string) => 
   );
 }
 
-function SegmentCopyButton({
-  label,
-  text,
-  onCopy,
-}: {
-  label: string;
-  text: string;
-  onCopy: (text: string) => void;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  return (
-    <button
-      type="button"
-      title={text.length > 120 ? `${text.slice(0, 120)}…` : text}
-      onClick={() => {
-        onCopy(text);
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 1200);
-      }}
-      className="font-mono text-[11px] text-ink-faint transition-colors hover:text-accent"
-    >
-      {copied ? "copied" : `copy · ${label}`}
-    </button>
-  );
-}
-
 export function MessageList({
   messages,
   streaming,
@@ -182,7 +155,6 @@ export function MessageList({
           const thinking = Boolean(message.streaming && !message.content);
           const actionsDisabled = streaming || Boolean(message.pending);
           const costLabel = formatQuietCostUsd(message.costUsd);
-          const segments = message.copySegments ?? [];
 
           return (
             <div
@@ -211,6 +183,12 @@ export function MessageList({
                   <MarkdownMessage
                     content={message.content}
                     streaming={Boolean(message.streaming)}
+                    copySegments={
+                      message.copySegmentsLoading
+                        ? undefined
+                        : message.copySegments
+                    }
+                    onCopySegment={onCopy}
                   />
                 )}
                 <AttachmentChips attachments={message.attachments} />
@@ -252,23 +230,6 @@ export function MessageList({
                       {costLabel}
                     </span>
                   ) : null}
-                </div>
-              )}
-              {!isUser && !actionsDisabled && (
-                <div className="flex max-w-[min(100%,42rem)] flex-wrap items-center gap-x-3 gap-y-1">
-                  {message.copySegmentsLoading ? (
-                    <span className="font-mono text-[10px] text-ink-faint/70">
-                      spotting copy…
-                    </span>
-                  ) : null}
-                  {segments.map((segment) => (
-                    <SegmentCopyButton
-                      key={`${segment.label}-${segment.text.slice(0, 24)}`}
-                      label={segment.label}
-                      text={segment.text}
-                      onCopy={onCopy}
-                    />
-                  ))}
                 </div>
               )}
             </div>
