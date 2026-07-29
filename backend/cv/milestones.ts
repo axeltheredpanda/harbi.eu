@@ -2,22 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/backend/supabase/server";
-import type { Database } from "@/backend/supabase/types";
+import {
+  CV_MILESTONES_BUCKET,
+  type CvMilestone,
+  type CvMilestoneInput,
+} from "@/backend/cv/types";
 
-export type CvMilestone = Database["public"]["Tables"]["cv_milestones"]["Row"];
-
-export type CvMilestoneInput = {
-  period: string;
-  titleFr: string;
-  titleEn: string;
-  placeFr: string;
-  placeEn: string;
-  summaryFr: string;
-  summaryEn: string;
-  published?: boolean;
-};
-
-const BUCKET = "cv-milestones";
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
   "image/jpeg",
@@ -59,13 +49,6 @@ function normalizeInput(input: CvMilestoneInput) {
     summary_en: summaryEn,
     published: Boolean(input.published),
   };
-}
-
-export function milestoneImageUrl(path: string | null): string | null {
-  if (!path) return null;
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
-  if (!base) return null;
-  return `${base}/storage/v1/object/public/${BUCKET}/${path}`;
 }
 
 export async function listPublishedMilestones(): Promise<CvMilestone[]> {
@@ -159,7 +142,9 @@ export async function deleteMilestone(id: string): Promise<void> {
     .maybeSingle();
 
   if (existing?.image_path) {
-    await supabase.storage.from(BUCKET).remove([existing.image_path]);
+    await supabase.storage
+      .from(CV_MILESTONES_BUCKET)
+      .remove([existing.image_path]);
   }
 
   const { error } = await supabase.from("cv_milestones").delete().eq("id", id);
@@ -218,12 +203,14 @@ export async function uploadMilestoneImage(
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const { error: uploadError } = await supabase.storage
-    .from(BUCKET)
+    .from(CV_MILESTONES_BUCKET)
     .upload(path, buffer, { contentType: file.type, upsert: false });
   if (uploadError) throw uploadError;
 
   if (existing.image_path) {
-    await supabase.storage.from(BUCKET).remove([existing.image_path]);
+    await supabase.storage
+      .from(CV_MILESTONES_BUCKET)
+      .remove([existing.image_path]);
   }
 
   const { data, error } = await supabase
@@ -247,7 +234,9 @@ export async function clearMilestoneImage(id: string): Promise<CvMilestone> {
   if (loadError) throw loadError;
 
   if (existing.image_path) {
-    await supabase.storage.from(BUCKET).remove([existing.image_path]);
+    await supabase.storage
+      .from(CV_MILESTONES_BUCKET)
+      .remove([existing.image_path]);
   }
 
   const { data, error } = await supabase
