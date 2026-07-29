@@ -28,7 +28,7 @@ import { SpecimenCard } from "./specimen-card";
 const AXEL_CRM_STACK = ["Java", "React", "Supabase", "Stripe"] as const;
 const AXEL_CRM_YEARS = "2025—";
 
-const SITE_LAUNCH_MS = Date.UTC(2026, 6, 1);
+const SITE_LAUNCH_MS = Date.UTC(2026, 6, 27);
 /** One Red Bull every 8 hours from launch (= 3/day). */
 const REDBULL_EVERY_MS = 8 * 3_600_000;
 const REDBULL_BASE = 8;
@@ -267,53 +267,6 @@ export function LandingPage({
           </p>
 
           <div className="flex shrink-0 flex-wrap items-baseline gap-x-4 gap-y-1 sm:justify-end sm:gap-x-5">
-            <a
-              href={nowPlaying.url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-ink-muted transition-colors hover:text-accent"
-              title={nowPlayingLine}
-            >
-              <span className="text-ink-faint">{copy.listeningTo}</span>
-              <svg
-                viewBox="0 0 16 16"
-                className="eq-icon h-3 w-3 shrink-0"
-                aria-hidden="true"
-                fill="none"
-              >
-                <line
-                  className="eq-bar eq-bar-1"
-                  x1="3.5"
-                  y1="12"
-                  x2="3.5"
-                  y2="5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-                <line
-                  className="eq-bar eq-bar-2"
-                  x1="8"
-                  y1="12"
-                  x2="8"
-                  y2="3"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-                <line
-                  className="eq-bar eq-bar-3"
-                  x1="12.5"
-                  y1="12"
-                  x2="12.5"
-                  y2="6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <span className="min-w-0 truncate">{nowPlayingLine}</span>
-            </a>
             <p
               className="inline-flex items-baseline gap-x-1.5 text-ink-muted"
               title={
@@ -342,6 +295,58 @@ export function LandingPage({
               </>
             ) : null}
           </div>
+        </div>
+      </div>
+
+      <div className="relative z-10 hidden border-b border-border sm:block">
+        <div className="mx-auto flex w-full max-w-3xl px-6 py-2 sm:px-8">
+          <a
+            href={nowPlaying.url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-w-0 max-w-full items-center gap-2 font-mono text-[11px] tracking-wide text-ink-muted transition-colors hover:text-accent sm:text-xs"
+            title={nowPlayingLine}
+          >
+            <svg
+              viewBox="0 0 16 16"
+              className="eq-icon h-3.5 w-3.5 shrink-0"
+              aria-hidden="true"
+              fill="none"
+            >
+              <line
+                className="eq-bar eq-bar-1"
+                x1="3.5"
+                y1="12"
+                x2="3.5"
+                y2="5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+              <line
+                className="eq-bar eq-bar-2"
+                x1="8"
+                y1="12"
+                x2="8"
+                y2="3"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+              <line
+                className="eq-bar eq-bar-3"
+                x1="12.5"
+                y1="12"
+                x2="12.5"
+                y2="6"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+            <span className="text-ink-faint shrink-0">{copy.listeningTo}</span>
+            <span className="min-w-0 truncate">{nowPlayingLine}</span>
+          </a>
         </div>
       </div>
 

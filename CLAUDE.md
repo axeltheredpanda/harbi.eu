@@ -55,7 +55,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [x] Claudette : draft chat au landing, coût turn discret, copy-segments Haiku (hover discret sur extraits)
 - [x] Market + garage retirés de l’UI (nav / routes / API) — tables DB éventuellement encore présentes
 - [x] Soft-nav SWR : `experimental.staleTimes` 30 min + `SoftNavRefresh` (cache immédiat, maj en fond)
-- [x] Landing : badge tech footer (SHA / build / en ligne depuis) + now-playing meta — SQL `now-playing.sql`
+- [x] Landing : badge tech footer + now-playing sous la meta bar (desktop only) — SQL `now-playing.sql`
 - [ ] Brancher Supabase (SQL à jour) si besoin — dont `supabase/now-playing.sql`
 - [ ] Contenu projets / LinkedIn encore placeholders
 ## Notes
