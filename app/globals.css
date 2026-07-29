@@ -193,6 +193,47 @@ body {
   }
 }
 
+/* Now-playing equalizer bars */
+@keyframes eq-pulse {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.eq-icon {
+  overflow: visible;
+}
+
+.eq-bar {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .eq-bar-1 {
+    animation: eq-pulse 0.85s ease-in-out infinite;
+  }
+
+  .eq-bar-2 {
+    animation: eq-pulse 0.85s ease-in-out 0.18s infinite;
+  }
+
+  .eq-bar-3 {
+    animation: eq-pulse 0.85s ease-in-out 0.36s infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eq-bar {
+    animation: none;
+    transform: scaleY(0.65);
+  }
+}
+
 /* Claudette markdown — light paper */
 .markdown-body p {
   margin: 0.4em 0;

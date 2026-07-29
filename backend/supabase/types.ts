@@ -235,6 +235,9 @@ export type Database = {
           relationship_status: "single" | "dating";
           single_since: string;
           louis_joke_mode: boolean;
+          now_playing_title: string | null;
+          now_playing_artist: string | null;
+          now_playing_url: string | null;
           updated_at: string;
         };
         Insert: {
@@ -242,6 +245,9 @@ export type Database = {
           relationship_status?: "single" | "dating";
           single_since?: string;
           louis_joke_mode?: boolean;
+          now_playing_title?: string | null;
+          now_playing_artist?: string | null;
+          now_playing_url?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -249,6 +255,9 @@ export type Database = {
           relationship_status?: "single" | "dating";
           single_since?: string;
           louis_joke_mode?: boolean;
+          now_playing_title?: string | null;
+          now_playing_artist?: string | null;
+          now_playing_url?: string | null;
           updated_at?: string;
         };
         Relationships: [];

@@ -34,6 +34,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `backend/analytics/` — agrégation + pricing approx
 - `frontend/navigation/soft-nav-refresh.tsx` — revisit → show router cache, refresh RSC
 - `content/now.ts` — lignes "now" éditables
+- `content/now-playing.ts` — fallback titre / artiste / url (override Settings)
 - `frontend/i18n/landing.ts` — dictionnaires FR/EN
 - `app/opengraph-image.tsx` (+ notes OG)
 
@@ -54,7 +55,8 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [x] Claudette : draft chat au landing, coût turn discret, copy-segments Haiku (hover discret sur extraits)
 - [x] Market + garage retirés de l’UI (nav / routes / API) — tables DB éventuellement encore présentes
 - [x] Soft-nav SWR : `experimental.staleTimes` 30 min + `SoftNavRefresh` (cache immédiat, maj en fond)
-- [ ] Brancher Supabase (SQL à jour) si besoin
+- [x] Landing : badge tech footer (SHA / build / en ligne depuis) + now-playing meta — SQL `now-playing.sql`
+- [ ] Brancher Supabase (SQL à jour) si besoin — dont `supabase/now-playing.sql`
 - [ ] Contenu projets / LinkedIn encore placeholders
 ## Notes
 - Pas de todo/projects / market / garage UI (retirés volontairement).
