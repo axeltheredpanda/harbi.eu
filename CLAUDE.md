@@ -59,6 +59,8 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [ ] Brancher Supabase (SQL à jour) si besoin — dont `supabase/now-playing.sql`
 - [ ] Contenu projets encore placeholders
 - [x] Contact : arthur.reichard@essec.edu · GitHub · LinkedIn
+- [x] SEO : sitemap.xml, robots.txt, metadata Arthur Reichard, JSON-LD Person
+- [ ] Soumettre harbi.eu dans Google Search Console (sitemap `/sitemap.xml`)
 ## Notes
 - Pas de todo/projects / market / garage UI (retirés volontairement).
 - Mettre à jour cette section à chaque session.

@@ -18,8 +18,9 @@ export async function generateMetadata({ params }: Props) {
   const note = await getNote(slug);
   if (!note) return { title: "Note · harbi.eu" };
   return {
-    title: `${note.title} · harbi.eu`,
-    description: note.excerpt,
+    title: note.title,
+    description: note.excerpt || `Note by Arthur Reichard — ${note.title}`,
+    authors: [{ name: "Arthur Reichard" }],
   };
 }
 
