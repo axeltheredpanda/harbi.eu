@@ -235,6 +235,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      claudette_settings: {
+        Row: {
+          user_id: string;
+          web_search_enabled: boolean;
+          profile: Record<string, unknown>;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          web_search_enabled?: boolean;
+          profile?: Record<string, unknown>;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          web_search_enabled?: boolean;
+          profile?: Record<string, unknown>;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

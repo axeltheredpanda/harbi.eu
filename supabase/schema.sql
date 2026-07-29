@@ -220,6 +220,26 @@ insert into public.site_settings (id, relationship_status, single_since)
 values ('default', 'single', '2026-02-01')
 on conflict (id) do nothing;
 
+-- Claudette personal settings + profile (private, per user)
+create table if not exists public.claudette_settings (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  web_search_enabled boolean not null default true,
+  profile jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.claudette_settings enable row level security;
+
+create policy "claudette_settings: owner read" on public.claudette_settings
+  for select using (auth.uid() = user_id);
+create policy "claudette_settings: owner insert" on public.claudette_settings
+  for insert with check (auth.uid() = user_id);
+create policy "claudette_settings: owner update" on public.claudette_settings
+  for update using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+create policy "claudette_settings: owner delete" on public.claudette_settings
+  for delete using (auth.uid() = user_id);
+
 -- Storage bucket for Claudette attachments (private).
 -- Create in Dashboard or via:
 insert into storage.buckets (id, name, public)
