@@ -559,17 +559,26 @@ export function LandingPage({
             {copy.contactBody}
           </p>
           <p className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-base">
-            <a href="mailto:arthur.reichard@essec.edu" className="link-underline">
+            <a
+              href="mailto:arthur.reichard@essec.edu"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="link-underline"
+            >
               arthur.reichard@essec.edu
             </a>
             <a
               href="https://github.com/axeltheredpanda"
+              target="_blank"
+              rel="noopener noreferrer"
               className="link-underline"
             >
               GitHub
             </a>
             <a
               href="https://www.linkedin.com/in/arthur-reichard/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="link-underline"
             >
               LinkedIn
