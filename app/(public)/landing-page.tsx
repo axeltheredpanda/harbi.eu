@@ -28,6 +28,9 @@ const AXEL_CRM_STACK = ["Java", "React", "Supabase", "Stripe"] as const;
 const AXEL_CRM_YEARS = "2025—";
 
 const SITE_LAUNCH_MS = Date.UTC(2026, 6, 1);
+/** One Red Bull every 8 hours from launch (= 3/day). */
+const REDBULL_EVERY_MS = 8 * 3_600_000;
+const REDBULL_BASE = 8;
 const LOCALE_KEY = "harbi.locale";
 
 const KONAMI = [
@@ -94,11 +97,7 @@ export function LandingPage({
   const [singleDays, setSingleDays] = useState(() =>
     relationshipStatus === "single" ? daysSince(singleSince) : 0,
   );
-  const [statusJoke, setStatusJoke] = useState(() =>
-    relationshipStatus === "single"
-      ? jokeOfDay(dictionaries[initialLocale])
-      : "",
-  );
+  const [statusJoke, setStatusJoke] = useState("");
   const [clickTimes, setClickTimes] = useState<number[]>([]);
   const [themeBusy, setThemeBusy] = useState(false);
 
@@ -156,29 +155,28 @@ export function LandingPage({
   }, []);
 
   useEffect(() => {
-    if (!isSingle) {
-      setStatusJoke("");
-      return;
-    }
-    setStatusJoke(jokeOfDay(dictionaries[locale]));
-  }, [locale, isSingle]);
-
-  useEffect(() => {
-    const tick = () => {
+    const frame = requestAnimationFrame(() => {
       const now = Date.now();
       setRedbulls(redbullCount(now));
       if (isSingle) {
         setSingleDays(daysSince(singleSince, now));
+        setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
+      } else {
+        setStatusJoke("");
       }
-    };
-    tick();
+    });
     const id = window.setInterval(() => {
-      tick();
+      const tick = Date.now();
+      setRedbulls(redbullCount(tick));
       if (isSingle) {
+        setSingleDays(daysSince(singleSince, tick));
         setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
       }
     }, 60_000);
-    return () => window.clearInterval(id);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearInterval(id);
+    };
   }, [locale, isSingle, singleSince]);
 
   useEffect(() => {
