@@ -43,7 +43,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [x] Claudette (streaming, modèles, uploads, UX, web search per-message, draft landing, coût, copy-segments)
 - [x] Cutout in-browser (imgly) + history/cache Supabase — SQL `cutout-and-settings.sql`
 - [x] Settings (relationship status single/dating → bannière publique)
-- [x] Landing personnalité + FR/EN + now + notes + GitHub subtle + OG
+- [x] Landing personnalité + now + notes + GitHub subtle + OG (English only)
 - [x] Command palette (Ctrl+K)
 - [x] Selected work en cartes museum specimen (Axel CRM Nº 01 ; crédit studio Axel Project)
 - [x] News drawer RSS + sync GitHub Actions

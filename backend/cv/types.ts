@@ -2,14 +2,12 @@ import type { Database } from "@/backend/supabase/types";
 
 export type CvMilestone = Database["public"]["Tables"]["cv_milestones"]["Row"];
 
+/** English-only editor shape — FR DB columns are mirrored on write. */
 export type CvMilestoneInput = {
   period: string;
-  titleFr: string;
-  titleEn: string;
-  placeFr: string;
-  placeEn: string;
-  summaryFr: string;
-  summaryEn: string;
+  title: string;
+  place: string;
+  summary: string;
   published?: boolean;
 };
 

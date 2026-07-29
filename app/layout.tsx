@@ -54,8 +54,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    locale: "fr_FR",
-    alternateLocale: ["en_GB"],
+    locale: "en_GB",
     url: "/",
     siteName: "harbi.eu",
     title: "Arthur Reichard — harbi.eu",
@@ -88,7 +87,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="fr"
+      lang="en"
       className={`${fraunces.variable} ${publicSans.variable} ${geistMono.variable} h-full`}
     >
       <body className="flex min-h-full flex-col font-body antialiased">
