@@ -44,8 +44,10 @@ export function ScrollReveal({
     }
 
     items.forEach((el) => {
+      // Opacity/transform only — never remove from flow (avoids CLS)
       el.style.opacity = "0";
       el.style.transform = "translateY(12px)";
+      el.style.willChange = "opacity, transform";
     });
 
     const observer = new IntersectionObserver(

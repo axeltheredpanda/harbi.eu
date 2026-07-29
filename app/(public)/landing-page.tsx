@@ -73,6 +73,14 @@ function pickJoke(copy: LandingCopy, exclude?: string): string {
   return next;
 }
 
+/** Stable per UTC day — same on SSR and first client paint (avoids CLS). */
+function jokeOfDay(copy: LandingCopy, now = Date.now()): string {
+  const pool = copy.statusJokes;
+  if (pool.length === 0) return "";
+  const day = Math.floor(now / 86_400_000);
+  return pool[day % pool.length] ?? pool[0];
+}
+
 export function LandingPage({
   initialLocale,
   notes,
@@ -82,9 +90,15 @@ export function LandingPage({
 }: Props) {
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [rally, setRally] = useState(false);
-  const [redbulls, setRedbulls] = useState(0);
-  const [singleDays, setSingleDays] = useState(0);
-  const [statusJoke, setStatusJoke] = useState("");
+  const [redbulls, setRedbulls] = useState(() => redbullCount());
+  const [singleDays, setSingleDays] = useState(() =>
+    relationshipStatus === "single" ? daysSince(singleSince) : 0,
+  );
+  const [statusJoke, setStatusJoke] = useState(() =>
+    relationshipStatus === "single"
+      ? jokeOfDay(dictionaries[initialLocale])
+      : "",
+  );
   const [clickTimes, setClickTimes] = useState<number[]>([]);
   const [themeBusy, setThemeBusy] = useState(false);
 
@@ -110,16 +124,16 @@ export function LandingPage({
   }, [themeBusy, rally]);
 
   useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      try {
-        const stored = window.localStorage.getItem(LOCALE_KEY);
-        if (stored === "fr" || stored === "en") setLocale(stored);
-      } catch {
-        // ignore
+    // Restore locale before paint when possible — still may differ from SSR
+    try {
+      const stored = window.localStorage.getItem(LOCALE_KEY);
+      if ((stored === "fr" || stored === "en") && stored !== initialLocale) {
+        setLocale(stored);
       }
-    });
-    return () => cancelAnimationFrame(frame);
-  }, []);
+    } catch {
+      // ignore
+    }
+  }, [initialLocale]);
 
   useEffect(() => {
     return () => {
@@ -142,28 +156,29 @@ export function LandingPage({
   }, []);
 
   useEffect(() => {
-    const frame = requestAnimationFrame(() => {
+    if (!isSingle) {
+      setStatusJoke("");
+      return;
+    }
+    setStatusJoke(jokeOfDay(dictionaries[locale]));
+  }, [locale, isSingle]);
+
+  useEffect(() => {
+    const tick = () => {
       const now = Date.now();
       setRedbulls(redbullCount(now));
       if (isSingle) {
         setSingleDays(daysSince(singleSince, now));
-        setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
-      } else {
-        setStatusJoke("");
       }
-    });
+    };
+    tick();
     const id = window.setInterval(() => {
-      const tick = Date.now();
-      setRedbulls(redbullCount(tick));
+      tick();
       if (isSingle) {
-        setSingleDays(daysSince(singleSince, tick));
         setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
       }
     }, 60_000);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.clearInterval(id);
-    };
+    return () => window.clearInterval(id);
   }, [locale, isSingle, singleSince]);
 
   useEffect(() => {
@@ -217,7 +232,7 @@ export function LandingPage({
       )}
 
       <div className="relative z-10 border-b border-border bg-accent-soft/70">
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-1 px-6 py-2.5 font-mono text-[11px] leading-relaxed tracking-wide text-ink-muted sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-5 sm:gap-y-1 sm:px-8 sm:text-xs">
+        <div className="mx-auto flex min-h-[3.25rem] w-full max-w-2xl flex-col justify-center gap-1 px-6 py-2.5 font-mono text-[11px] leading-relaxed tracking-wide text-ink-muted sm:min-h-[2.5rem] sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-5 sm:gap-y-1 sm:px-8 sm:text-xs">
           <p title="Not a real metric. Wings not included.">
             {copy.redbulls} ·{" "}
             <CountUp value={redbulls} locale={numberLocale} />
