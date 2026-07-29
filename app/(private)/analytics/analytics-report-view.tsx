@@ -168,11 +168,14 @@ export function AnalyticsReportView({ report }: Props) {
         </p>
         <div>
           <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-ink-faint">
-            UTC hour of day
+            Hour of day
           </p>
           <Sparkline
             values={patterns.byHour.map((h) => h.value)}
             label="Chat activity by hour"
+            axisLabels={patterns.byHour.map((h) =>
+              h.hour % 4 === 0 ? String(h.hour) : null,
+            )}
           />
         </div>
         <div>
@@ -182,10 +185,8 @@ export function AnalyticsReportView({ report }: Props) {
           <Sparkline
             values={patterns.byWeekday.map((d) => d.value)}
             label="Chat activity by weekday"
+            axisLabels={patterns.byWeekday.map((d) => d.day)}
           />
-          <p className="mt-1 font-mono text-[10px] text-ink-faint">
-            {patterns.byWeekday.map((d) => d.day).join(" · ")}
-          </p>
         </div>
         {patterns.topics.length > 0 && (
           <div className="space-y-2">
