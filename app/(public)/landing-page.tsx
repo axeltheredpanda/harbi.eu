@@ -249,6 +249,9 @@ export function LandingPage({
           <a href="#notes" className="transition-colors hover:text-ink">
             {copy.navNotes}
           </a>
+          <Link href="/news" className="transition-colors hover:text-ink">
+            {copy.navNews}
+          </Link>
           <a href="#contact" className="transition-colors hover:text-ink">
             {copy.navContact}
           </a>

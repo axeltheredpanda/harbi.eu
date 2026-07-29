@@ -7,6 +7,7 @@ export type LandingCopy = {
   readResume: string;
   navWork: string;
   navNotes: string;
+  navNews: string;
   navNow: string;
   navContact: string;
   navLogin: string;
@@ -129,6 +130,7 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     readResume: "Lire le CV",
     navWork: "Travail",
     navNotes: "Notes",
+    navNews: "News",
     navNow: "Maintenant",
     navContact: "Contact",
     navLogin: "Connexion",
@@ -184,6 +186,7 @@ export const dictionaries: Record<Locale, LandingCopy> = {
     readResume: "Read the résumé",
     navWork: "Work",
     navNotes: "Notes",
+    navNews: "News",
     navNow: "Now",
     navContact: "Contact",
     navLogin: "Login",

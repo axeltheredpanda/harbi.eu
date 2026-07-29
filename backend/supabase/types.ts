@@ -256,6 +256,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      news_items: {
+        Row: {
+          id: string;
+          feed_id: string;
+          guid: string;
+          title: string;
+          url: string;
+          source_name: string;
+          summary: string | null;
+          published_at: string | null;
+          tags: string[];
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          feed_id: string;
+          guid: string;
+          title: string;
+          url: string;
+          source_name: string;
+          summary?: string | null;
+          published_at?: string | null;
+          tags?: string[];
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          feed_id?: string;
+          guid?: string;
+          title?: string;
+          url?: string;
+          source_name?: string;
+          summary?: string | null;
+          published_at?: string | null;
+          tags?: string[];
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
