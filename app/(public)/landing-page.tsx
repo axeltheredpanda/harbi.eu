@@ -10,7 +10,7 @@ import {
 import type { NoteMeta } from "@/backend/notes";
 import type { GithubActivity } from "@/backend/github";
 import type { NationalFuelPrice } from "@/backend/fuel";
-import type { CvMilestone } from "@/backend/cv/milestones";
+import type { CvMilestone } from "@/backend/cv/types";
 import type { RelationshipStatus } from "@/backend/supabase/types";
 import { nowItems } from "@/content/now";
 import { HeroAssemble } from "@/frontend/motion/hero-assemble";

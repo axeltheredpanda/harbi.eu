@@ -6,14 +6,13 @@ import {
   clearMilestoneImage,
   createMilestone,
   deleteMilestone,
-  milestoneImageUrl,
   reorderMilestones,
   setMilestonePublished,
   updateMilestone,
   uploadMilestoneImage,
-  type CvMilestone,
-  type CvMilestoneInput,
 } from "@/backend/cv/milestones";
+import type { CvMilestone, CvMilestoneInput } from "@/backend/cv/types";
+import { milestoneImageUrl } from "@/frontend/cv/milestone-image";
 
 type Props = {
   initial: CvMilestone[];

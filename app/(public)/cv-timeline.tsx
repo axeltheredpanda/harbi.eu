@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  milestoneImageUrl,
-  type CvMilestone,
-} from "@/backend/cv/milestones";
+import type { CvMilestone } from "@/backend/cv/types";
+import { milestoneImageUrl } from "@/frontend/cv/milestone-image";
 import type { Locale } from "@/frontend/i18n/landing";
 import { prefersReducedMotion } from "@/frontend/motion/prefers-reduced";
 
