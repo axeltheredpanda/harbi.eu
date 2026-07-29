@@ -16,7 +16,6 @@ import { CountUp } from "@/frontend/motion/count-up";
 import { MonogramLogo } from "@/frontend/motion/monogram-logo";
 import { PipelineDiagram } from "@/frontend/motion/pipeline-diagram";
 import { morphTheme } from "@/frontend/motion/theme-morph";
-import { openNewsDrawer } from "@/frontend/news/news-provider";
 import { FuelStatusLine } from "./fuel-status-line";
 import { CvTimeline } from "./cv-timeline";
 import { SpecimenCard } from "./specimen-card";
@@ -338,13 +337,6 @@ export function LandingPage({
           <a href="#notes" className="transition-colors hover:text-ink">
             {copy.navNotes}
           </a>
-          <button
-            type="button"
-            onClick={() => openNewsDrawer()}
-            className="transition-colors hover:text-ink"
-          >
-            {copy.navNews}
-          </button>
           <a href="#contact" className="transition-colors hover:text-ink">
             {copy.navContact}
           </a>

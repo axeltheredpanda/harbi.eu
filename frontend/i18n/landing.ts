@@ -5,7 +5,6 @@ export type LandingCopy = {
   readResume: string;
   navWork: string;
   navNotes: string;
-  navNews: string;
   navNow: string;
   navCv: string;
   navContact: string;
@@ -140,7 +139,6 @@ export const copy: LandingCopy = {
   readResume: "Read the résumé",
   navWork: "Work",
   navNotes: "Notes",
-  navNews: "News",
   navNow: "Now",
   navCv: "CV",
   navContact: "Contact",

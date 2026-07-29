@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { usePathname } from "next/navigation";
 
 type NewsUiContextValue = {
   open: boolean;
@@ -19,14 +20,33 @@ type NewsUiContextValue = {
 
 const NewsUiContext = createContext<NewsUiContextValue | null>(null);
 
-export function NewsProvider({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false);
+const PRIVATE_PREFIXES = ["/chat", "/cutout", "/analytics", "/settings"];
 
-  const openNews = useCallback(() => setOpen(true), []);
+function isPrivatePath(pathname: string) {
+  return PRIVATE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
+export function NewsProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const privateArea = isPrivatePath(pathname);
+
+  const openNews = useCallback(() => {
+    if (!isPrivatePath(window.location.pathname)) return;
+    setOpen(true);
+  }, []);
   const closeNews = useCallback(() => setOpen(false), []);
+
+  // Close if we navigate out of the private area
+  useEffect(() => {
+    if (!privateArea && open) setOpen(false);
+  }, [privateArea, open]);
 
   useEffect(() => {
     function onOpen() {
+      if (!isPrivatePath(window.location.pathname)) return;
       setOpen(true);
     }
     window.addEventListener("harbi:news-open", onOpen);
@@ -34,16 +54,17 @@ export function NewsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !privateArea) return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("news") === "1" || window.location.hash === "#news") {
       setOpen(true);
     }
-  }, []);
+  }, [privateArea]);
 
-  // Windows-first: Ctrl+Shift+Y opens News (Ctrl+N / Ctrl+Shift+N conflict with browser)
+  // Windows-first: Ctrl+Shift+Y opens News (private area only)
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (!isPrivatePath(window.location.pathname)) return;
       if (
         event.ctrlKey &&
         event.shiftKey &&

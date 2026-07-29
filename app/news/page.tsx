@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-/** Legacy /news page → home with drawer open. */
+/** Legacy /news URL - no longer opens the drawer on the public site. */
 export default function NewsRedirectPage() {
-  redirect("/?news=1");
+  redirect("/");
 }
