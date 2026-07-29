@@ -90,7 +90,7 @@ export function ClaudetteSettingsSection({ initial }: Props) {
     <>
       <form
         onSubmit={handleSave}
-        className="space-y-6 border-t border-border pt-10"
+        className="space-y-6"
       >
         <div className="space-y-3">
           <h2 className="font-display text-xl font-medium text-ink">

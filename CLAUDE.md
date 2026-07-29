@@ -28,10 +28,11 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `app/(private)/market/` — watchlist actions US tech
 - `app/(private)/garage/` — tracker recherche voiture (CRUD Supabase)
 - `app/(private)/analytics/` — rapport d’usage / santé du site
-- `app/(private)/settings/` — réglages site (relationship, CV milestones, Claudette)
+- `app/(private)/settings/` — onglets Site / CV / Claudette
 - `app/(private)/command-palette.tsx` — Ctrl+K
-- `app/(public)/cv-timeline.tsx` — frise CV scroll-pin
-- `backend/cv/milestones.ts` — CRUD milestones + logos Storage
+- `app/(public)/cv-timeline.tsx` — frise sticky (ligne terracotta) ; stack mobile / reduced-motion
+- `backend/cv/milestones.ts` — drafts autosave + publish explicite
+- `frontend/cv/milestone-image.ts` — URL logos bucket
 - `frontend/cutout/remove-background.ts` — wrapper imgly
 - `backend/analytics/` — agrégation + pricing approx
 - `content/now.ts` — lignes "now" éditables
@@ -50,7 +51,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [x] Rapport `/analytics` (tokens, coût, cutout, news, patterns) — SQL `analytics.sql`
 - [x] Vercel Analytics + Speed Insights
 - [x] Banner E10 nationale (Mon Plein Pas Cher — moyenne, tendance 1j, min–max)
-- [x] CV timeline dynamique (`#cv` + Settings milestones FR/EN) — SQL `cv-milestones.sql`
+- [x] CV timeline (`#cv` sticky track + Settings onglet CV deux panneaux) — SQL `cv-milestones.sql`
 - [ ] Brancher Supabase (SQL à jour) si besoin
 - [ ] Contenu projets / LinkedIn encore placeholders
 ## Notes

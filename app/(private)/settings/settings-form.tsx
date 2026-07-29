@@ -49,20 +49,7 @@ export function SettingsForm({ initial }: Props) {
 
   return (
     <form onSubmit={handleSave} className="space-y-8">
-      <header className="space-y-3">
-        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">
-          Private · settings
-        </p>
-        <h1 className="font-display text-3xl font-medium tracking-tight text-ink sm:text-4xl">
-          Settings
-        </h1>
-        <p className="max-w-prose text-base leading-relaxed text-ink-muted">
-          Public banner dials and Claudette’s private brief — who you are, how
-          she talks, whether she may search the web.
-        </p>
-      </header>
-
-      <section className="space-y-4 border-t border-border pt-8">
+      <section className="space-y-4">
         <h2 className="font-display text-xl font-medium text-ink">
           Relationship status
         </h2>

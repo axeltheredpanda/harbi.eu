@@ -352,10 +352,7 @@ export function LandingPage({
             <a href="#contact" className="link-underline">
               {copy.writeToMe}
             </a>
-            <a
-              href={milestones.length > 0 ? "#cv" : "/resume.pdf"}
-              className="link-underline"
-            >
+            <a href="/resume.pdf" className="link-underline">
               {copy.readResume}
             </a>
           </p>
@@ -424,6 +421,7 @@ export function LandingPage({
             title={copy.cvTitle}
             intro={copy.cvIntro}
             pdfLabel={copy.cvPdf}
+            scrollHint={copy.cvScrollHint}
           />
         ) : null}
 

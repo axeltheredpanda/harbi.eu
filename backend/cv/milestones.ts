@@ -30,15 +30,23 @@ async function requireUser() {
   return supabase;
 }
 
-function normalizeInput(input: CvMilestoneInput) {
-  const period = input.period.trim();
-  const titleFr = input.titleFr.trim();
-  const titleEn = input.titleEn.trim();
-  const summaryFr = input.summaryFr.trim();
-  const summaryEn = input.summaryEn.trim();
-  if (!period || !titleFr || !titleEn || !summaryFr || !summaryEn) {
-    throw new Error("Period, titles, and summaries are required in FR and EN");
+function normalizeInput(input: CvMilestoneInput, mode: "draft" | "strict") {
+  const period = input.period.trim() || (mode === "draft" ? "—" : "");
+  const titleFr = input.titleFr.trim() || (mode === "draft" ? "Nouveau jalon" : "");
+  const titleEn = input.titleEn.trim() || (mode === "draft" ? "New milestone" : "");
+  const summaryFr =
+    input.summaryFr.trim() || (mode === "draft" ? "…" : "");
+  const summaryEn =
+    input.summaryEn.trim() || (mode === "draft" ? "…" : "");
+
+  if (mode === "strict") {
+    if (!period || period === "—") throw new Error("Add a period before publishing");
+    if (!titleFr || !titleEn) throw new Error("FR and EN titles are required to publish");
+    if (!summaryFr || summaryFr === "…" || !summaryEn || summaryEn === "…") {
+      throw new Error("FR and EN summaries are required to publish");
+    }
   }
+
   return {
     period,
     title_fr: titleFr,
@@ -47,7 +55,6 @@ function normalizeInput(input: CvMilestoneInput) {
     place_en: input.placeEn.trim(),
     summary_fr: summaryFr,
     summary_en: summaryEn,
-    published: Boolean(input.published),
   };
 }
 
@@ -75,10 +82,21 @@ export async function listAllMilestones(): Promise<CvMilestone[]> {
 }
 
 export async function createMilestone(
-  input: CvMilestoneInput,
+  input?: Partial<CvMilestoneInput>,
 ): Promise<CvMilestone> {
   const supabase = await requireUser();
-  const row = normalizeInput(input);
+  const row = normalizeInput(
+    {
+      period: input?.period ?? "",
+      titleFr: input?.titleFr ?? "",
+      titleEn: input?.titleEn ?? "",
+      placeFr: input?.placeFr ?? "",
+      placeEn: input?.placeEn ?? "",
+      summaryFr: input?.summaryFr ?? "",
+      summaryEn: input?.summaryEn ?? "",
+    },
+    "draft",
+  );
 
   const { data: last } = await supabase
     .from("cv_milestones")
@@ -91,7 +109,7 @@ export async function createMilestone(
 
   const { data, error } = await supabase
     .from("cv_milestones")
-    .insert({ ...row, sort_order })
+    .insert({ ...row, sort_order, published: false })
     .select("*")
     .single();
 
@@ -100,12 +118,13 @@ export async function createMilestone(
   return data;
 }
 
-export async function updateMilestone(
+/** Autosave content without changing publish state. */
+export async function saveMilestoneDraft(
   id: string,
   input: CvMilestoneInput,
 ): Promise<CvMilestone> {
   const supabase = await requireUser();
-  const row = normalizeInput(input);
+  const row = normalizeInput(input, "draft");
 
   const { data, error } = await supabase
     .from("cv_milestones")
@@ -119,17 +138,49 @@ export async function updateMilestone(
   return data;
 }
 
+export async function updateMilestone(
+  id: string,
+  input: CvMilestoneInput,
+): Promise<CvMilestone> {
+  return saveMilestoneDraft(id, input);
+}
+
 export async function setMilestonePublished(
   id: string,
   published: boolean,
-): Promise<void> {
+): Promise<CvMilestone> {
   const supabase = await requireUser();
-  const { error } = await supabase
+
+  if (published) {
+    const { data: existing, error: loadError } = await supabase
+      .from("cv_milestones")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (loadError) throw loadError;
+    normalizeInput(
+      {
+        period: existing.period,
+        titleFr: existing.title_fr,
+        titleEn: existing.title_en,
+        placeFr: existing.place_fr,
+        placeEn: existing.place_en,
+        summaryFr: existing.summary_fr,
+        summaryEn: existing.summary_en,
+      },
+      "strict",
+    );
+  }
+
+  const { data, error } = await supabase
     .from("cv_milestones")
     .update({ published, updated_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", id)
+    .select("*")
+    .single();
   if (error) throw error;
   revalidateCv();
+  return data;
 }
 
 export async function deleteMilestone(id: string): Promise<void> {
