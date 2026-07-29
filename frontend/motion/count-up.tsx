@@ -10,22 +10,25 @@ type Props = {
   className?: string;
 };
 
-/** Count from 0 to target with anime.js on first mount / value jump. */
+/** Count to target without layout shift — tabular nums + reserved width. */
 export function CountUp({ value, locale, className }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
   const shown = useRef(false);
+  const formatted = value.toLocaleString(locale);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
 
     if (prefersReducedMotion() || value <= 0) {
-      el.textContent = value.toLocaleString(locale);
+      el.textContent = formatted;
       shown.current = true;
       return;
     }
 
-    const from = shown.current ? Number(el.textContent?.replace(/\D/g, "") || 0) : 0;
+    const from = shown.current
+      ? Number(el.textContent?.replace(/\D/g, "") || 0)
+      : 0;
     shown.current = true;
     const state = { n: from };
     const anim = anime({
@@ -38,11 +41,15 @@ export function CountUp({ value, locale, className }: Props) {
       },
     });
     return () => anim.pause();
-  }, [value, locale]);
+  }, [value, locale, formatted]);
 
   return (
-    <span ref={ref} className={className}>
-      0
+    <span
+      ref={ref}
+      className={`inline-block tabular-nums ${className ?? ""}`}
+      style={{ minWidth: `${Math.max(formatted.length, 1)}ch` }}
+    >
+      {formatted}
     </span>
   );
 }

@@ -27,10 +27,11 @@ export function HeroAssemble({ text, className, onActivate, ...rest }: Props) {
       return;
     }
 
-    anime.set(letters, { opacity: 0, translateY: 10 });
+    // Keep letters visible for first paint (CLS); animate from near-opaque
+    anime.set(letters, { opacity: 0.001, translateY: 10 });
     anime({
       targets: letters,
-      opacity: [0, 1],
+      opacity: [0.001, 1],
       translateY: [10, 0],
       duration: 420,
       delay: anime.stagger(28, { start: 80 }),
@@ -51,7 +52,6 @@ export function HeroAssemble({ text, className, onActivate, ...rest }: Props) {
         <span
           key={`${ch}-${nodes.length}`}
           className="hero-letter inline-block will-change-transform"
-          style={{ opacity: 0 }}
         >
           {ch}
         </span>,
