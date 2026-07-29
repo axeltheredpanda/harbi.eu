@@ -31,13 +31,13 @@ async function requireUser() {
 }
 
 function normalizeInput(input: CvMilestoneInput, mode: "draft" | "strict") {
-  const period = input.period.trim() || (mode === "draft" ? "—" : "");
+  const period = input.period.trim() || (mode === "draft" ? "-" : "");
   const title = input.title.trim() || (mode === "draft" ? "New milestone" : "");
   const summary = input.summary.trim() || (mode === "draft" ? "…" : "");
   const place = input.place.trim();
 
   if (mode === "strict") {
-    if (!period || period === "—") throw new Error("Add a period before publishing");
+    if (!period || period === "-") throw new Error("Add a period before publishing");
     if (!title || title === "New milestone") {
       throw new Error("A title is required to publish");
     }

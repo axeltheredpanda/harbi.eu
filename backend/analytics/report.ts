@@ -449,7 +449,7 @@ export async function buildAnalyticsReport(
       fast,
       quality,
       byDay: fillSeries(dayBase, cutoutRows),
-      note: "Cutout runs in the browser (imgly ONNX) — no Hugging Face Space cold starts to track.",
+      note: "Cutout runs in the browser (imgly ONNX) - no Hugging Face Space cold starts to track.",
     },
     news: {
       itemsInPeriod: feedItems.length,
@@ -471,7 +471,7 @@ export async function buildAnalyticsReport(
       cutoutErrors: errorEvents.filter((e) => e.service === "cutout").length,
       newsErrors: errorEvents.filter((e) => e.service === "news").length,
       errorByDay: fillSeries(dayBase, errorEvents),
-      note: "No Python microservice uptime — rembg moved in-browser. Errors come from logged service_events.",
+      note: "No Python microservice uptime - rembg moved in-browser. Errors come from logged service_events.",
     },
     extras: {
       conversationsStarted: conversations.length,

@@ -1,4 +1,4 @@
-/** Target of the Louis prank — keep in sync with Settings copy. */
+/** Target of the Louis prank - keep in sync with Settings copy. */
 export const LOUIS_EMAIL = "louis.vedovato@essec.edu";
 
 export function isLouisEmail(email: string | null | undefined): boolean {
@@ -6,7 +6,7 @@ export function isLouisEmail(email: string | null | undefined): boolean {
   return email.trim().toLowerCase() === LOUIS_EMAIL;
 }
 
-/** French for FR and EN — intentional, no translation. */
+/** French for FR and EN - intentional, no translation. */
 export const LOUIS_COPY = {
   q1: "T'appelles tu Louis ?",
   q2: "Possèdes-tu une 206 ?",

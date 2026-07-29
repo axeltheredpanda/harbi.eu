@@ -1,4 +1,4 @@
-/** Compact relative time: 2h, 3d, 1mo — not verbose. */
+/** Compact relative time: 2h, 3d, 1mo - not verbose. */
 export function relativeShort(iso: string | null | undefined): string {
   if (!iso) return "";
   const then = new Date(iso).getTime();

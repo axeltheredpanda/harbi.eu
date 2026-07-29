@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
-  Design tokens — editorial warm identity for harbi.eu.
+  Design tokens - editorial warm identity for harbi.eu.
   Consumed via Tailwind @theme utilities (bg-canvas, text-ink, font-display, …).
   Never hardcode hex / font stacks in components.
 */
@@ -12,12 +12,12 @@
   --color-surface-hover: #ebe3d7;
   --color-border: #ddd0c0;
 
-  /* ink — warm near-black */
+  /* ink - warm near-black */
   --color-ink: #1c1916;
   --color-ink-muted: #5c534a;
   --color-ink-faint: #8a8075;
 
-  /* accent — deep terracotta, used sparingly */
+  /* accent - deep terracotta, used sparingly */
   --color-accent: #9a4e2c;
   --color-accent-strong: #7a3b20;
   --color-accent-soft: #f2e4d8;
@@ -56,7 +56,7 @@ body {
   outline-offset: 3px;
 }
 
-/* Quiet entrance — essay page, not dashboard motion */
+/* Quiet entrance - essay page, not dashboard motion */
 @keyframes rise {
   from {
     opacity: 0;
@@ -82,7 +82,7 @@ body {
   }
 }
 
-/* Editorial underline link — anime.js drives --underline-scale on hover */
+/* Editorial underline link - anime.js drives --underline-scale on hover */
 .link-underline {
   color: var(--color-accent);
   text-decoration: none;
@@ -158,7 +158,7 @@ body {
   }
 }
 
-/* Status banner — fuel ticker settles in after the joke lines */
+/* Status banner - fuel ticker settles in after the joke lines */
 @keyframes fuel-settle {
   from {
     opacity: 0;
@@ -234,7 +234,7 @@ body {
   }
 }
 
-/* Claudette markdown — light paper */
+/* Claudette markdown - light paper */
 .markdown-body p {
   margin: 0.4em 0;
 }
@@ -318,7 +318,7 @@ body {
   color: var(--color-ink);
 }
 
-/* Streaming caret — soft pulse while Claudette writes */
+/* Streaming caret - soft pulse while Claudette writes */
 @keyframes cursor-soft {
   0%,
   100% {
@@ -340,7 +340,7 @@ body {
   animation: cursor-soft 0.9s ease-in-out infinite;
 }
 
-/* Chat motion — short, no staggered delays */
+/* Chat motion - short, no staggered delays */
 @keyframes chat-fade {
   from {
     opacity: 0;
@@ -416,7 +416,7 @@ body {
 }
 
 /*
-  Hidden rally / motorsport theme — toggled via data-theme="rally" on <html>.
+  Hidden rally / motorsport theme - toggled via data-theme="rally" on <html>.
   Temporary visual departure; Exit rally mode restores editorial tokens.
 */
 html[data-theme="rally"] {

@@ -8,11 +8,11 @@ import {
 import { SUMMARY_MODEL } from "@/backend/chat/constants";
 
 const PARSE_SYSTEM = `You extract a structured personal profile for Claudette, a private AI assistant.
-Map the user's pasted notes into the JSON schema. Keep wording compact and faithful — do not invent facts.
+Map the user's pasted notes into the JSON schema. Keep wording compact and faithful - do not invent facts.
 If a field has no info, use an empty string.
 Prefer French or English as written in the source; do not translate unless the source mixes both and clarity needs one language.
 Merge related bullets into short prose or semicolon-separated fragments suitable for form fields.
-Return ONLY valid JSON matching the schema — no markdown fences.`;
+Return ONLY valid JSON matching the schema - no markdown fences.`;
 
 const SCHEMA_HINT = `{
   "firstName": string,
@@ -47,7 +47,7 @@ export async function parseProfileFromPaste(
     messages: [
       {
         role: "user",
-        content: `Existing profile (may be empty — fill / overwrite with better extracted data):\n${JSON.stringify(existing ?? EMPTY_PROFILE, null, 2)}\n\nPaste to extract:\n---\n${trimmed}\n---\n\nJSON schema:\n${SCHEMA_HINT}`,
+        content: `Existing profile (may be empty - fill / overwrite with better extracted data):\n${JSON.stringify(existing ?? EMPTY_PROFILE, null, 2)}\n\nPaste to extract:\n---\n${trimmed}\n---\n\nJSON schema:\n${SCHEMA_HINT}`,
       },
     ],
   });

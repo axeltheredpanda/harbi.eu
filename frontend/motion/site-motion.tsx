@@ -12,7 +12,7 @@ function enhanceUnderlines(root: ParentNode) {
     link.dataset.underlineReady = "1";
 
     if (reduced) {
-      // Keep a static full underline — no draw animation
+      // Keep a static full underline - no draw animation
       return;
     }
 

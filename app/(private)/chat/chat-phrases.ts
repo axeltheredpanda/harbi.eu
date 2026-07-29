@@ -3,7 +3,7 @@ export const PLACEHOLDERS = [
   "A half-formed thought is fine.",
   "Paste a PDF, drop an image, or just type.",
   "What's the actual question underneath this?",
-  "Draft it rough — she'll tidy the edges.",
+  "Draft it rough - she'll tidy the edges.",
   "One concrete problem beats three vague ones.",
 ];
 

@@ -17,6 +17,6 @@ export function saveLocalReadIds(ids: Set<string>) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids]));
   } catch {
-    // quota / private mode — ignore
+    // quota / private mode - ignore
   }
 }

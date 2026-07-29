@@ -542,7 +542,7 @@ export function NewsDrawer() {
                 <p className="mt-2 text-sm text-ink-muted">
                   {feeds.length === 0
                     ? "Run the SQL migration, then hit Refresh (or wait for the scheduled sync)."
-                    : "Quiet for now — flip a source back on, or hit Refresh."}
+                    : "Quiet for now - flip a source back on, or hit Refresh."}
                 </p>
               </div>
             ) : unreadVisible.length === 0 ? (

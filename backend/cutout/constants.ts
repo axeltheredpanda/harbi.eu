@@ -24,4 +24,4 @@ export const CUTOUT_PROCESSING_PHRASES = [
 ] as const;
 
 export const CUTOUT_WARMUP_PHRASE =
-  "loading the model — first run can take a moment…";
+  "loading the model - first run can take a moment…";

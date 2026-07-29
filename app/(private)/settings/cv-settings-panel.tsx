@@ -39,7 +39,7 @@ function toForm(row: CvMilestone): CvMilestoneInput {
   const place = row.place_en || row.place_fr;
   const summary = row.summary_en || row.summary_fr;
   return {
-    period: row.period === "—" ? "" : row.period,
+    period: row.period === "-" ? "" : row.period,
     title: title === "New milestone" || title === "Nouveau jalon" ? "" : title,
     place,
     summary: summary === "…" ? "" : summary,
@@ -408,7 +408,7 @@ export function CvSettingsPanel({ initial }: Props) {
                   onChange={(e) =>
                     setForm({ ...form, period: e.target.value })
                   }
-                  placeholder="2024—2025 or 2026—"
+                  placeholder="2024-2025 or 2026-"
                 />
               </label>
 

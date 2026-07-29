@@ -45,8 +45,8 @@ export function SettingsForm({ initial }: Props) {
         setSingleSince(next.singleSince);
         setMessage(
           next.relationshipStatus === "single"
-            ? "Saved — jokes are back on the public banner."
-            : "Saved — jokes stay off while you’re dating.",
+            ? "Saved - jokes are back on the public banner."
+            : "Saved - jokes stay off while you’re dating.",
         );
       } catch (err) {
         setError(err instanceof Error ? err.message : "Couldn’t save settings");
@@ -68,7 +68,7 @@ export function SettingsForm({ initial }: Props) {
         setNpTitle(next.nowPlaying.title);
         setNpArtist(next.nowPlaying.artist);
         setNpUrl(next.nowPlaying.url);
-        setMessage("Saved — now playing updated on the public banner.");
+        setMessage("Saved - now playing updated on the public banner.");
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Couldn’t save now playing",
@@ -106,7 +106,7 @@ export function SettingsForm({ initial }: Props) {
           <p className="text-sm leading-relaxed text-ink-muted">
             When it’s <span className="text-ink">single</span>, the banner shows
             the day count and the rotating jokes in parentheses. When it’s{" "}
-            <span className="text-ink">dating</span>, just the status — no jokes.
+            <span className="text-ink">dating</span>, just the status - no jokes.
           </p>
 
           <fieldset className="space-y-3">
@@ -121,7 +121,7 @@ export function SettingsForm({ initial }: Props) {
                 {
                   id: "dating" as const,
                   label: "Dating",
-                  detail: "Status only — jokes stay in the drawer.",
+                  detail: "Status only - jokes stay in the drawer.",
                 },
               ] as const
             ).map((option) => (

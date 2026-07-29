@@ -15,13 +15,13 @@ function money(n: number): string {
 }
 
 function ms(n: number | null): string {
-  if (n == null) return "—";
+  if (n == null) return "-";
   if (n < 1000) return `${Math.round(n)} ms`;
   return `${(n / 1000).toFixed(1)} s`;
 }
 
 function pct(n: number | null): string {
-  if (n == null) return "—";
+  if (n == null) return "-";
   return `${Math.round(n * 100)}%`;
 }
 

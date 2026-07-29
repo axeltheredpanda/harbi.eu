@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props) {
   if (!note) return { title: "Note · harbi.eu" };
   return {
     title: note.title,
-    description: note.excerpt || `Note by Arthur Reichard — ${note.title}`,
+    description: note.excerpt || `Note by Arthur Reichard - ${note.title}`,
     authors: [{ name: "Arthur Reichard" }],
   };
 }

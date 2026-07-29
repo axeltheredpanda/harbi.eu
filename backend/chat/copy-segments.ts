@@ -39,7 +39,7 @@ Skip:
 - huge dumps (prefer the crisp deliverable)
 
 Rules:
-- label: 1–4 words, lowercase ok, FR or EN matching the excerpt language
+- label: 1-4 words, lowercase ok, FR or EN matching the excerpt language
 - text: verbatim from the message (preserve newlines inside the excerpt)
 - max 5 segments; [] if nothing is copy-worthy
 - do not invent text

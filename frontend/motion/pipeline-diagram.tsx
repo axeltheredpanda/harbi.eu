@@ -13,7 +13,7 @@ const STAGES = [
 const LINE_Y = 8;
 const DOT_RADIUS = 2.5;
 
-/** Quiet CRM pipeline sketch in neutral ink — secondary catalog detail. */
+/** Quiet CRM pipeline sketch in neutral ink - secondary catalog detail. */
 export function PipelineDiagram({ className = "" }: { className?: string }) {
   const ref = useRef<SVGSVGElement>(null);
 

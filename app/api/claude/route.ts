@@ -312,7 +312,7 @@ export async function POST(request: Request) {
     typeof body.web_search === "boolean"
       ? body.web_search
       : claudette.webSearchEnabled;
-  // Managed web search is unreliable on Haiku — keep tools for Sonnet/Opus family
+  // Managed web search is unreliable on Haiku - keep tools for Sonnet/Opus family
   const allowWebSearch =
     webSearchEnabled && !chatModel.toLowerCase().includes("haiku");
 
