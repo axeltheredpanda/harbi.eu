@@ -16,7 +16,6 @@ type Props = {
 
 export function ClaudetteSettingsSection({ initial }: Props) {
   const dialogId = useId();
-  const [webSearch, setWebSearch] = useState(initial.webSearchEnabled);
   const [profile, setProfile] = useState<ClaudetteProfile>(initial.profile);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,10 +46,8 @@ export function ClaudetteSettingsSection({ initial }: Props) {
     startTransition(async () => {
       try {
         const next = await updateClaudetteSettings({
-          webSearchEnabled: webSearch,
           profile,
         });
-        setWebSearch(next.webSearchEnabled);
         setProfile(next.profile);
         setMessage("Claudette settings saved — she’ll use them on the next reply.");
       } catch (err) {
@@ -100,29 +97,11 @@ export function ClaudetteSettingsSection({ initial }: Props) {
             Claudette
           </h2>
           <p className="text-sm leading-relaxed text-ink-muted">
-            Who you are to her, how she should talk, and whether she may look
-            things up online. Profile facts are used only when they help the
-            current question — she won’t dump your bio unprompted.
+            Who you are to her and how she should talk. Profile facts are used
+            only when they help the current question — she won’t dump your bio
+            unprompted. Web search is toggled per message in the chat composer.
           </p>
         </div>
-
-        <label className="flex cursor-pointer items-start gap-3 border border-border px-4 py-3">
-          <input
-            type="checkbox"
-            checked={webSearch}
-            onChange={(e) => setWebSearch(e.target.checked)}
-            className="mt-1 accent-[var(--color-accent)]"
-          />
-          <span>
-            <span className="block font-display text-base text-ink">
-              Allow web search
-            </span>
-            <span className="mt-0.5 block text-sm text-ink-muted">
-              Claudette can search the live web for news, docs, prices. Personal
-              facts still come from this profile. (Sonnet / Opus — not Haiku.)
-            </span>
-          </span>
-        </label>
 
         <div className="flex flex-wrap items-center gap-3">
           <button

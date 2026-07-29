@@ -17,6 +17,9 @@ type Props = {
   streaming: boolean;
   editingContent: string | null;
   attachments: PendingAttachment[];
+  webSearch: boolean;
+  webSearchDisabledReason?: string | null;
+  onWebSearchChange: (enabled: boolean) => void;
   onCancelEdit: () => void;
   onRemoveAttachment: (id: string) => void;
   onPickFiles: (files: File[] | FileList) => void;
@@ -57,6 +60,9 @@ export function MessageInput({
   streaming,
   editingContent,
   attachments,
+  webSearch,
+  webSearchDisabledReason,
+  onWebSearchChange,
   onCancelEdit,
   onRemoveAttachment,
   onPickFiles,
@@ -276,6 +282,39 @@ export function MessageInput({
             Send
           </button>
         )}
+      </div>
+
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+        <label
+          className={`inline-flex cursor-pointer items-center gap-2 font-mono text-[11px] tracking-wide ${
+            webSearchDisabledReason
+              ? "cursor-not-allowed text-ink-faint"
+              : webSearch
+                ? "text-accent"
+                : "text-ink-faint hover:text-ink-muted"
+          }`}
+          title={
+            webSearchDisabledReason ??
+            "When on, this reply may search the live web (extra tokens)."
+          }
+        >
+          <input
+            type="checkbox"
+            checked={webSearch && !webSearchDisabledReason}
+            disabled={Boolean(webSearchDisabledReason) || disabled || streaming}
+            onChange={(e) => onWebSearchChange(e.target.checked)}
+            className="accent-[var(--color-accent)]"
+          />
+          <span className="uppercase">Web search</span>
+          {webSearch && !webSearchDisabledReason ? (
+            <span className="normal-case text-ink-faint">on for this reply</span>
+          ) : null}
+        </label>
+        {webSearchDisabledReason ? (
+          <span className="font-mono text-[10px] text-ink-faint">
+            {webSearchDisabledReason}
+          </span>
+        ) : null}
       </div>
     </div>
   );

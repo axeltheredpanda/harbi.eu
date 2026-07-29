@@ -19,6 +19,7 @@ import { MessageInput, type PendingAttachment } from "./message-input";
 import { ModelSelect } from "./model-select";
 
 const MODEL_STORAGE_KEY = "claudette.model";
+const WEB_SEARCH_STORAGE_KEY = "claudette.webSearch";
 
 type Props = {
   initialConversations: Conversation[];
@@ -30,10 +31,12 @@ type LastRequest =
       content: string;
       attachmentIds: string[];
       editMessageId: string | null;
+      webSearch: boolean;
     }
   | {
       kind: "regenerate";
       messageId: string;
+      webSearch: boolean;
     };
 
 function parseSseChunk(buffer: string): {
@@ -86,6 +89,7 @@ export function ChatShell({ initialConversations }: Props) {
       return CHAT_MODEL;
     }
   });
+  const [webSearch, setWebSearch] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string | null>(null);
@@ -146,6 +150,24 @@ export function ChatShell({ initialConversations }: Props) {
       window.localStorage.setItem(MODEL_STORAGE_KEY, next);
     } catch {
       // ignore storage errors
+    }
+  }
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(WEB_SEARCH_STORAGE_KEY);
+      if (stored === "1" || stored === "true") setWebSearch(true);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  function handleWebSearchChange(next: boolean) {
+    setWebSearch(next);
+    try {
+      window.localStorage.setItem(WEB_SEARCH_STORAGE_KEY, next ? "1" : "0");
+    } catch {
+      // ignore
     }
   }
 
@@ -587,6 +609,7 @@ export function ChatShell({ initialConversations }: Props) {
       content,
       attachmentIds,
       editMessageId: editingMessageId,
+      webSearch,
     };
 
     const optimisticAttachments = readyAttachments.map((a) => ({
@@ -666,6 +689,7 @@ export function ChatShell({ initialConversations }: Props) {
         attachment_ids: attachmentIds,
         edit_message_id: editId ?? undefined,
         model,
+        web_search: webSearch,
       },
       {
         optimisticUserId: editId ? undefined : optimisticId,
@@ -679,7 +703,11 @@ export function ChatShell({ initialConversations }: Props) {
     if (!activeId || streaming) return;
     setThreadError(null);
     const streamId = `stream-${crypto.randomUUID()}`;
-    lastRequestRef.current = { kind: "regenerate", messageId: message.id };
+    lastRequestRef.current = {
+      kind: "regenerate",
+      messageId: message.id,
+      webSearch,
+    };
 
     setMessages((prev) => {
       const index = prev.findIndex((m) => m.id === message.id);
@@ -722,6 +750,7 @@ export function ChatShell({ initialConversations }: Props) {
         conversation_id: activeId,
         regenerate_message_id: message.id,
         model,
+        web_search: webSearch,
       },
       { streamId },
     );
@@ -829,6 +858,13 @@ export function ChatShell({ initialConversations }: Props) {
           streaming={streaming}
           editingContent={editingContent}
           attachments={pendingAttachments}
+          webSearch={webSearch}
+          webSearchDisabledReason={
+            model.toLowerCase().includes("haiku")
+              ? "Unavailable on Haiku"
+              : null
+          }
+          onWebSearchChange={handleWebSearchChange}
           onCancelEdit={cancelEdit}
           onRemoveAttachment={(id) => {
             const controller = uploadAbortRef.current.get(id);
