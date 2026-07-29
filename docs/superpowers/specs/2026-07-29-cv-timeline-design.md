@@ -22,7 +22,7 @@ The PDF download (`/resume.pdf`) remains as a secondary exit — the timeline is
 
 ### Placement
 
-New landing section `#cv`, after Selected work (or before Now — exact order fixed at implementation; prefer **after work, before now** so the CV reads as biography following proof of craft).
+New landing section `#cv`, **after Selected work, before Now** — biography after proof of craft.
 
 Nav gains a **CV** link pointing to `#cv` (FR/EN copy in `frontend/i18n/landing.ts`).
 
