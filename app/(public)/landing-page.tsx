@@ -28,7 +28,7 @@ import { SpecimenCard } from "./specimen-card";
 const AXEL_CRM_STACK = ["Java", "React", "Supabase", "Stripe"] as const;
 const AXEL_CRM_YEARS = "2025—";
 
-const SITE_LAUNCH_MS = Date.UTC(2026, 6, 1);
+const SITE_LAUNCH_MS = Date.UTC(2026, 6, 27);
 /** One Red Bull every 8 hours from launch (= 3/day). */
 const REDBULL_EVERY_MS = 8 * 3_600_000;
 const REDBULL_BASE = 8;
