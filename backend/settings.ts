@@ -9,23 +9,25 @@ import type {
 
 const DEFAULTS: Pick<
   SiteSettings,
-  "id" | "relationship_status" | "single_since"
+  "id" | "relationship_status" | "single_since" | "louis_joke_mode"
 > = {
   id: "default",
   relationship_status: "single",
   single_since: "2026-02-01",
+  louis_joke_mode: false,
 };
 
 export type PublicSiteSettings = {
   relationshipStatus: RelationshipStatus;
   singleSince: string;
+  louisJokeMode: boolean;
 };
 
 export async function getPublicSiteSettings(): Promise<PublicSiteSettings> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("site_settings")
-    .select("relationship_status, single_since")
+    .select("relationship_status, single_since, louis_joke_mode")
     .eq("id", "default")
     .maybeSingle();
 
@@ -33,12 +35,14 @@ export async function getPublicSiteSettings(): Promise<PublicSiteSettings> {
     return {
       relationshipStatus: DEFAULTS.relationship_status,
       singleSince: DEFAULTS.single_since,
+      louisJokeMode: DEFAULTS.louis_joke_mode,
     };
   }
 
   return {
     relationshipStatus: data.relationship_status,
     singleSince: data.single_since,
+    louisJokeMode: Boolean(data.louis_joke_mode),
   };
 }
 
@@ -74,16 +78,51 @@ export async function updateRelationshipSettings(input: {
   const { data, error } = await supabase
     .from("site_settings")
     .upsert(payload, { onConflict: "id" })
-    .select("relationship_status, single_since")
+    .select("relationship_status, single_since, louis_joke_mode")
     .single();
 
   if (error) throw error;
 
   revalidatePath("/");
   revalidatePath("/settings");
+  revalidatePath("/login");
 
   return {
     relationshipStatus: data.relationship_status,
     singleSince: data.single_since,
+    louisJokeMode: Boolean(data.louis_joke_mode),
+  };
+}
+
+export async function updateLouisJokeMode(
+  enabled: boolean,
+): Promise<PublicSiteSettings> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("site_settings")
+    .update({
+      louis_joke_mode: enabled,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", "default")
+    .select("relationship_status, single_since, louis_joke_mode")
+    .single();
+
+  if (error) throw error;
+
+  revalidatePath("/");
+  revalidatePath("/settings");
+  revalidatePath("/login");
+  revalidatePath("/chat");
+
+  return {
+    relationshipStatus: data.relationship_status,
+    singleSince: data.single_since,
+    louisJokeMode: Boolean(data.louis_joke_mode),
   };
 }

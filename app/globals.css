@@ -129,6 +129,17 @@ body {
   }
 }
 
+@keyframes louis-quiz-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .cv-milestone-swap {
     animation: cv-milestone-in 0.35s ease-out both;
@@ -136,6 +147,14 @@ body {
 
   .cv-scroll-hint-arrow {
     animation: cv-hint-bob 1.4s ease-in-out infinite;
+  }
+
+  .louis-quiz-step {
+    animation: louis-quiz-in 0.4s ease-out both;
+  }
+
+  .louis-quiz-reveal {
+    animation: louis-quiz-in 0.5s ease-out both;
   }
 }
 

@@ -5,6 +5,8 @@ import {
   CHAT_STORAGE_BUCKET,
   MAX_UPLOAD_BYTES,
 } from "@/backend/chat/constants";
+import { getPublicSiteSettings } from "@/backend/settings";
+import { isLouisEmail, LOUIS_COPY } from "@/backend/louis";
 
 const IMAGE_TYPES = new Set([
   "image/jpeg",
@@ -31,6 +33,14 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const site = await getPublicSiteSettings();
+  if (site.louisJokeMode && isLouisEmail(user.email)) {
+    return NextResponse.json(
+      { error: LOUIS_COPY.claudetteBlock },
+      { status: 403 },
+    );
   }
 
   const form = await request.formData();

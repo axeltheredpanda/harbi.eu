@@ -234,18 +234,21 @@ export type Database = {
           id: string;
           relationship_status: "single" | "dating";
           single_since: string;
+          louis_joke_mode: boolean;
           updated_at: string;
         };
         Insert: {
           id?: string;
           relationship_status?: "single" | "dating";
           single_since?: string;
+          louis_joke_mode?: boolean;
           updated_at?: string;
         };
         Update: {
           id?: string;
           relationship_status?: "single" | "dating";
           single_since?: string;
+          louis_joke_mode?: boolean;
           updated_at?: string;
         };
         Relationships: [];
