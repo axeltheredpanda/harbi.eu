@@ -25,6 +25,8 @@ type Body = {
   edit_message_id?: string;
   regenerate_message_id?: string;
   model?: string;
+  /** Per-message override; when set, ignores Claudette settings default. */
+  web_search?: boolean;
 };
 
 function sseEncode(event: string, data: unknown): string {
@@ -291,7 +293,11 @@ export async function POST(request: Request) {
 
   const claudette = await getClaudetteSettings();
   const profile = claudette.profile;
-  const webSearchEnabled = claudette.webSearchEnabled;
+  // Per-message toggle wins; settings default is only a fallback for old clients
+  const webSearchEnabled =
+    typeof body.web_search === "boolean"
+      ? body.web_search
+      : claudette.webSearchEnabled;
   // Managed web search is unreliable on Haiku — keep tools for Sonnet/Opus family
   const allowWebSearch =
     webSearchEnabled && !chatModel.toLowerCase().includes("haiku");
@@ -408,7 +414,7 @@ export async function POST(request: Request) {
             {
               type: "web_search_20250305",
               name: "web_search",
-              max_uses: 5,
+              max_uses: 3,
               user_location: {
                 type: "approximate",
                 country: "FR",
