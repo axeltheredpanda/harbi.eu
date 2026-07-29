@@ -10,6 +10,9 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - API Anthropic serveur (`/api/claude`, `/api/claude/upload`)
 - Cutout : `@imgly/background-removal` **dans le navigateur** (ONNX) + stockage /
   cache hash via `/api/remove-bg` — pas de microservice Python
+- News : drawer RSS reader (`frontend/news/*`) — feeds/feed_items in Supabase,
+  sync serveur toutes les 30 min (GitHub Actions) + Refresh manuel (connecté),
+  raccourcis Windows (Ctrl+K palette, Ctrl+Shift+Y news, j/k/Enter/m/r)
 - Market quotes via `/api/market` (Yahoo chart, revalidate ~5 min)
 - Analytics optionnel : Umami (`NEXT_PUBLIC_UMAMI_*`)
 - Déploiement : Vercel

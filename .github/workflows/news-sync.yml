@@ -1,0 +1,36 @@
+# Free RSS sync every 30 minutes via GitHub Actions (Hobby-friendly).
+# Setup: repo Settings → Secrets → Actions → add CRON_SECRET (same value as Vercel).
+# Optional: Variables → NEWS_SYNC_URL (defaults to https://harbi.eu).
+
+name: News sync
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Sync RSS feeds
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          NEWS_SYNC_URL: ${{ vars.NEWS_SYNC_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::Add repository secret CRON_SECRET (same as Vercel env)."
+            exit 1
+          fi
+          BASE="${NEWS_SYNC_URL:-https://harbi.eu}"
+          URL="${BASE%/}/api/news/sync"
+          echo "POST $URL"
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "$URL"
+          echo
+          echo "OK"

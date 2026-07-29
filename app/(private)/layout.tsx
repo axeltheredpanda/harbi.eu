@@ -33,7 +33,7 @@ export default async function PrivateLayout({
         </div>
         <div className="flex items-center gap-3">
           <span className="hidden font-mono text-[11px] text-ink-faint sm:inline">
-            ⌘K
+            Ctrl+K
           </span>
           <SignOutButton />
         </div>

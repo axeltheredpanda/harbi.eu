@@ -17,6 +17,7 @@ import { CountUp } from "@/frontend/motion/count-up";
 import { MonogramLogo } from "@/frontend/motion/monogram-logo";
 import { PipelineDiagram } from "@/frontend/motion/pipeline-diagram";
 import { morphTheme } from "@/frontend/motion/theme-morph";
+import { openNewsDrawer } from "@/frontend/news/news-provider";
 import { SpecimenCard } from "./specimen-card";
 
 const AXEL_CRM_STACK = ["Java", "React", "Supabase", "Stripe"] as const;
@@ -254,6 +255,13 @@ export function LandingPage({
           <a href="#notes" className="transition-colors hover:text-ink">
             {copy.navNotes}
           </a>
+          <button
+            type="button"
+            onClick={() => openNewsDrawer()}
+            className="transition-colors hover:text-ink"
+          >
+            {copy.navNews}
+          </button>
           <a href="#contact" className="transition-colors hover:text-ink">
             {copy.navContact}
           </a>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { openNewsDrawer } from "@/frontend/news/news-provider";
 
 const links = [
   { href: "/chat", label: "/chat" },
@@ -16,6 +17,13 @@ export function NavLinks() {
 
   return (
     <nav className="flex flex-wrap gap-5 font-mono text-sm">
+      <button
+        type="button"
+        onClick={() => openNewsDrawer()}
+        className="text-ink-muted hover:text-ink"
+      >
+        /news
+      </button>
       {links.map((link) => {
         const isActive = pathname === link.href;
         return (
@@ -23,7 +31,9 @@ export function NavLinks() {
             key={link.href}
             href={link.href}
             aria-current={isActive ? "page" : undefined}
-            className={isActive ? "text-accent" : "text-ink-muted hover:text-ink"}
+            className={
+              isActive ? "text-accent" : "text-ink-muted hover:text-ink"
+            }
           >
             {link.label}
           </Link>

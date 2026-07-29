@@ -256,6 +256,81 @@ export type Database = {
         };
         Relationships: [];
       };
+      feeds: {
+        Row: {
+          id: string;
+          url: string;
+          name: string;
+          favicon_url: string | null;
+          last_fetched_at: string | null;
+          status: "ok" | "unreachable";
+          consecutive_failures: number;
+          tags: string[];
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          url: string;
+          name: string;
+          favicon_url?: string | null;
+          last_fetched_at?: string | null;
+          status?: "ok" | "unreachable";
+          consecutive_failures?: number;
+          tags?: string[];
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          url?: string;
+          name?: string;
+          favicon_url?: string | null;
+          last_fetched_at?: string | null;
+          status?: "ok" | "unreachable";
+          consecutive_failures?: number;
+          tags?: string[];
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      feed_items: {
+        Row: {
+          id: string;
+          feed_id: string;
+          guid: string;
+          title: string;
+          url: string;
+          published_at: string | null;
+          content_snippet: string | null;
+          full_content: string | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          feed_id: string;
+          guid: string;
+          title: string;
+          url: string;
+          published_at?: string | null;
+          content_snippet?: string | null;
+          full_content?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          feed_id?: string;
+          guid?: string;
+          title?: string;
+          url?: string;
+          published_at?: string | null;
+          content_snippet?: string | null;
+          full_content?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

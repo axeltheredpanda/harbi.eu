@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Geist_Mono, Public_Sans } from "next/font/google";
 import { SiteMotion } from "@/frontend/motion/site-motion";
+import { NewsShell } from "@/frontend/news/news-shell";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -38,7 +39,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col font-body antialiased">
         <SiteMotion />
-        {children}
+        <NewsShell>{children}</NewsShell>
       </body>
     </html>
   );

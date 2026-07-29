@@ -2,28 +2,80 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { openNewsDrawer } from "@/frontend/news/news-provider";
 
-const COMMANDS = [
-  { id: "chat", label: "Chat · Claudette", href: "/chat", keywords: "claudette ai conversation" },
-  { id: "cutout", label: "Cutout · remove background", href: "/cutout", keywords: "rembg background remove png cutout" },
-  { id: "market", label: "Market · watchlist", href: "/market", keywords: "stocks tickers prices" },
-  { id: "garage", label: "Garage · vehicle tracker", href: "/garage", keywords: "cars vehicles search" },
-  { id: "settings", label: "Settings", href: "/settings", keywords: "relationship status single dating" },
-  { id: "home", label: "Public site", href: "/", keywords: "landing portfolio" },
-] as const;
+type Command = {
+  id: string;
+  label: string;
+  keywords: string;
+  href?: string;
+  action?: "news";
+};
+
+const COMMANDS: Command[] = [
+  {
+    id: "news",
+    label: "News · RSS reader",
+    keywords: "feeds headlines reader atom",
+    action: "news",
+  },
+  {
+    id: "chat",
+    label: "Chat · Claudette",
+    href: "/chat",
+    keywords: "claudette ai conversation",
+  },
+  {
+    id: "cutout",
+    label: "Cutout · remove background",
+    href: "/cutout",
+    keywords: "rembg background remove png cutout",
+  },
+  {
+    id: "market",
+    label: "Market · watchlist",
+    href: "/market",
+    keywords: "stocks tickers prices",
+  },
+  {
+    id: "garage",
+    label: "Garage · vehicle tracker",
+    href: "/garage",
+    keywords: "cars vehicles search",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    href: "/settings",
+    keywords: "relationship status single dating",
+  },
+  {
+    id: "home",
+    label: "Public site",
+    href: "/",
+    keywords: "landing portfolio",
+  },
+];
 
 function score(query: string, label: string, keywords: string): number {
   const q = query.trim().toLowerCase();
   if (!q) return 1;
   const hay = `${label} ${keywords}`.toLowerCase();
   if (hay.includes(q)) return 10 - hay.indexOf(q) * 0.01;
-  // simple fuzzy: all chars in order
   let i = 0;
   for (const ch of hay) {
     if (ch === q[i]) i += 1;
     if (i === q.length) return 3;
   }
   return 0;
+}
+
+function runCommand(cmd: Command, router: ReturnType<typeof useRouter>) {
+  if (cmd.action === "news") {
+    openNewsDrawer();
+    return;
+  }
+  if (cmd.href) router.push(cmd.href);
 }
 
 export function CommandPalette() {
@@ -44,7 +96,9 @@ export function CommandPalette() {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      const isPalette = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
+      // Windows-first: Ctrl+K (Meta still accepted for Mac keyboards)
+      const isPalette =
+        (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
       if (isPalette) {
         event.preventDefault();
         setOpen((v) => !v);
@@ -67,7 +121,7 @@ export function CommandPalette() {
         const target = results[active];
         if (target) {
           setOpen(false);
-          router.push(target.href);
+          runCommand(target, router);
         }
       }
     }
@@ -111,7 +165,9 @@ export function CommandPalette() {
         </div>
         <ul className="max-h-72 overflow-y-auto py-1">
           {results.length === 0 && (
-            <li className="px-4 py-3 font-mono text-xs text-ink-faint">No matches</li>
+            <li className="px-4 py-3 font-mono text-xs text-ink-faint">
+              No matches
+            </li>
           )}
           {results.map((cmd, index) => (
             <li key={cmd.id}>
@@ -120,7 +176,7 @@ export function CommandPalette() {
                 onMouseEnter={() => setActive(index)}
                 onClick={() => {
                   setOpen(false);
-                  router.push(cmd.href);
+                  runCommand(cmd, router);
                 }}
                 className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm ${
                   index === active
@@ -129,13 +185,15 @@ export function CommandPalette() {
                 }`}
               >
                 <span>{cmd.label}</span>
-                <span className="font-mono text-[11px] text-ink-faint">{cmd.href}</span>
+                <span className="font-mono text-[11px] text-ink-faint">
+                  {cmd.action === "news" ? "drawer" : cmd.href}
+                </span>
               </button>
             </li>
           ))}
         </ul>
         <p className="border-t border-border px-4 py-2 font-mono text-[10px] text-ink-faint">
-          ↑↓ navigate · enter open · esc close
+          ↑↓ navigate · Enter open · Esc close · Ctrl+K
         </p>
       </div>
     </div>
