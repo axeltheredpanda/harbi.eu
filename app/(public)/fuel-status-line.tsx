@@ -26,9 +26,7 @@ function trendMeta(trend: number, locale: string) {
     return {
       arrow: "↓",
       signed: `−${formatted}`,
-      // Cheaper fuel = calm; warmer accent reserved for rises
       className: "text-ink-muted",
-      direction: "down" as const,
     };
   }
   if (trend > 0.0005) {
@@ -36,20 +34,18 @@ function trendMeta(trend: number, locale: string) {
       arrow: "↑",
       signed: `+${formatted}`,
       className: "text-accent",
-      direction: "up" as const,
     };
   }
   return {
     arrow: "→",
     signed: formatEuro(0, locale),
     className: "text-ink-faint",
-    direction: "flat" as const,
   };
 }
 
 /**
- * Mono ticker line for the public banner — national E10 avg, 1d trend, min–max.
- * Keeps the same voice as the Red Bull / relationship lines (no cards).
+ * Compact fuel metric for the asymmetric status rail.
+ * Min–max live in the tooltip so the strip stays scannable.
  */
 export function FuelStatusLine({
   price,
@@ -65,7 +61,7 @@ export function FuelStatusLine({
   const max = formatEuro(price.max, numberLocale);
   const trend = trendMeta(price.trend1d, numberLocale);
   const title = [
-    `${label} ${avg} ${unit}`,
+    `${label} France ${avg} ${unit}`,
     `${trendLabel} ${trend.arrow} ${trend.signed} ${unit}`,
     `${rangeLabel} ${min}–${max} ${unit}`,
     price.computedAt ? `source ${price.computedAt}` : null,
@@ -75,33 +71,20 @@ export function FuelStatusLine({
 
   return (
     <p
-      className="fuel-ticker text-ink-muted"
+      className="fuel-ticker inline-flex flex-wrap items-baseline gap-x-1.5 text-ink-muted"
       title={title}
       aria-label={title}
     >
-      <span className="text-ink">{label}</span>
-      <span className="text-ink-faint" aria-hidden="true">
-        {" · "}
-      </span>
-      <span className="inline-block tabular-nums text-ink">{avg}</span>
-      <span className="text-ink-faint"> {unit}</span>
-      <span className="text-ink-faint" aria-hidden="true">
-        {" · "}
-      </span>
-      <span className={`inline-flex items-baseline gap-1 tabular-nums ${trend.className}`}>
+      <span className="text-ink-faint">{label}</span>
+      <span className="tabular-nums text-ink">{avg}</span>
+      <span className="text-ink-faint">{unit}</span>
+      <span
+        className={`inline-flex items-baseline gap-0.5 tabular-nums ${trend.className}`}
+      >
         <span aria-hidden="true" className="fuel-trend-arrow inline-block">
           {trend.arrow}
         </span>
-        <span>
-          {trend.signed}
-          <span className="text-ink-faint"> {trendLabel}</span>
-        </span>
-      </span>
-      <span className="text-ink-faint" aria-hidden="true">
-        {" · "}
-      </span>
-      <span className="tabular-nums text-ink-faint">
-        {min}–{max}
+        <span>{trend.signed}</span>
       </span>
     </p>
   );
