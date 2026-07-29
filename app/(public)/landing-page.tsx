@@ -618,8 +618,8 @@ export function LandingPage({
             {copy.contactBody}
           </p>
           <p className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-base">
-            <a href="mailto:hello@harbi.eu" className="link-underline">
-              hello@harbi.eu
+            <a href="mailto:arthur.reichard@essec.edu" className="link-underline">
+              arthur.reichard@essec.edu
             </a>
             <a
               href="https://github.com/axeltheredpanda"
@@ -628,7 +628,7 @@ export function LandingPage({
               GitHub
             </a>
             <a
-              href="https://linkedin.com/in/yourusername"
+              href="https://www.linkedin.com/in/arthur-reichard/"
               className="link-underline"
             >
               LinkedIn
