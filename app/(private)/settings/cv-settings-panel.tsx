@@ -25,29 +25,24 @@ type Props = {
   initial: CvMilestone[];
 };
 
-type Lang = "fr" | "en";
-
 function emptyForm(): CvMilestoneInput {
   return {
     period: "",
-    titleFr: "",
-    titleEn: "",
-    placeFr: "",
-    placeEn: "",
-    summaryFr: "",
-    summaryEn: "",
+    title: "",
+    place: "",
+    summary: "",
   };
 }
 
 function toForm(row: CvMilestone): CvMilestoneInput {
+  const title = row.title_en || row.title_fr;
+  const place = row.place_en || row.place_fr;
+  const summary = row.summary_en || row.summary_fr;
   return {
     period: row.period === "—" ? "" : row.period,
-    titleFr: row.title_fr === "Nouveau jalon" ? "" : row.title_fr,
-    titleEn: row.title_en === "New milestone" ? "" : row.title_en,
-    placeFr: row.place_fr,
-    placeEn: row.place_en,
-    summaryFr: row.summary_fr === "…" ? "" : row.summary_fr,
-    summaryEn: row.summary_en === "…" ? "" : row.summary_en,
+    title: title === "New milestone" || title === "Nouveau jalon" ? "" : title,
+    place,
+    summary: summary === "…" ? "" : summary,
   };
 }
 
@@ -63,7 +58,6 @@ export function CvSettingsPanel({ initial }: Props) {
   const [form, setForm] = useState<CvMilestoneInput>(() =>
     initial[0] ? toForm(initial[0]) : emptyForm(),
   );
-  const [lang, setLang] = useState<Lang>("fr");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -251,15 +245,9 @@ export function CvSettingsPanel({ initial }: Props) {
     "mt-1 w-full border border-border bg-canvas px-3 py-2 font-body text-sm text-ink outline-none focus:border-accent";
   const labelClass = "block text-xs font-medium text-ink-muted";
 
-  const titleValue = lang === "fr" ? form.titleFr : form.titleEn;
-  const placeValue = lang === "fr" ? form.placeFr : form.placeEn;
-  const summaryValue = lang === "fr" ? form.summaryFr : form.summaryEn;
-
-  const previewTitle =
-    (lang === "fr" ? form.titleFr : form.titleEn) || "Title";
-  const previewPlace = lang === "fr" ? form.placeFr : form.placeEn;
-  const previewSummary =
-    (lang === "fr" ? form.summaryFr : form.summaryEn) || "Summary…";
+  const previewTitle = form.title || "Title";
+  const previewPlace = form.place;
+  const previewSummary = form.summary || "Summary…";
 
   return (
     <div className="space-y-4">
@@ -335,7 +323,7 @@ export function CvSettingsPanel({ initial }: Props) {
                         </span>
                       </p>
                       <p className="mt-0.5 truncate text-sm text-ink">
-                        {item.title_fr || "Untitled"}
+                        {item.title_en || item.title_fr || "Untitled"}
                       </p>
                     </button>
                     <div className="flex flex-col py-2 pr-2 opacity-70 group-hover:opacity-100">
@@ -424,68 +412,31 @@ export function CvSettingsPanel({ initial }: Props) {
                 />
               </label>
 
-              <div className="flex items-center gap-1 border-b border-border pb-2">
-                {(["fr", "en"] as const).map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => setLang(code)}
-                    className={`px-3 py-1 font-mono text-xs uppercase tracking-wide ${
-                      lang === code
-                        ? "text-accent"
-                        : "text-ink-faint hover:text-ink"
-                    }`}
-                    aria-pressed={lang === code}
-                  >
-                    {code}
-                  </button>
-                ))}
-                <span className="ml-2 text-[11px] text-ink-faint">
-                  Title, place & summary
-                </span>
-              </div>
-
               <label className={labelClass}>
-                Title ({lang.toUpperCase()})
+                Title
                 <input
                   className={fieldClass}
-                  value={titleValue}
-                  onChange={(e) =>
-                    setForm(
-                      lang === "fr"
-                        ? { ...form, titleFr: e.target.value }
-                        : { ...form, titleEn: e.target.value },
-                    )
-                  }
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
                 />
               </label>
 
               <label className={labelClass}>
-                Location ({lang.toUpperCase()})
+                Location
                 <input
                   className={fieldClass}
-                  value={placeValue}
-                  onChange={(e) =>
-                    setForm(
-                      lang === "fr"
-                        ? { ...form, placeFr: e.target.value }
-                        : { ...form, placeEn: e.target.value },
-                    )
-                  }
+                  value={form.place}
+                  onChange={(e) => setForm({ ...form, place: e.target.value })}
                 />
               </label>
 
               <label className={labelClass}>
-                Summary ({lang.toUpperCase()})
+                Summary
                 <textarea
                   className={`${fieldClass} min-h-[6rem] resize-y`}
-                  value={summaryValue}
+                  value={form.summary}
                   onChange={(e) =>
-                    setForm(
-                      lang === "fr"
-                        ? { ...form, summaryFr: e.target.value }
-                        : { ...form, summaryEn: e.target.value },
-                    )
+                    setForm({ ...form, summary: e.target.value })
                   }
                 />
               </label>

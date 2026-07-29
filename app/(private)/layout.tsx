@@ -1,9 +1,18 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { createClient } from "@/backend/supabase/server";
 import { NavLinks } from "./nav-links";
 import { SignOutButton } from "./sign-out-button";
 import { CommandPalette } from "./command-palette";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: { index: false, follow: false },
+  },
+};
 
 export default async function PrivateLayout({
   children,

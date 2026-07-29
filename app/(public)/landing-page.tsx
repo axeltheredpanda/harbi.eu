@@ -2,11 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import {
-  dictionaries,
-  type LandingCopy,
-  type Locale,
-} from "@/frontend/i18n/landing";
+import { copy, type LandingCopy } from "@/frontend/i18n/landing";
 import type { NoteMeta } from "@/backend/notes";
 import type { GithubActivity } from "@/backend/github";
 import type { NationalFuelPrice } from "@/backend/fuel";
@@ -32,8 +28,6 @@ const SITE_LAUNCH_MS = Date.UTC(2026, 6, 27);
 /** One Red Bull every 8 hours from launch (= 3/day). */
 const REDBULL_EVERY_MS = 8 * 3_600_000;
 const REDBULL_BASE = 8;
-const LOCALE_KEY = "harbi.locale";
-
 const KONAMI = [
   "ArrowUp",
   "ArrowUp",
@@ -48,7 +42,6 @@ const KONAMI = [
 ] as const;
 
 type Props = {
-  initialLocale: Locale;
   notes: NoteMeta[];
   github: GithubActivity;
   relationshipStatus: RelationshipStatus;
@@ -87,7 +80,6 @@ function pickJoke(copy: LandingCopy, exclude?: string): string {
 }
 
 export function LandingPage({
-  initialLocale,
   notes,
   github,
   relationshipStatus,
@@ -98,7 +90,6 @@ export function LandingPage({
   commitSha,
   buildDate,
 }: Props) {
-  const [locale, setLocale] = useState<Locale>(initialLocale);
   const [rally, setRally] = useState(false);
   const [redbulls, setRedbulls] = useState(() => redbullCount());
   const [singleDays, setSingleDays] = useState(() =>
@@ -108,8 +99,7 @@ export function LandingPage({
   const [clickTimes, setClickTimes] = useState<number[]>([]);
   const [themeBusy, setThemeBusy] = useState(false);
 
-  const copy = dictionaries[locale];
-  const numberLocale = locale === "fr" ? "fr-FR" : "en-GB";
+  const numberLocale = "en-GB";
   const isSingle = relationshipStatus === "single";
   const statusWord = isSingle ? copy.statusSingle : copy.statusDating;
   const onlineDays = daysSince(
@@ -133,18 +123,6 @@ export function LandingPage({
     await morphTheme(false);
     setThemeBusy(false);
   }, [themeBusy, rally]);
-
-  useEffect(() => {
-    // Restore locale before paint when possible — still may differ from SSR
-    try {
-      const stored = window.localStorage.getItem(LOCALE_KEY);
-      if ((stored === "fr" || stored === "en") && stored !== initialLocale) {
-        setLocale(stored);
-      }
-    } catch {
-      // ignore
-    }
-  }, [initialLocale]);
 
   useEffect(() => {
     return () => {
@@ -172,7 +150,7 @@ export function LandingPage({
       setRedbulls(redbullCount(now));
       if (isSingle) {
         setSingleDays(daysSince(singleSince, now));
-        setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
+        setStatusJoke((prev) => pickJoke(copy, prev));
       } else {
         setStatusJoke("");
       }
@@ -182,14 +160,14 @@ export function LandingPage({
       setRedbulls(redbullCount(tick));
       if (isSingle) {
         setSingleDays(daysSince(singleSince, tick));
-        setStatusJoke((prev) => pickJoke(dictionaries[locale], prev));
+        setStatusJoke((prev) => pickJoke(copy, prev));
       }
     }, 60_000);
     return () => {
       cancelAnimationFrame(frame);
       window.clearInterval(id);
     };
-  }, [locale, isSingle, singleSince]);
+  }, [isSingle, singleSince]);
 
   useEffect(() => {
     let index = 0;
@@ -213,14 +191,6 @@ export function LandingPage({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [enableRally]);
 
-  function handleLocale(next: Locale) {
-    setLocale(next);
-    try {
-      window.localStorage.setItem(LOCALE_KEY, next);
-    } catch {
-      // ignore
-    }
-  }
 
   function handleNameClick() {
     const now = Date.now();
@@ -269,11 +239,7 @@ export function LandingPage({
           <div className="flex shrink-0 flex-wrap items-baseline gap-x-4 gap-y-1 sm:justify-end sm:gap-x-5">
             <p
               className="inline-flex items-baseline gap-x-1.5 text-ink-muted"
-              title={
-                locale === "fr"
-                  ? "Depuis le lancement. Pas une vraie métrique — ailes non incluses."
-                  : "Since launch. Not a real metric. Wings not included."
-              }
+              title="Since launch. Not a real metric. Wings not included."
             >
               <span className="text-ink-faint">{copy.redbulls}</span>
               <CountUp value={redbulls} locale={numberLocale} />
@@ -286,7 +252,6 @@ export function LandingPage({
                 />
                 <FuelStatusLine
                   price={fuel}
-                  locale={locale}
                   label={copy.fuelLabel}
                   unit={copy.fuelUnit}
                   rangeLabel={copy.fuelRange}
@@ -386,29 +351,6 @@ export function LandingPage({
           <Link href="/login" className="transition-colors hover:text-ink">
             {copy.navLogin}
           </Link>
-          <span className="inline-flex items-center gap-1 font-mono text-xs">
-            <button
-              type="button"
-              onClick={() => handleLocale("fr")}
-              className={
-                locale === "fr" ? "text-accent" : "text-ink-faint hover:text-ink"
-              }
-              aria-pressed={locale === "fr"}
-            >
-              {copy.langFr}
-            </button>
-            <span className="text-border">/</span>
-            <button
-              type="button"
-              onClick={() => handleLocale("en")}
-              className={
-                locale === "en" ? "text-accent" : "text-ink-faint hover:text-ink"
-              }
-              aria-pressed={locale === "en"}
-            >
-              {copy.langEn}
-            </button>
-          </span>
         </nav>
       </header>
 
@@ -497,7 +439,6 @@ export function LandingPage({
         {milestones.length > 0 ? (
           <CvTimeline
             milestones={milestones}
-            locale={locale}
             title={copy.cvTitle}
             intro={copy.cvIntro}
             pdfLabel={copy.cvPdf}
@@ -521,7 +462,7 @@ export function LandingPage({
                   className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent"
                   aria-hidden="true"
                 />
-                <span>{locale === "fr" ? item.fr : item.en}</span>
+                <span>{item.text}</span>
               </li>
             ))}
           </ScrollReveal>
@@ -618,8 +559,8 @@ export function LandingPage({
             {copy.contactBody}
           </p>
           <p className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-base">
-            <a href="mailto:hello@harbi.eu" className="link-underline">
-              hello@harbi.eu
+            <a href="mailto:arthur.reichard@essec.edu" className="link-underline">
+              arthur.reichard@essec.edu
             </a>
             <a
               href="https://github.com/axeltheredpanda"
@@ -628,7 +569,7 @@ export function LandingPage({
               GitHub
             </a>
             <a
-              href="https://linkedin.com/in/yourusername"
+              href="https://www.linkedin.com/in/arthur-reichard/"
               className="link-underline"
             >
               LinkedIn

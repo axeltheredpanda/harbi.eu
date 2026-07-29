@@ -1,11 +1,8 @@
 "use client";
 
 import type { NationalFuelPrice } from "@/backend/fuel";
-import type { Locale } from "@/frontend/i18n/landing";
-
 type Props = {
   price: NationalFuelPrice;
-  locale: Locale;
   label: string;
   unit: string;
   rangeLabel: string;
@@ -49,13 +46,12 @@ function trendMeta(trend: number, locale: string) {
  */
 export function FuelStatusLine({
   price,
-  locale,
   label,
   unit,
   rangeLabel,
   trendLabel,
 }: Props) {
-  const numberLocale = locale === "fr" ? "fr-FR" : "en-GB";
+  const numberLocale = "en-GB";
   const avg = formatEuro(price.avg, numberLocale);
   const min = formatEuro(price.min, numberLocale);
   const max = formatEuro(price.max, numberLocale);

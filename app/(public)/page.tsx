@@ -1,11 +1,20 @@
-import { headers } from "next/headers";
+import type { Metadata } from "next";
 import { listNotes } from "@/backend/notes";
 import { getLatestGithubActivity } from "@/backend/github";
 import { getNationalE10Price } from "@/backend/fuel";
 import { listPublishedMilestones } from "@/backend/cv/milestones";
 import { getPublicSiteSettings } from "@/backend/settings";
-import { detectLocale } from "@/frontend/i18n/landing";
+import { personJsonLd } from "@/frontend/seo/person-json-ld";
 import { LandingPage } from "./landing-page";
+
+export const metadata: Metadata = {
+  title: {
+    absolute: "Arthur Reichard — Software, portfolio & notes · harbi.eu",
+  },
+  description:
+    "Arthur Reichard — Digital Web & E-Commerce Officer (intern) at Rémy Cointreau. ESSEC. Builder of Axel Project and harbi.eu.",
+  alternates: { canonical: "/" },
+};
 
 function shortCommitSha(): string | null {
   const sha = process.env.VERCEL_GIT_COMMIT_SHA?.trim();
@@ -23,7 +32,6 @@ function buildDateLabel(): string {
 }
 
 export default async function HomePage() {
-  const headerList = await headers();
   const [notes, github, settings, fuel, milestones] = await Promise.all([
     listNotes(),
     getLatestGithubActivity(),
@@ -33,17 +41,24 @@ export default async function HomePage() {
   ]);
 
   return (
-    <LandingPage
-      initialLocale={detectLocale(headerList.get("accept-language"))}
-      notes={notes.slice(0, 3)}
-      github={github}
-      relationshipStatus={settings.relationshipStatus}
-      singleSince={settings.singleSince}
-      fuel={fuel}
-      milestones={milestones}
-      nowPlaying={settings.nowPlaying}
-      commitSha={shortCommitSha()}
-      buildDate={buildDateLabel()}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(personJsonLd()),
+        }}
+      />
+      <LandingPage
+        notes={notes.slice(0, 3)}
+        github={github}
+        relationshipStatus={settings.relationshipStatus}
+        singleSince={settings.singleSince}
+        fuel={fuel}
+        milestones={milestones}
+        nowPlaying={settings.nowPlaying}
+        commitSha={shortCommitSha()}
+        buildDate={buildDateLabel()}
+      />
+    </>
   );
 }

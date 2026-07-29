@@ -31,8 +31,53 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://harbi.eu"),
-  title: "harbi.eu",
-  description: "Personal site and portfolio.",
+  title: {
+    default: "Arthur Reichard — harbi.eu",
+    template: "%s · Arthur Reichard",
+  },
+  description:
+    "Arthur Reichard — software from schema to screen. Portfolio, notes, and personal workspace at harbi.eu. Intern @ Rémy Cointreau (Digital Web & E-Commerce), ESSEC.",
+  applicationName: "harbi.eu",
+  authors: [{ name: "Arthur Reichard", url: "https://harbi.eu" }],
+  creator: "Arthur Reichard",
+  publisher: "Arthur Reichard",
+  keywords: [
+    "Arthur Reichard",
+    "Arthur Reichard ESSEC",
+    "Arthur Reichard portfolio",
+    "harbi.eu",
+    "Axel Project",
+    "Rémy Cointreau",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_GB",
+    url: "/",
+    siteName: "harbi.eu",
+    title: "Arthur Reichard — harbi.eu",
+    description:
+      "Portfolio and personal site of Arthur Reichard — software, notes, and Axel Project.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Arthur Reichard — harbi.eu",
+    description:
+      "Portfolio and personal site of Arthur Reichard — software, notes, and Axel Project.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export default function RootLayout({

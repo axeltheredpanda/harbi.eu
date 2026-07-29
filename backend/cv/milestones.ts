@@ -32,29 +32,29 @@ async function requireUser() {
 
 function normalizeInput(input: CvMilestoneInput, mode: "draft" | "strict") {
   const period = input.period.trim() || (mode === "draft" ? "—" : "");
-  const titleFr = input.titleFr.trim() || (mode === "draft" ? "Nouveau jalon" : "");
-  const titleEn = input.titleEn.trim() || (mode === "draft" ? "New milestone" : "");
-  const summaryFr =
-    input.summaryFr.trim() || (mode === "draft" ? "…" : "");
-  const summaryEn =
-    input.summaryEn.trim() || (mode === "draft" ? "…" : "");
+  const title = input.title.trim() || (mode === "draft" ? "New milestone" : "");
+  const summary = input.summary.trim() || (mode === "draft" ? "…" : "");
+  const place = input.place.trim();
 
   if (mode === "strict") {
     if (!period || period === "—") throw new Error("Add a period before publishing");
-    if (!titleFr || !titleEn) throw new Error("FR and EN titles are required to publish");
-    if (!summaryFr || summaryFr === "…" || !summaryEn || summaryEn === "…") {
-      throw new Error("FR and EN summaries are required to publish");
+    if (!title || title === "New milestone") {
+      throw new Error("A title is required to publish");
+    }
+    if (!summary || summary === "…") {
+      throw new Error("A summary is required to publish");
     }
   }
 
+  // Mirror into FR columns so existing NOT NULL / dual schema stays valid.
   return {
     period,
-    title_fr: titleFr,
-    title_en: titleEn,
-    place_fr: input.placeFr.trim(),
-    place_en: input.placeEn.trim(),
-    summary_fr: summaryFr,
-    summary_en: summaryEn,
+    title_fr: title,
+    title_en: title,
+    place_fr: place,
+    place_en: place,
+    summary_fr: summary,
+    summary_en: summary,
   };
 }
 
@@ -88,12 +88,9 @@ export async function createMilestone(
   const row = normalizeInput(
     {
       period: input?.period ?? "",
-      titleFr: input?.titleFr ?? "",
-      titleEn: input?.titleEn ?? "",
-      placeFr: input?.placeFr ?? "",
-      placeEn: input?.placeEn ?? "",
-      summaryFr: input?.summaryFr ?? "",
-      summaryEn: input?.summaryEn ?? "",
+      title: input?.title ?? "",
+      place: input?.place ?? "",
+      summary: input?.summary ?? "",
     },
     "draft",
   );
@@ -161,12 +158,9 @@ export async function setMilestonePublished(
     normalizeInput(
       {
         period: existing.period,
-        titleFr: existing.title_fr,
-        titleEn: existing.title_en,
-        placeFr: existing.place_fr,
-        placeEn: existing.place_en,
-        summaryFr: existing.summary_fr,
-        summaryEn: existing.summary_en,
+        title: existing.title_en || existing.title_fr,
+        place: existing.place_en || existing.place_fr,
+        summary: existing.summary_en || existing.summary_fr,
       },
       "strict",
     );

@@ -2,8 +2,9 @@ import Link from "next/link";
 import { listNotes } from "@/backend/notes";
 
 export const metadata = {
-  title: "Notes · harbi.eu",
-  description: "Short editorial notes from Arthur Reichard.",
+  title: "Notes",
+  description:
+    "Short editorial notes by Arthur Reichard — reflections on building software and products.",
 };
 
 export default async function NotesIndexPage() {

@@ -3,30 +3,21 @@
 import { useEffect, useRef, useState } from "react";
 import type { CvMilestone } from "@/backend/cv/types";
 import { milestoneImageUrl } from "@/frontend/cv/milestone-image";
-import type { Locale } from "@/frontend/i18n/landing";
 import { prefersReducedMotion } from "@/frontend/motion/prefers-reduced";
 
 type Props = {
   milestones: CvMilestone[];
-  locale: Locale;
   title: string;
   intro: string;
   pdfLabel: string;
   scrollHint: string;
 };
 
-function localized(row: CvMilestone, locale: Locale) {
-  if (locale === "en") {
-    return {
-      title: row.title_en,
-      place: row.place_en,
-      summary: row.summary_en,
-    };
-  }
+function localized(row: CvMilestone) {
   return {
-    title: row.title_fr,
-    place: row.place_fr,
-    summary: row.summary_fr,
+    title: row.title_en || row.title_fr,
+    place: row.place_en || row.place_fr,
+    summary: row.summary_en || row.summary_fr,
   };
 }
 
@@ -43,13 +34,11 @@ function useIsMobile(breakpoint = 640) {
 }
 
 function ActiveContent({
-  row,
-  locale,
+  row
 }: {
   row: CvMilestone;
-  locale: Locale;
 }) {
-  const copy = localized(row, locale);
+  const copy = localized(row);
   const image = milestoneImageUrl(row.image_path);
 
   return (
@@ -84,7 +73,6 @@ function ActiveContent({
 
 function VerticalStack({
   milestones,
-  locale,
   title,
   intro,
   pdfLabel,
@@ -115,7 +103,7 @@ function VerticalStack({
 
       <ol className="relative ml-2 border-l border-border pl-8">
         {milestones.map((row) => {
-          const copy = localized(row, locale);
+          const copy = localized(row);
           const image = milestoneImageUrl(row.image_path);
           return (
             <li
@@ -166,7 +154,6 @@ function VerticalStack({
  */
 export function CvTimeline({
   milestones,
-  locale,
   title,
   intro,
   pdfLabel,
@@ -224,7 +211,7 @@ export function CvTimeline({
     return (
       <VerticalStack
         milestones={milestones}
-        locale={locale}
+        
         title={title}
         intro={intro}
         pdfLabel={pdfLabel}
@@ -283,7 +270,7 @@ export function CvTimeline({
             className="cv-milestone-swap"
             aria-live="polite"
           >
-            <ActiveContent row={active} locale={locale} />
+            <ActiveContent row={active}  />
           </div>
 
           <div className="relative mt-12 px-1 pt-2 sm:px-2">
@@ -311,7 +298,7 @@ export function CvTimeline({
                     type="button"
                     role="tab"
                     aria-selected={state === "active"}
-                    aria-label={`${row.period} — ${localized(row, locale).title}`}
+                    aria-label={`${row.period} — ${localized(row).title}`}
                     onClick={() => jumpTo(index)}
                     className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full focus-visible:outline-offset-4"
                     style={{ left: `${left}%`, top: "50%" }}
