@@ -30,7 +30,7 @@ function parseEuro(raw: string | undefined): number | null {
 
 /**
  * National E10 average from Mon Plein Pas Cher (official FR open data).
- * Cached ~30 min — fuel prices barely move minute-to-minute.
+ * Cached ~30 min - fuel prices barely move minute-to-minute.
  */
 export async function getNationalE10Price(): Promise<NationalFuelPrice | null> {
   try {

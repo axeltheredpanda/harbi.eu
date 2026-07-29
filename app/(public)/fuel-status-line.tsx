@@ -42,7 +42,7 @@ function trendMeta(trend: number, locale: string) {
 
 /**
  * Compact fuel metric for the asymmetric status rail.
- * Min–max live in the tooltip so the strip stays scannable.
+ * Min-max live in the tooltip so the strip stays scannable.
  */
 export function FuelStatusLine({
   price,
@@ -59,7 +59,7 @@ export function FuelStatusLine({
   const title = [
     `${label} France ${avg} ${unit}`,
     `${trendLabel} ${trend.arrow} ${trend.signed} ${unit}`,
-    `${rangeLabel} ${min}–${max} ${unit}`,
+    `${rangeLabel} ${min}-${max} ${unit}`,
     price.computedAt ? `source ${price.computedAt}` : null,
   ]
     .filter(Boolean)

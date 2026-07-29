@@ -130,7 +130,7 @@ export function MessageList({
                 Claudette
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-ink-muted">
-                Nouveau fil — il n’apparaît dans la sidebar qu’après le premier
+                Nouveau fil - il n’apparaît dans la sidebar qu’après le premier
                 message.
               </p>
             </div>

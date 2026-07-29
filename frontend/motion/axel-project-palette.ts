@@ -1,5 +1,5 @@
 /**
- * Axel Project's own brand colors — a deliberate, contained exception to this
+ * Axel Project's own brand colors - a deliberate, contained exception to this
  * site's ink/terracotta tokens (see app/globals.css). Used only inside the
  * "Axel CRM" write-up (pipeline diagram + peeking swatch) to hint at the
  * product's real identity showing through its description here. Do not reuse

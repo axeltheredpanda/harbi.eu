@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "harbi.eu — Arthur Reichard";
+export const alt = "harbi.eu - Arthur Reichard";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -52,7 +52,7 @@ export default function OpenGraphImage() {
               maxWidth: 820,
             }}
           >
-            Software from schema to screen — with a private workspace on the side.
+            Software from schema to screen - with a private workspace on the side.
           </div>
         </div>
         <div

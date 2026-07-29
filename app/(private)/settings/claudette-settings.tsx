@@ -49,7 +49,7 @@ export function ClaudetteSettingsSection({ initial }: Props) {
           profile,
         });
         setProfile(next.profile);
-        setMessage("Claudette settings saved — she’ll use them on the next reply.");
+        setMessage("Claudette settings saved - she’ll use them on the next reply.");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Couldn’t save");
       }
@@ -77,7 +77,7 @@ export function ClaudetteSettingsSection({ initial }: Props) {
       setImportOpen(false);
       setPaste("");
       setMessage(
-        "Fields filled from your paste — review them, then hit Save Claudette.",
+        "Fields filled from your paste - review them, then hit Save Claudette.",
       );
     } catch {
       setImportError("Network error while parsing");
@@ -98,7 +98,7 @@ export function ClaudetteSettingsSection({ initial }: Props) {
           </h2>
           <p className="text-sm leading-relaxed text-ink-muted">
             Who you are to her and how she should talk. Profile facts are used
-            only when they help the current question — she won’t dump your bio
+            only when they help the current question - she won’t dump your bio
             unprompted. Web search is toggled per message in the chat composer.
           </p>
         </div>
@@ -115,7 +115,7 @@ export function ClaudetteSettingsSection({ initial }: Props) {
             Paste Claude memory…
           </button>
           <p className="text-xs text-ink-faint">
-            Drop a long memory dump — she’ll map it into the fields below.
+            Drop a long memory dump - she’ll map it into the fields below.
           </p>
         </div>
 
@@ -191,7 +191,7 @@ export function ClaudetteSettingsSection({ initial }: Props) {
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-ink-muted">
               Paste the raw memory export from Claude (or any notes). Claudette
-              will sort it into the fields — you review and save.
+              will sort it into the fields - you review and save.
             </p>
             <textarea
               value={paste}

@@ -132,10 +132,10 @@ export const STATUS_JOKES = [
   "(side quest: finishing what I started yesterday)",
 ] as const;
 
-/** Site copy — English only. */
+/** Site copy - English only. */
 export const copy: LandingCopy = {
   available: "Available for opportunities",
-  bio: "Fresh off a digital / e-commerce internship, currently arguing with an internal AI tool that keeps losing. I still build software the careful way — schema to screen — and care about naming, structure, and the sentence a product leaves behind.",
+  bio: "Fresh off a digital / e-commerce internship, currently arguing with an internal AI tool that keeps losing. I still build software the careful way - schema to screen - and care about naming, structure, and the sentence a product leaves behind.",
   writeToMe: "Write to me",
   readResume: "Read the résumé",
   navWork: "Work",
@@ -149,7 +149,7 @@ export const copy: LandingCopy = {
   workIntro: "A short shelf. Each piece is something I shaped myself, or nearly so.",
   cvTitle: "Path",
   cvIntro:
-    "A few milestones on a track — keep scrolling to move along. The PDF is still available beside the section.",
+    "A few milestones on a track - keep scrolling to move along. The PDF is still available beside the section.",
   cvPdf: "Download PDF",
   cvScrollHint: "Scroll to explore",
   notYetOnView: "Not yet on view.",
@@ -157,10 +157,10 @@ export const copy: LandingCopy = {
     "Pieces on this shelf are built under Axel Project, a two-person studio.",
   skillsTitle: "How I work",
   skillsIntro: "The stack I reach for when the problem is real.",
-  jokeSkill: "Excel — expert level (post-traumatic)",
+  jokeSkill: "cursor as well, but dont tell claude",
   contactTitle: "Let's talk",
   contactBody:
-    "If something here resonates — a role, a collaboration, a question — send a note. I read everything that arrives.",
+    "If something here resonates - a role, a collaboration, a question - send a note. I read everything that arrives.",
   redbulls: "Red Bulls",
   relationshipLabel: "Status",
   listeningTo: "Listening to",
@@ -175,7 +175,7 @@ export const copy: LandingCopy = {
   exitRally: "Exit rally mode",
   nowTitle: "Now",
   notesTitle: "Notes",
-  notesIntro: "Short reflections, written to be read — not to fill a blog.",
+  notesIntro: "Short reflections, written to be read - not to fill a blog.",
   notesRead: "Read",
   notesAll: "All notes",
   githubActivity: "On GitHub",
@@ -187,10 +187,6 @@ export const copy: LandingCopy = {
         "A CRM built for SMBs who've outgrown spreadsheets but aren't ready for enterprise software. Java backend, React frontend, Supabase and Stripe underneath. Built and used alongside real customers, not designed in a vacuum.",
     },
   ],
-  skills: [
-    "Next.js, React, TypeScript, Tailwind",
-    "Supabase, PostgreSQL, Node",
-    "Vercel, Git, Anthropic API",
-  ],
+  skills: ["Claude", "Claude Code", "Claude Design"],
   statusJokes: [...STATUS_JOKES],
 };

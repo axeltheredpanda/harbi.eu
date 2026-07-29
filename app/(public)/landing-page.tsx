@@ -22,7 +22,7 @@ import { CvTimeline } from "./cv-timeline";
 import { SpecimenCard } from "./specimen-card";
 
 const AXEL_CRM_STACK = ["Java", "React", "Supabase", "Stripe"] as const;
-const AXEL_CRM_YEARS = "2025—";
+const AXEL_CRM_YEARS = "2025-";
 
 const SITE_LAUNCH_MS = Date.UTC(2026, 6, 27);
 /** One Red Bull every 8 hours from launch (= 3/day). */
@@ -106,7 +106,7 @@ export function LandingPage({
     new Date(SITE_LAUNCH_MS).toISOString().slice(0, 10),
   );
   const commitLabel = commitSha ? commitSha.slice(0, 7) : "dev";
-  const nowPlayingLine = `${nowPlaying.title} — ${nowPlaying.artist}`;
+  const nowPlayingLine = `${nowPlaying.title} - ${nowPlaying.artist}`;
 
   const enableRally = useCallback(async () => {
     if (themeBusy || rally) return;
@@ -403,7 +403,7 @@ export function LandingPage({
                   stack={
                     isAxelCrm ? [...AXEL_CRM_STACK] : project.stack ?? []
                   }
-                  years={isAxelCrm ? AXEL_CRM_YEARS : (project.years ?? "—")}
+                  years={isAxelCrm ? AXEL_CRM_YEARS : (project.years ?? "-")}
                   note={project.wink}
                   description={project.description}
                   catalogStatus={copy.notYetOnView}
@@ -430,7 +430,7 @@ export function LandingPage({
               >
                 {github.repo}
               </a>
-              {" — "}
+              {" - "}
               <span className="text-ink-muted">{github.message}</span>
             </p>
           )}

@@ -3,7 +3,7 @@ export type NowItem = {
   text: string;
 };
 
-/** Easy to edit — short present-tense lines about current focus. */
+/** Easy to edit - short present-tense lines about current focus. */
 export const nowItems: NowItem[] = [
   {
     id: "work",

@@ -21,7 +21,7 @@ export function SpecimenCard({
   catalogStatus,
   pipeline,
 }: SpecimenCardProps) {
-  const meta = [`Stack — ${stack.join(", ")}`, years].join(" · ");
+  const meta = [`Stack - ${stack.join(", ")}`, years].join(" · ");
 
   return (
     <article className="py-10 first:pt-2">

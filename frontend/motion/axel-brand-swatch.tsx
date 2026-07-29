@@ -10,7 +10,7 @@ const HOVER_ROTATION = 0.5;
 
 /**
  * Wraps the Axel CRM write-up with a thin ember-to-maroon swatch peeking from
- * its top-right corner — a fragment of the product's real brand identity
+ * its top-right corner - a fragment of the product's real brand identity
  * showing through this site's ink/terracotta treatment of it.
  */
 export function AxelBrandSwatch({

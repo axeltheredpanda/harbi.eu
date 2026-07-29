@@ -4,7 +4,7 @@ import { listNotes } from "@/backend/notes";
 export const metadata = {
   title: "Notes",
   description:
-    "Short editorial notes by Arthur Reichard — reflections on building software and products.",
+    "Short editorial notes by Arthur Reichard - reflections on building software and products.",
 };
 
 export default async function NotesIndexPage() {

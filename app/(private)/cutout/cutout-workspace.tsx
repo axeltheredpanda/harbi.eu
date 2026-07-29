@@ -45,7 +45,7 @@ function validateFile(file: File): string | null {
     return "Use PNG, JPEG, WebP, or GIF.";
   }
   if (file.size > MAX_BG_UPLOAD_BYTES) {
-    return `Too large — max ${Math.floor(MAX_BG_UPLOAD_BYTES / (1024 * 1024))} MB.`;
+    return `Too large - max ${Math.floor(MAX_BG_UPLOAD_BYTES / (1024 * 1024))} MB.`;
   }
   return null;
 }
@@ -220,7 +220,7 @@ export function CutoutWorkspace({ initialHistory }: Props) {
         return;
       }
 
-      // Process in the browser (ONNX) — no external service
+      // Process in the browser (ONNX) - no external service
       const processStarted = performance.now();
       let resultBlob: Blob;
       try {
@@ -322,7 +322,7 @@ export function CutoutWorkspace({ initialHistory }: Props) {
         fill === "transparent" ? "cutout" : fill === "blur" ? "blur" : "solid";
       downloadBlob(blob, `${base}-${suffix}.png`);
     } catch {
-      setError("Download failed — try opening the result in a new tab.");
+      setError("Download failed - try opening the result in a new tab.");
     }
   }
 
@@ -337,7 +337,7 @@ export function CutoutWorkspace({ initialHistory }: Props) {
         </h1>
         <p className="max-w-prose text-base leading-relaxed text-ink-muted">
           Drop a photo, paste a screenshot, or pick a file. The background
-          leaves — no watermark, no credit card, just pixels negotiating their
+          leaves - no watermark, no credit card, just pixels negotiating their
           exit.
         </p>
       </header>
@@ -354,12 +354,12 @@ export function CutoutWorkspace({ initialHistory }: Props) {
                   {
                     id: "fast" as const,
                     label: "Fast",
-                    tip: "Quicker pass — good for drafts and simple subjects. Lower fidelity, lower latency.",
+                    tip: "Quicker pass - good for drafts and simple subjects. Lower fidelity, lower latency.",
                   },
                   {
                     id: "quality" as const,
                     label: "Quality",
-                    tip: "Slower, sharper edges — better for hair, glass, and fiddly silhouettes. Worth the wait when it matters.",
+                    tip: "Slower, sharper edges - better for hair, glass, and fiddly silhouettes. Worth the wait when it matters.",
                   },
                 ] as const
               ).map((option) => (
@@ -519,7 +519,7 @@ export function CutoutWorkspace({ initialHistory }: Props) {
           {fill !== "transparent" && (
             <p className="text-sm text-ink-faint">
               Download will bake in a{" "}
-              {fill === "blur" ? "blurred backdrop" : "solid fill"} — the slider
+              {fill === "blur" ? "blurred backdrop" : "solid fill"} - the slider
               still shows the transparent cutout.
             </p>
           )}
@@ -537,7 +537,7 @@ export function CutoutWorkspace({ initialHistory }: Props) {
         </div>
         {history.length === 0 ? (
           <p className="text-sm text-ink-muted">
-            Nothing here yet — your first cutout will land in this shelf.
+            Nothing here yet - your first cutout will land in this shelf.
           </p>
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">

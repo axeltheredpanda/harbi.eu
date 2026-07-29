@@ -298,7 +298,7 @@ export function CvTimeline({
                     type="button"
                     role="tab"
                     aria-selected={state === "active"}
-                    aria-label={`${row.period} — ${localized(row).title}`}
+                    aria-label={`${row.period} - ${localized(row).title}`}
                     onClick={() => jumpTo(index)}
                     className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full focus-visible:outline-offset-4"
                     style={{ left: `${left}%`, top: "50%" }}

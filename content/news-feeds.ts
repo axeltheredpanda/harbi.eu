@@ -9,11 +9,11 @@ export type NewsFeed = {
 };
 
 /**
- * Curated RSS/Atom sources — seed for the `feeds` table on sync.
+ * Curated RSS/Atom sources - seed for the `feeds` table on sync.
  * Prefer official feeds over scrapers.
  */
 export const NEWS_FEEDS: NewsFeed[] = [
-  // General French news (TF1 has no public RSS — franceinfo is the closest reliable titre feed)
+  // General French news (TF1 has no public RSS - franceinfo is the closest reliable titre feed)
   {
     id: "franceinfo",
     name: "franceinfo",

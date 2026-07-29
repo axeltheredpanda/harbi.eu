@@ -2,7 +2,7 @@ import type { Database } from "@/backend/supabase/types";
 
 export type CvMilestone = Database["public"]["Tables"]["cv_milestones"]["Row"];
 
-/** English-only editor shape — FR DB columns are mirrored on write. */
+/** English-only editor shape - FR DB columns are mirrored on write. */
 export type CvMilestoneInput = {
   period: string;
   title: string;

@@ -18,7 +18,7 @@ export async function sha256Hex(file: Blob): Promise<string> {
 
 /**
  * Client-side background removal (ONNX in the browser).
- * First call may download the model — treat as a warm-up.
+ * First call may download the model - treat as a warm-up.
  */
 export async function removeBackgroundInBrowser(
   file: Blob,

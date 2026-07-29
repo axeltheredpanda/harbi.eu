@@ -42,7 +42,7 @@ export const PROFILE_FIELDS: {
   rows?: number;
 }[] = [
   { key: "firstName", label: "First name", hint: "How Claudette should address you" },
-  { key: "age", label: "Age", hint: "Optional — only if you want it known" },
+  { key: "age", label: "Age", hint: "Optional - only if you want it known" },
   { key: "location", label: "Location", hint: "City, country, timezone clues" },
   { key: "languages", label: "Languages", hint: "Native / levels" },
   { key: "studies", label: "Studies", hint: "School, programme, exchange" },
@@ -57,7 +57,7 @@ export const PROFILE_FIELDS: {
   },
   { key: "interests", label: "Interests", hint: "Cars, motorsport, tech, finance…", rows: 3 },
   { key: "vehicles", label: "Vehicles", hint: "Current car, search criteria", rows: 2 },
-  { key: "people", label: "People", hint: "Associates, manager — only as needed", rows: 2 },
+  { key: "people", label: "People", hint: "Associates, manager - only as needed", rows: 2 },
   { key: "other", label: "Other", hint: "Anything else worth remembering", rows: 3 },
 ];
 
@@ -76,7 +76,7 @@ export function profileHasContent(profile: ClaudetteProfile): boolean {
   return Object.values(profile).some((v) => v.trim().length > 0);
 }
 
-/** Compact block for the system prompt — only non-empty fields. */
+/** Compact block for the system prompt - only non-empty fields. */
 export function formatProfileForPrompt(profile: ClaudetteProfile): string {
   const lines: string[] = [];
   const push = (label: string, value: string) => {

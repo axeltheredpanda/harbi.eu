@@ -68,7 +68,7 @@ function parseSseChunk(buffer: string): {
 function friendlyError(raw: string, status?: number): string {
   const lower = raw.toLowerCase();
   if (status === 429 || lower.includes("rate") || lower.includes("overloaded")) {
-    return "Rate limit — Claudette needs a short breath. Retry in a moment.";
+    return "Rate limit - Claudette needs a short breath. Retry in a moment.";
   }
   if (status === 408 || lower.includes("timeout") || lower.includes("timed out")) {
     return "Timed out waiting for a reply. Worth another try.";
@@ -194,7 +194,7 @@ export function ChatShell({
     if (selectId) {
       setActiveId(selectId);
     } else if (activeId && !list.some((c) => c.id === activeId)) {
-      // Active chat deleted elsewhere — back to blank draft
+      // Active chat deleted elsewhere - back to blank draft
       setActiveId(null);
     }
   }

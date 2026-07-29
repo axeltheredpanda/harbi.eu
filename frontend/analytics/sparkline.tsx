@@ -5,7 +5,7 @@ type Props = {
   label?: string;
 };
 
-/** Thin terracotta sparkline on cream — no grid, no legend. */
+/** Thin terracotta sparkline on cream - no grid, no legend. */
 export function Sparkline({ values, className = "", label }: Props) {
   const width = 240;
   const height = 36;

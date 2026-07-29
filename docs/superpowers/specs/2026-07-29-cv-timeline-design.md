@@ -1,4 +1,4 @@
-# Dynamic CV timeline — design
+# Dynamic CV timeline - design
 
 Date: 2026-07-29  
 Status: approved  
@@ -8,12 +8,12 @@ Scope: public horizontal CV section + Settings CRUD (FR/EN milestones with optio
 
 Replace the “static PDF only” CV presence on the public landing with a **scroll-driven horizontal timeline** of career milestones. Milestones are **editable from `/settings`** (add, edit, reorder, publish, optional logo), bilingual **FR + EN**, without redeploying.
 
-The PDF download (`/resume.pdf`) remains as a secondary exit — the timeline is the primary experience.
+The PDF download (`/resume.pdf`) remains as a secondary exit - the timeline is the primary experience.
 
 ## Non-goals (v1)
 
 - Auto-generating a PDF from milestones
-- Milestone types/tags (stage / job / école) — can add later
+- Milestone types/tags (stage / job / école) - can add later
 - Inline editing on the public page
 - Drag-and-drop on mobile beyond simple ↑↓ reorder
 - Public comments or “share this milestone”
@@ -22,7 +22,7 @@ The PDF download (`/resume.pdf`) remains as a secondary exit — the timeline is
 
 ### Placement
 
-New landing section `#cv`, **after Selected work, before Now** — biography after proof of craft.
+New landing section `#cv`, **after Selected work, before Now** - biography after proof of craft.
 
 Nav gains a **CV** link pointing to `#cv` (FR/EN copy in `frontend/i18n/landing.ts`).
 
@@ -34,9 +34,9 @@ Hero CTA “Lire le CV” / “Read the résumé” scrolls to `#cv` (smooth); a
 2. Section **pins** (sticky / scroll-hijack pattern) for the duration of the horizontal journey.
 3. Continued vertical scroll **maps to horizontal progress** across milestones (one panel ≈ one milestone).
 4. After the last milestone, pin releases and normal page scroll resumes (Now, Notes, …).
-5. `prefers-reduced-motion: reduce`: no hijack — milestones stack vertically in the same visual language.
+5. `prefers-reduced-motion: reduce`: no hijack - milestones stack vertically in the same visual language.
 
-Progress UI: a thin track + dots under the active panel (mono, editorial — not a SaaS stepper). Active milestone is clear; neighbors peek slightly on desktop.
+Progress UI: a thin track + dots under the active panel (mono, editorial - not a SaaS stepper). Active milestone is clear; neighbors peek slightly on desktop.
 
 ### Milestone slide content
 
@@ -44,17 +44,17 @@ Per active locale (`fr` | `en` from existing landing locale switch):
 
 | Element | Source | Notes |
 |--------|--------|--------|
-| Period | `period` | Shared, e.g. `2024—2025` |
+| Period | `period` | Shared, e.g. `2024-2025` |
 | Title | `title_fr` / `title_en` | Display weight |
 | Place | `place_fr` / `place_en` | Muted |
 | Summary | `summary_fr` / `summary_en` | Max ~2 short sentences |
 | Image | `image_path` → public URL | Optional; small mark/logo, not a hero card |
 
-Empty published list: section hidden (or a one-line “CV bientôt” only if we want a placeholder — **prefer hide** until ≥1 published milestone).
+Empty published list: section hidden (or a one-line “CV bientôt” only if we want a placeholder - **prefer hide** until ≥1 published milestone).
 
 ### Motion
 
-- Horizontal translate of the track driven by pin progress (CSS transform or anime.js — match existing `frontend/motion` patterns).
+- Horizontal translate of the track driven by pin progress (CSS transform or anime.js - match existing `frontend/motion` patterns).
 - Soft fade/settle on the active panel; avoid glow, pills, and dashboard chrome.
 - Respect reduced motion as above.
 
@@ -73,7 +73,7 @@ Empty published list: section hidden (or a one-line “CV bientôt” only if we
 | `summary_fr` | `text` not null | |
 | `summary_en` | `text` not null | |
 | `image_path` | `text` null | Storage object path |
-| `sort_order` | `int` not null default `0` | Lower = earlier in journey (or higher = later — pick **ascending = left→right chronological**, document in SQL) |
+| `sort_order` | `int` not null default `0` | Lower = earlier in journey (or higher = later - pick **ascending = left→right chronological**, document in SQL) |
 | `published` | `boolean` not null default `false` | Public only sees `true` |
 | `created_at` | `timestamptz` | |
 | `updated_at` | `timestamptz` | |
@@ -89,16 +89,16 @@ SQL file: `supabase/cv-milestones.sql` (idempotent, safe to re-run), referenced 
 
 - Public **read** (logos on landing without signed URLs)
 - Authenticated **upload / update / delete** scoped to the bucket (solo; path can be `{milestone_id}/{filename}` or `uploads/{uuid}-{filename}`)
-- Accept images only (jpeg/png/webp/svg); max size ~1–2 MB enforced in Server Action
+- Accept images only (jpeg/png/webp/svg); max size ~1-2 MB enforced in Server Action
 
 ## Backend
 
 New module `backend/cv/milestones.ts`:
 
-- `listPublishedMilestones()` — public landing, ordered by `sort_order` ascending (left → right)
-- `listAllMilestones()` — settings (auth), same order
+- `listPublishedMilestones()` - public landing, ordered by `sort_order` ascending (left → right)
+- `listAllMilestones()` - settings (auth), same order
 - `createMilestone` / `updateMilestone` / `deleteMilestone`
-- `reorderMilestones(ids: string[])` — rewrite `sort_order` 0..n-1
+- `reorderMilestones(ids: string[])` - rewrite `sort_order` 0..n-1
 - `uploadMilestoneImage(milestoneId, file)` / `clearMilestoneImage`
 
 Server Actions only (no public write API). Revalidate `/` and `/settings` on mutate.

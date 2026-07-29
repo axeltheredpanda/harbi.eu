@@ -21,8 +21,8 @@ export async function generateConversationTitle(
       {
         role: "user",
         content: `Return ONLY compact JSON: {"title":"...","topic":"..."}
-- title: 3–6 words, no quotes, no trailing punctuation
-- topic: one short lowercase label (1–3 words) for analytics (e.g. "coding", "car search", "writing", "news", "debugging")
+- title: 3-6 words, no quotes, no trailing punctuation
+- topic: one short lowercase label (1-3 words) for analytics (e.g. "coding", "car search", "writing", "news", "debugging")
 
 User: ${userSlice}
 Assistant: ${assistantSlice}`,

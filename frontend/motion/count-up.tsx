@@ -10,7 +10,7 @@ type Props = {
   className?: string;
 };
 
-/** Count to target without layout shift — tabular nums + reserved width. */
+/** Count to target without layout shift - tabular nums + reserved width. */
 export function CountUp({ value, locale, className }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
   const shown = useRef(false);

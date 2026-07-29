@@ -84,7 +84,7 @@
 - Modify: `app/(public)/landing-page.tsx`, `app/(public)/page.tsx`, `frontend/i18n/landing.ts`, `CLAUDE.md`
 
 - [ ] **Step 1:** i18n keys `navCv`, `cvTitle`, `cvIntro`, `cvPdf`.
-- [ ] **Step 2:** `CvTimeline` — pin spacer height ≈ `milestones.length * 100vh` (or fixed per panel), sticky viewport, horizontal track `translateX` from scroll progress; dots as jump buttons; reduced motion = vertical stack.
+- [ ] **Step 2:** `CvTimeline` - pin spacer height ≈ `milestones.length * 100vh` (or fixed per panel), sticky viewport, horizontal track `translateX` from scroll progress; dots as jump buttons; reduced motion = vertical stack.
 - [ ] **Step 3:** Wire fetch + section between work and now; nav + hero CTA → `#cv`.
 - [ ] **Step 4:** Update `CLAUDE.md`; `tsc --noEmit`; commit & push.
 
@@ -92,8 +92,8 @@
 
 ## Verification
 
-1. Run `supabase/cv-milestones.sql` in Supabase (manual — agent cannot).
-2. `/settings`: create 2–3 milestones, upload logo, publish, reorder.
+1. Run `supabase/cv-milestones.sql` in Supabase (manual - agent cannot).
+2. `/settings`: create 2-3 milestones, upload logo, publish, reorder.
 3. `/`: `#cv` appears; scroll pins and advances panels; FR/EN switch swaps copy; reduced motion stacks.
 4. Unpublish all → section hidden.
 5. PDF link still downloads.
