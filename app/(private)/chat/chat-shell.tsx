@@ -23,6 +23,9 @@ const WEB_SEARCH_STORAGE_KEY = "claudette.webSearch";
 
 type Props = {
   initialConversations: Conversation[];
+  /** When true, composer is locked (Louis joke mode). */
+  claudetteBlocked?: boolean;
+  claudetteBlockMessage?: string;
 };
 
 type LastRequest =
@@ -72,7 +75,11 @@ function friendlyError(raw: string, status?: number): string {
   return raw || "Something went wrong sending that message.";
 }
 
-export function ChatShell({ initialConversations }: Props) {
+export function ChatShell({
+  initialConversations,
+  claudetteBlocked = false,
+  claudetteBlockMessage,
+}: Props) {
   const [conversations, setConversations] = useState(initialConversations);
   const [activeId, setActiveId] = useState<string | null>(
     initialConversations[0]?.id ?? null,
@@ -597,6 +604,7 @@ export function ChatShell({ initialConversations }: Props) {
   }
 
   async function handleSend(content: string) {
+    if (claudetteBlocked) return;
     setThreadError(null);
     if (pendingAttachments.some((a) => a.uploading)) return;
 
@@ -704,7 +712,7 @@ export function ChatShell({ initialConversations }: Props) {
   }
 
   async function handleRegenerate(message: ChatMessage) {
-    if (!activeId || streaming) return;
+    if (!activeId || streaming || claudetteBlocked) return;
     setThreadError(null);
     const streamId = `stream-${crypto.randomUUID()}`;
     lastRequestRef.current = {
@@ -857,16 +865,32 @@ export function ChatShell({ initialConversations }: Props) {
           onSuggestedPrompt={handleSuggestedPrompt}
         />
 
+        {claudetteBlocked && claudetteBlockMessage ? (
+          <div
+            className="mx-4 mb-3 border border-accent bg-accent-soft/70 px-4 py-3 sm:mx-0"
+            role="status"
+          >
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-accent">
+              Accès refusé
+            </p>
+            <p className="mt-1.5 font-display text-lg leading-snug text-ink">
+              {claudetteBlockMessage}
+            </p>
+          </div>
+        ) : null}
+
         <MessageInput
-          disabled={streaming}
+          disabled={streaming || claudetteBlocked}
           streaming={streaming}
           editingContent={editingContent}
           attachments={pendingAttachments}
           webSearch={webSearch}
           webSearchDisabledReason={
-            model.toLowerCase().includes("haiku")
-              ? "Unavailable on Haiku"
-              : null
+            claudetteBlocked
+              ? "…"
+              : model.toLowerCase().includes("haiku")
+                ? "Unavailable on Haiku"
+                : null
           }
           onWebSearchChange={handleWebSearchChange}
           onCancelEdit={cancelEdit}
@@ -881,6 +905,7 @@ export function ChatShell({ initialConversations }: Props) {
             });
           }}
           onPickFiles={(files) => {
+            if (claudetteBlocked) return;
             void handlePickFiles(files);
           }}
           onSend={(content) => {

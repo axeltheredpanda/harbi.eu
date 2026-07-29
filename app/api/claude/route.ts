@@ -20,6 +20,8 @@ import {
   recordClaudeUsage,
   recordServiceEvent,
 } from "@/backend/analytics/record";
+import { getPublicSiteSettings } from "@/backend/settings";
+import { isLouisEmail, LOUIS_COPY } from "@/backend/louis";
 import type { Attachment, Message } from "@/backend/supabase/types";
 
 type Body = {
@@ -50,6 +52,14 @@ export async function POST(request: Request) {
   if (!user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const site = await getPublicSiteSettings();
+  if (site.louisJokeMode && isLouisEmail(user.email)) {
+    return new Response(JSON.stringify({ error: LOUIS_COPY.claudetteBlock }), {
+      status: 403,
       headers: { "Content-Type": "application/json" },
     });
   }
