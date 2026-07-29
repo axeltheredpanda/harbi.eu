@@ -106,8 +106,8 @@ export function NewsDrawer() {
 
   useEffect(() => {
     if (!open) return;
-    void load();
-  }, [open, load]);
+    void load({ quiet: items.length > 0 });
+  }, [open, load, items.length]);
 
   useEffect(() => {
     if (scrollPreserveRef.current != null && listRef.current) {
