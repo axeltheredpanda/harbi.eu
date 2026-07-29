@@ -457,6 +457,53 @@ export function LandingPage({
           <h2 className="font-display text-2xl font-medium tracking-tight text-ink sm:text-3xl">
             {copy.nowTitle}
           </h2>
+          <a
+            href={nowPlaying.url}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 inline-flex max-w-full items-center gap-2 font-mono text-[11px] tracking-wide text-ink-muted transition-colors hover:text-accent sm:text-xs"
+            title={nowPlayingLine}
+          >
+            <svg
+              viewBox="0 0 16 16"
+              className="eq-icon h-3.5 w-3.5 shrink-0"
+              aria-hidden="true"
+              fill="none"
+            >
+              <line
+                className="eq-bar eq-bar-1"
+                x1="3.5"
+                y1="12"
+                x2="3.5"
+                y2="5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+              <line
+                className="eq-bar eq-bar-2"
+                x1="8"
+                y1="12"
+                x2="8"
+                y2="3"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+              <line
+                className="eq-bar eq-bar-3"
+                x1="12.5"
+                y1="12"
+                x2="12.5"
+                y2="6"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+            <span className="text-ink-faint shrink-0">{copy.listeningTo}</span>
+            <span className="min-w-0 truncate">{nowPlayingLine}</span>
+          </a>
           <ScrollReveal
             as="ul"
             className="mt-8 list-none max-w-prose space-y-4 text-base leading-relaxed text-ink-muted"
