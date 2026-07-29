@@ -4,11 +4,17 @@ import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import {
+  splitContentByCopySegments,
+  type CopySegmentInput,
+} from "@/frontend/chat/split-copy-segments";
 import { THINKING_PHRASES } from "./chat-phrases";
 
 type Props = {
   content: string;
   streaming?: boolean;
+  copySegments?: CopySegmentInput[];
+  onCopySegment?: (text: string) => void;
 };
 
 /** Split at an unclosed fenced code block so partial highlighting doesn't flash. */
@@ -25,19 +31,86 @@ function splitForStreaming(content: string): { closed: string; open: string | nu
   };
 }
 
-export function MarkdownMessage({ content, streaming = false }: Props) {
+function MarkdownChunk({ content }: { content: string }) {
+  if (!content) return null;
+  return (
+    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+      {content}
+    </ReactMarkdown>
+  );
+}
+
+function CopyableRegion({
+  label,
+  text,
+  content,
+  onCopy,
+}: {
+  label: string;
+  text: string;
+  content: string;
+  onCopy: (text: string) => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    onCopy(text);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1200);
+  }
+
+  return (
+    <div className="group/seg relative my-1 rounded-sm transition-colors duration-150 hover:bg-accent-soft/45">
+      <button
+        type="button"
+        onClick={handleCopy}
+        title={`Copy · ${label}`}
+        aria-label={`Copy ${label}`}
+        className="absolute top-1 right-1 z-10 rounded-sm bg-canvas/90 px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-ink-faint opacity-0 shadow-sm ring-1 ring-border/60 transition-[opacity,color] duration-150 hover:text-accent focus-visible:opacity-100 focus-visible:outline-none group-hover/seg:opacity-100 [@media(hover:none)]:opacity-50"
+      >
+        {copied ? "copied" : "copy"}
+      </button>
+      <div className="pr-12">
+        <MarkdownChunk content={content} />
+      </div>
+    </div>
+  );
+}
+
+export function MarkdownMessage({
+  content,
+  streaming = false,
+  copySegments = [],
+  onCopySegment,
+}: Props) {
   const { closed, open } = useMemo(() => {
-    if (!streaming) return { closed: content, open: null as string | null };
-    return splitForStreaming(content);
+    if (streaming) return splitForStreaming(content);
+    return { closed: content, open: null as string | null };
   }, [content, streaming]);
+
+  const parts = useMemo(() => {
+    if (streaming || !onCopySegment || copySegments.length === 0) {
+      return closed ? ([{ kind: "md" as const, content: closed }] as const) : [];
+    }
+    return splitContentByCopySegments(closed, copySegments);
+  }, [closed, copySegments, onCopySegment, streaming]);
 
   return (
     <div className="markdown-body max-w-none text-sm leading-relaxed text-ink">
-      {closed ? (
-        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-          {closed}
-        </ReactMarkdown>
-      ) : null}
+      {parts.map((part, index) => {
+        if (part.kind === "segment" && onCopySegment) {
+          return (
+            <CopyableRegion
+              key={`seg-${index}-${part.label}`}
+              label={part.label}
+              text={part.text}
+              content={part.content}
+              onCopy={onCopySegment}
+            />
+          );
+        }
+        return <MarkdownChunk key={`md-${index}`} content={part.content} />;
+      })}
       {open ? (
         <pre className="!mt-2 whitespace-pre-wrap">
           <code>{open.replace(/^```\w*\n?/, "")}</code>
