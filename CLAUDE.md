@@ -15,7 +15,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
   raccourcis Windows (Ctrl+K palette, Ctrl+Shift+Y news, j/k/Enter/m/r)
 - Market quotes via `/api/market` (Yahoo chart, revalidate ~5 min)
 - Rapport privé `/analytics` (`claude_usage`, `service_events` — SQL `supabase/analytics.sql`)
-- Déploiement : Vercel (+ Speed Insights)
+- Déploiement : Vercel (+ Analytics + Speed Insights)
 
 ## Structure
 - `app/(public)/` — landing FR/EN, sections work / now / notes / skills / contact
@@ -44,7 +44,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [x] Selected work en cartes museum specimen (Axel CRM Nº 01 ; crédit studio Axel Project)
 - [x] News drawer RSS + sync GitHub Actions
 - [x] Rapport `/analytics` (tokens, coût, cutout, news, patterns) — SQL `analytics.sql`
-- [x] Vercel Speed Insights
+- [x] Vercel Analytics + Speed Insights
 - [ ] Brancher Supabase (SQL à jour) si besoin
 - [ ] Contenu projets / LinkedIn encore placeholders
 ## Notes

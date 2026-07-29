@@ -13,6 +13,7 @@
     "@imgly/background-removal": "^1.7.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.9",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "animejs": "^3.2.2",
     "highlight.js": "^11.11.1",
