@@ -46,8 +46,6 @@ export async function updateSession(request: NextRequest) {
     "/chat",
     "/claudette",
     "/cutout",
-    "/market",
-    "/garage",
     "/settings",
     "/analytics",
   ];
