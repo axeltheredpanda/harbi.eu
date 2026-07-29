@@ -44,6 +44,12 @@ const COMMANDS: Command[] = [
     keywords: "cars vehicles search",
   },
   {
+    id: "analytics",
+    label: "Analytics · usage report",
+    href: "/analytics",
+    keywords: "tokens cost usage health stats umami",
+  },
+  {
     id: "settings",
     label: "Settings",
     href: "/settings",

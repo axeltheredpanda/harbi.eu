@@ -310,6 +310,21 @@ export async function syncNewsFeeds(feedIds?: string[]): Promise<SyncResult> {
     if (o.unreachable) unreachable.push(o.feedId);
   }
 
+  if (errors.length) {
+    try {
+      const { recordServiceEvent } = await import("@/backend/analytics/record");
+      for (const err of errors.slice(0, 8)) {
+        await recordServiceEvent({
+          service: "news",
+          kind: "error",
+          detail: `${err.feedId}: ${err.message}`,
+        });
+      }
+    } catch {
+      // ignore analytics failures
+    }
+  }
+
   return { feeds: feeds.length, inserted, errors, unreachable };
 }
 

@@ -14,7 +14,8 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
   sync serveur toutes les 30 min (GitHub Actions) + Refresh manuel (connecté),
   raccourcis Windows (Ctrl+K palette, Ctrl+Shift+Y news, j/k/Enter/m/r)
 - Market quotes via `/api/market` (Yahoo chart, revalidate ~5 min)
-- Analytics optionnel : Umami (`NEXT_PUBLIC_UMAMI_*`)
+- Analytics optionnel : Umami (`NEXT_PUBLIC_UMAMI_*`) + rapport privé `/analytics`
+  (`claude_usage`, `service_events` — SQL `supabase/analytics.sql`)
 - Déploiement : Vercel
 
 ## Structure
@@ -25,24 +26,28 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `app/(private)/cutout/` — remove background (client ONNX)
 - `app/(private)/market/` — watchlist actions US tech
 - `app/(private)/garage/` — tracker recherche voiture (CRUD Supabase)
+- `app/(private)/analytics/` — rapport d’usage / santé du site
 - `app/(private)/settings/` — réglages site (ex. relationship status)
-- `app/(private)/command-palette.tsx` — Cmd/Ctrl+K
+- `app/(private)/command-palette.tsx` — Ctrl+K
 - `frontend/cutout/remove-background.ts` — wrapper imgly
+- `backend/analytics/` — agrégation + pricing approx
 - `content/now.ts` — lignes "now" éditables
 - `frontend/i18n/landing.ts` — dictionnaires FR/EN
 - `app/opengraph-image.tsx` (+ notes OG)
 
 ## État actuel
-- [x] Auth + proxy (`/chat` `/cutout` `/market` `/garage` `/settings`)
-- [x] Claudette (streaming, modèles, uploads, UX)
+- [x] Auth + proxy (`/chat` `/cutout` `/market` `/garage` `/analytics` `/settings`)
+- [x] Claudette (streaming, modèles, uploads, UX, web search per-message)
 - [x] Cutout in-browser (imgly) + history/cache Supabase — SQL `cutout-and-settings.sql`
 - [x] Settings (relationship status single/dating → bannière publique)
 - [x] Landing personnalité + FR/EN + now + notes + GitHub subtle + OG + Umami hook
 - [x] Market widget + garage tracker + command palette
 - [x] Selected work en cartes museum specimen (Axel CRM Nº 01 ; crédit studio Axel Project)
-- [ ] Brancher Supabase (SQL à jour) + env Umami si besoin
+- [x] News drawer RSS + sync GitHub Actions
+- [x] Rapport `/analytics` (tokens, coût, cutout, news, patterns) — SQL `analytics.sql`
+- [ ] Brancher Supabase (SQL à jour) + env Umami API si besoin pour traffic in-app
 - [ ] Contenu projets / LinkedIn encore placeholders
-
+- [ ] Search Console / geo France fine — pas branché (Umami country only)
 ## Notes
 - Pas de todo/projects UI (retirés volontairement).
 - Mettre à jour cette section à chaque session.

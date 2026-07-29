@@ -49,6 +49,7 @@ export async function updateSession(request: NextRequest) {
     "/market",
     "/garage",
     "/settings",
+    "/analytics",
   ];
   const isPrivateRoute = privatePaths.some(
     (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`),

@@ -221,7 +221,31 @@ export function CutoutWorkspace({ initialHistory }: Props) {
       }
 
       // Process in the browser (ONNX) — no external service
-      const resultBlob = await removeBackgroundInBrowser(file, mode);
+      const processStarted = performance.now();
+      let resultBlob: Blob;
+      try {
+        resultBlob = await removeBackgroundInBrowser(file, mode);
+      } catch (err) {
+        const detail =
+          err instanceof Error ? err.message : "Cutout processing failed";
+        setError(detail);
+        try {
+          await fetch("/api/remove-bg/event", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              kind: "error",
+              detail,
+              durationMs: Math.round(performance.now() - processStarted),
+              mode,
+            }),
+          });
+        } catch {
+          // ignore analytics failure
+        }
+        return;
+      }
+      const durationMs = Math.round(performance.now() - processStarted);
 
       const storeForm = new FormData();
       storeForm.append("file", file);
@@ -231,6 +255,7 @@ export function CutoutWorkspace({ initialHistory }: Props) {
       );
       storeForm.append("mode", mode);
       storeForm.append("contentHash", contentHash);
+      storeForm.append("durationMs", String(durationMs));
 
       const storeRes = await fetch("/api/remove-bg", {
         method: "POST",
