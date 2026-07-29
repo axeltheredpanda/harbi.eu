@@ -14,6 +14,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
   sync serveur toutes les 30 min (GitHub Actions) + Refresh manuel (connecté),
   raccourcis Windows (Ctrl+K palette, Ctrl+Shift+Y news, j/k/Enter/m/r)
 - Market quotes via `/api/market` (Yahoo chart, revalidate ~5 min)
+- Prix E10 national via Mon Plein Pas Cher (`backend/fuel.ts`, banner publique)
 - Rapport privé `/analytics` (`claude_usage`, `service_events` — SQL `supabase/analytics.sql`)
 - Déploiement : Vercel (+ Analytics + Speed Insights)
 
@@ -45,6 +46,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [x] News drawer RSS + sync GitHub Actions
 - [x] Rapport `/analytics` (tokens, coût, cutout, news, patterns) — SQL `analytics.sql`
 - [x] Vercel Analytics + Speed Insights
+- [x] Banner E10 nationale (Mon Plein Pas Cher — moyenne, tendance 1j, min–max)
 - [ ] Brancher Supabase (SQL à jour) si besoin
 - [ ] Contenu projets / LinkedIn encore placeholders
 ## Notes
