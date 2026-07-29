@@ -47,7 +47,7 @@ const COMMANDS: Command[] = [
     id: "analytics",
     label: "Analytics · usage report",
     href: "/analytics",
-    keywords: "tokens cost usage health stats umami",
+    keywords: "tokens cost usage health stats report",
   },
   {
     id: "settings",

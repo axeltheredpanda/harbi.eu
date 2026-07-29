@@ -68,16 +68,6 @@ export type AnalyticsReport = {
     errorByDay: DayPoint[];
     note: string;
   };
-  traffic: {
-    available: boolean;
-    note: string;
-    pageviews?: number;
-    visitors?: number;
-    byDay?: DayPoint[];
-    topPages?: { path: string; views: number }[];
-    referrers?: { referrer: string; views: number }[];
-    countries?: { country: string; visitors: number }[];
-  };
   extras: {
     conversationsStarted: number;
     messagesSent: number;
@@ -157,90 +147,6 @@ function formatGlance(parts: {
   }
   bits.push(parts.errors === 0 ? "everything's quiet" : `${parts.errors} error${parts.errors > 1 ? "s" : ""} logged`);
   return bits.join(" · ");
-}
-
-async function fetchUmamiTraffic(
-  since: Date | null,
-  until: Date,
-): Promise<AnalyticsReport["traffic"]> {
-  const apiUrl = process.env.UMAMI_API_URL?.replace(/\/$/, "");
-  const websiteId =
-    process.env.UMAMI_WEBSITE_ID || process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
-  const token = process.env.UMAMI_API_TOKEN;
-
-  if (!apiUrl || !websiteId || !token) {
-    return {
-      available: false,
-      note: "Umami script may be collecting pageviews, but UMAMI_API_URL + UMAMI_API_TOKEN aren’t set — traffic stays in the Umami dashboard for now. Search Console isn’t wired.",
-    };
-  }
-
-  const startAt = (since ?? new Date(until.getTime() - 29 * 86_400_000)).getTime();
-  const endAt = until.getTime();
-
-  try {
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    };
-    const statsRes = await fetch(
-      `${apiUrl}/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}`,
-      { headers, next: { revalidate: 300 } },
-    );
-    if (!statsRes.ok) {
-      return {
-        available: false,
-        note: `Umami API returned ${statsRes.status}. Check token permissions.`,
-      };
-    }
-    const stats = (await statsRes.json()) as {
-      pageviews?: { value?: number };
-      visitors?: { value?: number };
-    };
-
-    const [pagesRes, refsRes, countriesRes] = await Promise.all([
-      fetch(
-        `${apiUrl}/api/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&type=url&limit=8`,
-        { headers, next: { revalidate: 300 } },
-      ),
-      fetch(
-        `${apiUrl}/api/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&type=referrer&limit=6`,
-        { headers, next: { revalidate: 300 } },
-      ),
-      fetch(
-        `${apiUrl}/api/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&type=country&limit=10`,
-        { headers, next: { revalidate: 300 } },
-      ),
-    ]);
-
-    type MetricRow = { x: string; y: number };
-    const pages = pagesRes.ok ? ((await pagesRes.json()) as MetricRow[]) : [];
-    const refs = refsRes.ok ? ((await refsRes.json()) as MetricRow[]) : [];
-    const countries = countriesRes.ok
-      ? ((await countriesRes.json()) as MetricRow[])
-      : [];
-
-    return {
-      available: true,
-      note: "From Umami. France-level region/department isn’t available via this API — country only. Search Console not connected.",
-      pageviews: stats.pageviews?.value ?? 0,
-      visitors: stats.visitors?.value ?? 0,
-      topPages: pages.map((p) => ({ path: p.x, views: p.y })),
-      referrers: refs.map((r) => ({
-        referrer: r.x || "(direct)",
-        views: r.y,
-      })),
-      countries: countries.map((c) => ({
-        country: c.x,
-        visitors: c.y,
-      })),
-    };
-  } catch (err) {
-    return {
-      available: false,
-      note: err instanceof Error ? err.message : "Umami fetch failed",
-    };
-  }
 }
 
 export async function buildAnalyticsReport(
@@ -490,8 +396,6 @@ export async function buildAnalyticsReport(
     cursor.setUTCDate(cursor.getUTCDate() - 1);
   }
 
-  const traffic = await fetchUmamiTraffic(since, now);
-
   const totalTokens = inputTokens + outputTokens;
   const glance = formatGlance({
     tokens: totalTokens,
@@ -569,7 +473,6 @@ export async function buildAnalyticsReport(
       errorByDay: fillSeries(dayBase, errorEvents),
       note: "No Python microservice uptime — rembg moved in-browser. Errors come from logged service_events.",
     },
-    traffic,
     extras: {
       conversationsStarted: conversations.length,
       messagesSent: userMessages.length,

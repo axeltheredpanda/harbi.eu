@@ -30,7 +30,7 @@ create index if not exists claude_usage_conversation_idx
 create table if not exists public.service_events (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users (id) on delete set null,
-  service text not null check (service in ('claude', 'cutout', 'news', 'umami', 'other')),
+  service text not null check (service in ('claude', 'cutout', 'news', 'other')),
   kind text not null check (kind in ('success', 'error', 'timeout', 'info')),
   detail text,
   duration_ms integer,
