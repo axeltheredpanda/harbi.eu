@@ -155,7 +155,7 @@ export const copy: LandingCopy = {
     "Pieces on this shelf are built under Axel Project, a two-person studio.",
   skillsTitle: "How I work",
   skillsIntro: "The stack I reach for when the problem is real.",
-  jokeSkill: "cursor as well, but dont tell claude",
+  jokeSkill: "Cursor as well, but don't tell Claude",
   contactTitle: "Let's talk",
   contactBody:
     "If something here resonates - a role, a collaboration, a question - send a note. I read everything that arrives.",
