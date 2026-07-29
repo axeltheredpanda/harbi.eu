@@ -1,3 +1,5 @@
+import type { ReactElement } from "react";
+
 type Props = {
   values: number[];
   className?: string;
@@ -23,7 +25,7 @@ export function Sparkline({
 
   const empty = !values.length || values.every((v) => v === 0);
 
-  let chart: JSX.Element;
+  let chart: ReactElement;
   if (empty) {
     chart = (
       <svg
