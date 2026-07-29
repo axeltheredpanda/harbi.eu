@@ -15,8 +15,13 @@ import { HeroAssemble } from "@/frontend/motion/hero-assemble";
 import { ScrollReveal } from "@/frontend/motion/scroll-reveal";
 import { CountUp } from "@/frontend/motion/count-up";
 import { MonogramLogo } from "@/frontend/motion/monogram-logo";
+import { PipelineDiagram } from "@/frontend/motion/pipeline-diagram";
 import { morphTheme } from "@/frontend/motion/theme-morph";
 import { openNewsDrawer } from "@/frontend/news/news-provider";
+import { SpecimenCard } from "./specimen-card";
+
+const AXEL_CRM_STACK = ["Java", "React", "Supabase", "Stripe"] as const;
+const AXEL_CRM_YEARS = "2025—";
 
 const SITE_LAUNCH_MS = Date.UTC(2026, 6, 1);
 const LOCALE_KEY = "harbi.locale";
@@ -323,29 +328,38 @@ export function LandingPage({
             {copy.workIntro}
           </p>
           <ScrollReveal
-            as="ul"
-            className="mt-12 flex list-none flex-col"
-            selector=":scope > li"
+            as="div"
+            className="mt-12 divide-y divide-border border-t border-border"
+            selector=":scope > article"
             stagger={80}
           >
-            {copy.projects.map((project) => (
-              <li
-                key={project.name}
-                className="border-t border-border py-8 first:border-t-0 first:pt-0"
-              >
-                <h3 className="font-display text-xl font-medium text-ink">
-                  {project.name}
-                </h3>
-                <p className="mt-3 max-w-prose font-display text-[0.95rem] italic leading-relaxed text-ink-faint">
-                  {project.wink}
-                </p>
-                <p className="mt-2 max-w-prose text-base leading-relaxed text-ink-muted">
-                  {project.description}
-                </p>
-                <p className="mt-3 text-sm text-ink-faint">{copy.linkSoon}</p>
-              </li>
-            ))}
+            {copy.projects.map((project, index) => {
+              const isAxelCrm = project.name === "Axel CRM";
+              return (
+                <SpecimenCard
+                  key={project.name}
+                  number={String(index + 1).padStart(2, "0")}
+                  name={project.name}
+                  stack={
+                    isAxelCrm ? [...AXEL_CRM_STACK] : project.stack ?? []
+                  }
+                  years={isAxelCrm ? AXEL_CRM_YEARS : (project.years ?? "—")}
+                  note={project.wink}
+                  description={project.description}
+                  catalogStatus={copy.notYetOnView}
+                  pipeline={
+                    isAxelCrm ? (
+                      <PipelineDiagram className="mt-5 h-5 w-full max-w-[180px] opacity-70" />
+                    ) : undefined
+                  }
+                />
+              );
+            })}
           </ScrollReveal>
+
+          <p className="mt-14 max-w-md font-mono text-[0.65rem] leading-relaxed tracking-[0.14em] text-ink-faint uppercase">
+            {copy.studioCredit}
+          </p>
 
           {github && (
             <p className="mt-10 border-t border-border pt-6 font-mono text-xs leading-relaxed text-ink-faint">

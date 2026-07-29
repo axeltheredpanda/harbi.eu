@@ -19,6 +19,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 
 ## Structure
 - `app/(public)/` — landing FR/EN, sections work / now / notes / skills / contact
+- `app/(public)/specimen-card.tsx` — cartes « museum specimen » pour Selected work
 - `app/notes/` — mini-blog markdown (`content/notes/*.md`)
 - `app/(private)/chat/` — Claudette
 - `app/(private)/cutout/` — remove background (client ONNX)
@@ -38,6 +39,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [x] Settings (relationship status single/dating → bannière publique)
 - [x] Landing personnalité + FR/EN + now + notes + GitHub subtle + OG + Umami hook
 - [x] Market widget + garage tracker + command palette
+- [x] Selected work en cartes museum specimen (Axel CRM Nº 01 ; crédit studio Axel Project)
 - [ ] Brancher Supabase (SQL à jour) + env Umami si besoin
 - [ ] Contenu projets / LinkedIn encore placeholders
 
