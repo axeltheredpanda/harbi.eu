@@ -57,13 +57,13 @@ export const metadata: Metadata = {
     locale: "en_GB",
     url: "/",
     siteName: "harbi.eu",
-    title: "Arthur Reichard - harbi.eu",
+    title: "harbi.eu",
     description:
       "Portfolio and personal site of Arthur Reichard - software, notes, and Axel Project.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Arthur Reichard - harbi.eu",
+    title: "harbi.eu",
     description:
       "Portfolio and personal site of Arthur Reichard - software, notes, and Axel Project.",
   },
