@@ -13,6 +13,10 @@ import {
   removeBackgroundInBrowser,
   sha256Hex,
 } from "@/frontend/cutout/remove-background";
+import {
+  lookupCutoutCache,
+  persistCutout,
+} from "@/frontend/cutout/persist";
 import { CompareSlider } from "./compare-slider";
 import { DropZone } from "./drop-zone";
 
@@ -41,13 +45,36 @@ type Props = {
 };
 
 function validateFile(file: File): string | null {
-  if (!ALLOWED_BG_MIME.has(file.type)) {
+  if (file.type && !ALLOWED_BG_MIME.has(file.type)) {
     return "Use PNG, JPEG, WebP, or GIF.";
+  }
+  if (!file.type) {
+    // Clipboard pastes sometimes omit MIME - still accept by extension/default.
+    const lower = (file.name || "").toLowerCase();
+    const okExt =
+      !lower ||
+      /\.(png|jpe?g|webp|gif)$/.test(lower) ||
+      lower === "image.png" ||
+      lower.startsWith("image");
+    if (!okExt) {
+      return "Use PNG, JPEG, WebP, or GIF.";
+    }
   }
   if (file.size > MAX_BG_UPLOAD_BYTES) {
     return `Too large - max ${Math.floor(MAX_BG_UPLOAD_BYTES / (1024 * 1024))} MB.`;
   }
   return null;
+}
+
+/** Ensure uploads always carry an image MIME (clipboard can send empty type). */
+function withImageMime(file: File): File {
+  if (ALLOWED_BG_MIME.has(file.type)) return file;
+  const lower = (file.name || "").toLowerCase();
+  let type = "image/png";
+  if (/\.jpe?g$/.test(lower)) type = "image/jpeg";
+  else if (/\.webp$/.test(lower)) type = "image/webp";
+  else if (/\.gif$/.test(lower)) type = "image/gif";
+  return new File([file], file.name || "paste.png", { type });
 }
 
 async function loadImage(src: string): Promise<HTMLImageElement> {
@@ -155,13 +182,14 @@ export function CutoutWorkspace({ initialHistory }: Props) {
   }, [busy, mode]);
 
   async function processFiles(files: File[]) {
-    const file = files[0];
-    if (!file) return;
-    const validation = validateFile(file);
+    const raw = files[0];
+    if (!raw) return;
+    const validation = validateFile(raw);
     if (validation) {
       setError(validation);
       return;
     }
+    const file = withImageMime(raw);
 
     setError(null);
     setBusy(true);
@@ -177,43 +205,26 @@ export function CutoutWorkspace({ initialHistory }: Props) {
     try {
       const contentHash = await sha256Hex(file);
 
-      // Cache lookup (no result yet)
-      const lookupForm = new FormData();
-      lookupForm.append("file", file);
-      lookupForm.append("mode", mode);
-      lookupForm.append("contentHash", contentHash);
-      const lookupRes = await fetch("/api/remove-bg", {
-        method: "POST",
-        body: lookupForm,
-      });
-      const lookup = (await lookupRes.json()) as {
-        error?: string;
-        cached?: boolean;
-        needsProcessing?: boolean;
-        id?: string;
-        originalUrl?: string | null;
-        resultUrl?: string | null;
-        originalName?: string | null;
-        mode?: CutoutMode;
-      };
-
-      if (!lookupRes.ok) {
-        setError(lookup.error ?? "Something went sideways. Try again.");
+      // Cache lookup (hash only - no image bytes through Vercel)
+      let cached;
+      try {
+        cached = await lookupCutoutCache(contentHash, mode);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Something went sideways. Try again.",
+        );
         return;
       }
 
-      if (
-        lookup.cached &&
-        lookup.id &&
-        lookup.originalUrl &&
-        lookup.resultUrl
-      ) {
+      if (cached) {
         setResult({
-          id: lookup.id,
-          originalUrl: lookup.originalUrl,
-          resultUrl: lookup.resultUrl,
-          originalName: lookup.originalName ?? file.name,
-          mode: lookup.mode ?? mode,
+          id: cached.id,
+          originalUrl: cached.originalUrl,
+          resultUrl: cached.resultUrl,
+          originalName: cached.originalName ?? file.name,
+          mode: cached.mode,
           localPreview,
         });
         void refreshHistory();
@@ -247,30 +258,26 @@ export function CutoutWorkspace({ initialHistory }: Props) {
       }
       const durationMs = Math.round(performance.now() - processStarted);
 
-      const storeForm = new FormData();
-      storeForm.append("file", file);
-      storeForm.append(
-        "result",
-        new File([resultBlob], "result.png", { type: "image/png" }),
-      );
-      storeForm.append("mode", mode);
-      storeForm.append("contentHash", contentHash);
-      storeForm.append("durationMs", String(durationMs));
-
-      const storeRes = await fetch("/api/remove-bg", {
-        method: "POST",
-        body: storeForm,
-      });
-      const data = (await storeRes.json()) as {
-        error?: string;
-        id?: string;
-        originalUrl?: string | null;
-        resultUrl?: string | null;
-        originalName?: string | null;
-        mode?: CutoutMode;
-      };
-
-      if (!storeRes.ok || !data.resultUrl || !data.originalUrl || !data.id) {
+      // Upload original + result directly to Supabase Storage (browser →
+      // storage), then record the history row with a tiny JSON payload.
+      try {
+        const data = await persistCutout({
+          file,
+          result: resultBlob,
+          mode,
+          contentHash,
+          durationMs,
+        });
+        setResult({
+          id: data.id,
+          originalUrl: data.originalUrl,
+          resultUrl: data.resultUrl,
+          originalName: data.originalName ?? file.name,
+          mode: data.mode,
+          localPreview,
+        });
+        void refreshHistory();
+      } catch (err) {
         const localResult = URL.createObjectURL(resultBlob);
         setResult({
           id: "local",
@@ -281,21 +288,11 @@ export function CutoutWorkspace({ initialHistory }: Props) {
           localPreview,
         });
         setError(
-          data.error ??
-            "Cutout worked, but saving to history failed. You can still download.",
+          err instanceof Error
+            ? `Cutout worked, but saving failed: ${err.message}`
+            : "Cutout worked, but saving to history failed. You can still download.",
         );
-        return;
       }
-
-      setResult({
-        id: data.id,
-        originalUrl: data.originalUrl,
-        resultUrl: data.resultUrl,
-        originalName: data.originalName ?? file.name,
-        mode: data.mode ?? mode,
-        localPreview,
-      });
-      void refreshHistory();
     } catch (err) {
       console.error(err);
       setError(

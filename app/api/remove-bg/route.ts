@@ -1,30 +1,51 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/backend/supabase/server";
 import {
-  ALLOWED_BG_MIME,
   BG_STORAGE_BUCKET,
-  MAX_BG_UPLOAD_BYTES,
   type CutoutMode,
 } from "@/backend/cutout/constants";
 
-function parseMode(value: FormDataEntryValue | null): CutoutMode {
+function parseMode(value: unknown): CutoutMode {
   return value === "fast" ? "fast" : "quality";
 }
 
-function extensionFor(mime: string, filename: string): string {
-  if (mime === "image/png") return "png";
-  if (mime === "image/gif") return "gif";
-  if (mime === "image/webp") return "webp";
-  if (mime === "image/jpeg") return "jpg";
-  const fromName = filename.split(".").pop();
-  return fromName && fromName.length <= 5 ? fromName.toLowerCase() : "bin";
+function ownedPath(userId: string, path: unknown): path is string {
+  return (
+    typeof path === "string" &&
+    path.length > 0 &&
+    path.length < 512 &&
+    !path.includes("..") &&
+    path.startsWith(`${userId}/`)
+  );
+}
+
+async function signedPair(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  originalPath: string,
+  resultPath: string,
+) {
+  const [{ data: originalSigned }, { data: resultSigned }] = await Promise.all([
+    supabase.storage
+      .from(BG_STORAGE_BUCKET)
+      .createSignedUrl(originalPath, 60 * 60),
+    supabase.storage
+      .from(BG_STORAGE_BUCKET)
+      .createSignedUrl(resultPath, 60 * 60),
+  ]);
+  return {
+    originalUrl: originalSigned?.signedUrl ?? null,
+    resultUrl: resultSigned?.signedUrl ?? null,
+  };
 }
 
 /**
- * Store a client-processed cutout (or return a cache hit).
+ * Cutout history/cache API (JSON only).
  *
- * Cache lookup: FormData with `file` + `mode` only (no `result`).
- * Store: FormData with `file` + `result` + `mode` + optional `contentHash`.
+ * Images are uploaded from the browser straight to Supabase Storage so we
+ * never hit Vercel's ~4.5 MB request body limit with original + result.
+ *
+ * - `{ action: "lookup", contentHash, mode }`
+ * - `{ action: "save", contentHash, mode, originalPath, resultPath, ... }`
  */
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -36,93 +57,77 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const form = await request.formData();
-  const file = form.get("file");
-  const resultFile = form.get("result");
-  const mode = parseMode(form.get("mode"));
-  const providedHash = String(form.get("contentHash") ?? "").trim();
-  const durationRaw = Number(form.get("durationMs"));
-  const durationMs =
-    Number.isFinite(durationRaw) && durationRaw >= 0
-      ? Math.round(durationRaw)
-      : null;
+  const body = (await request.json().catch(() => null)) as {
+    action?: string;
+    contentHash?: string;
+    mode?: string;
+    originalName?: string | null;
+    originalPath?: string;
+    resultPath?: string;
+    durationMs?: number | null;
+  } | null;
 
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: "file is required" }, { status: 400 });
-  }
-  if (file.size <= 0) {
-    return NextResponse.json({ error: "Empty file" }, { status: 400 });
-  }
-  if (file.size > MAX_BG_UPLOAD_BYTES) {
+  if (!body || (body.action !== "lookup" && body.action !== "save")) {
     return NextResponse.json(
-      {
-        error: `File too large (max ${Math.floor(MAX_BG_UPLOAD_BYTES / (1024 * 1024))} MB)`,
-      },
+      { error: "action must be lookup or save" },
       { status: 400 },
     );
   }
 
-  const mime = file.type || "application/octet-stream";
-  if (!ALLOWED_BG_MIME.has(mime)) {
+  const mode = parseMode(body.mode);
+  const contentHash = String(body.contentHash ?? "")
+    .trim()
+    .toLowerCase();
+  if (!/^[a-f0-9]{64}$/.test(contentHash)) {
     return NextResponse.json(
-      { error: "Use PNG, JPEG, WebP, or GIF" },
+      { error: "contentHash must be sha256 hex" },
       { status: 400 },
     );
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const { createHash } = await import("node:crypto");
-  const contentHash =
-    providedHash && /^[a-f0-9]{64}$/i.test(providedHash)
-      ? providedHash.toLowerCase()
-      : createHash("sha256").update(buffer).digest("hex");
+  if (body.action === "lookup") {
+    const { data: cached } = await supabase
+      .from("bg_removals")
+      .select("id, mode, created_at, original_name, original_path, result_path")
+      .eq("user_id", user.id)
+      .eq("content_hash", contentHash)
+      .eq("mode", mode)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  // Always check cache first
-  const { data: cached } = await supabase
-    .from("bg_removals")
-    .select("id, mode, created_at, original_name, original_path, result_path")
-    .eq("user_id", user.id)
-    .eq("content_hash", contentHash)
-    .eq("mode", mode)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    if (cached) {
+      const urls = await signedPair(
+        supabase,
+        cached.original_path,
+        cached.result_path,
+      );
+      if (urls.originalUrl && urls.resultUrl) {
+        const { recordServiceEvent } = await import(
+          "@/backend/analytics/record"
+        );
+        await recordServiceEvent({
+          userId: user.id,
+          service: "cutout",
+          kind: "info",
+          detail: "cache_hit",
+          durationMs: 0,
+          meta: { mode, contentHash },
+        });
 
-  if (cached) {
-    const [{ data: originalSigned }, { data: resultSigned }] = await Promise.all([
-      supabase.storage
-        .from(BG_STORAGE_BUCKET)
-        .createSignedUrl(cached.original_path, 60 * 60),
-      supabase.storage
-        .from(BG_STORAGE_BUCKET)
-        .createSignedUrl(cached.result_path, 60 * 60),
-    ]);
-    if (originalSigned?.signedUrl && resultSigned?.signedUrl) {
-      const { recordServiceEvent } = await import("@/backend/analytics/record");
-      await recordServiceEvent({
-        userId: user.id,
-        service: "cutout",
-        kind: "info",
-        detail: "cache_hit",
-        durationMs: 0,
-        meta: { mode, contentHash },
-      });
-
-      return NextResponse.json({
-        id: cached.id,
-        mode: cached.mode,
-        createdAt: cached.created_at,
-        originalName: cached.original_name,
-        originalUrl: originalSigned.signedUrl,
-        resultUrl: resultSigned.signedUrl,
-        cached: true,
-        contentHash,
-      });
+        return NextResponse.json({
+          id: cached.id,
+          mode: cached.mode,
+          createdAt: cached.created_at,
+          originalName: cached.original_name,
+          originalUrl: urls.originalUrl,
+          resultUrl: urls.resultUrl,
+          cached: true,
+          contentHash,
+        });
+      }
     }
-  }
 
-  // Lookup-only (client will process in-browser)
-  if (!(resultFile instanceof File)) {
     return NextResponse.json({
       cached: false,
       contentHash,
@@ -130,55 +135,44 @@ export async function POST(request: Request) {
     });
   }
 
-  const resultBuffer = Buffer.from(await resultFile.arrayBuffer());
-  if (resultBuffer.length === 0) {
-    return NextResponse.json({ error: "Empty result" }, { status: 400 });
+  // action === "save"
+  if (!ownedPath(user.id, body.originalPath)) {
+    return NextResponse.json({ error: "Invalid originalPath" }, { status: 400 });
   }
-  if (resultBuffer.length > MAX_BG_UPLOAD_BYTES * 2) {
-    return NextResponse.json({ error: "Result too large" }, { status: 400 });
-  }
-
-  const id = crypto.randomUUID();
-  const ext = extensionFor(mime, file.name);
-  const originalPath = `${user.id}/${id}/original.${ext}`;
-  const resultPath = `${user.id}/${id}/result.png`;
-
-  const { error: originalUploadError } = await supabase.storage
-    .from(BG_STORAGE_BUCKET)
-    .upload(originalPath, buffer, { contentType: mime, upsert: false });
-
-  if (originalUploadError) {
-    return NextResponse.json(
-      { error: originalUploadError.message },
-      { status: 502 },
-    );
+  if (!ownedPath(user.id, body.resultPath)) {
+    return NextResponse.json({ error: "Invalid resultPath" }, { status: 400 });
   }
 
-  const { error: resultUploadError } = await supabase.storage
-    .from(BG_STORAGE_BUCKET)
-    .upload(resultPath, resultBuffer, {
-      contentType: "image/png",
-      upsert: false,
-    });
+  const durationRaw = Number(body.durationMs);
+  const durationMs =
+    Number.isFinite(durationRaw) && durationRaw >= 0
+      ? Math.round(durationRaw)
+      : null;
 
-  if (resultUploadError) {
-    await supabase.storage.from(BG_STORAGE_BUCKET).remove([originalPath]);
-    return NextResponse.json(
-      { error: resultUploadError.message },
-      { status: 502 },
-    );
-  }
+  // Prefer the UUID folder already used in the storage path.
+  const pathId = body.originalPath.split("/")[1];
+  const id =
+    pathId &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      pathId,
+    )
+      ? pathId
+      : crypto.randomUUID();
 
-  const { data: row, error: insertError } = await supabase
+  const baseRow = {
+    id,
+    user_id: user.id,
+    mode,
+    original_path: body.originalPath,
+    result_path: body.resultPath,
+    original_name: body.originalName ?? null,
+    content_hash: contentHash,
+  };
+
+  let { data: row, error: insertError } = await supabase
     .from("bg_removals")
     .insert({
-      id,
-      user_id: user.id,
-      mode,
-      original_path: originalPath,
-      result_path: resultPath,
-      original_name: file.name || null,
-      content_hash: contentHash,
+      ...baseRow,
       duration_ms: durationMs,
       cache_hit: false,
       failed: false,
@@ -186,30 +180,44 @@ export async function POST(request: Request) {
     .select("id, mode, created_at, original_name")
     .single();
 
+  // Older DBs may lack analytics columns - retry with the core schema only.
+  if (
+    insertError &&
+    /duration_ms|cache_hit|failed|schema cache/i.test(insertError.message)
+  ) {
+    ({ data: row, error: insertError } = await supabase
+      .from("bg_removals")
+      .insert(baseRow)
+      .select("id, mode, created_at, original_name")
+      .single());
+  }
+
   if (insertError || !row) {
-    await supabase.storage
-      .from(BG_STORAGE_BUCKET)
-      .remove([originalPath, resultPath]);
     return NextResponse.json(
       { error: insertError?.message ?? "Failed to save record" },
       { status: 502 },
     );
   }
 
-  const [{ data: originalSigned }, { data: resultSigned }] = await Promise.all([
-    supabase.storage
-      .from(BG_STORAGE_BUCKET)
-      .createSignedUrl(originalPath, 60 * 60),
-    supabase.storage.from(BG_STORAGE_BUCKET).createSignedUrl(resultPath, 60 * 60),
-  ]);
+  const urls = await signedPair(supabase, body.originalPath, body.resultPath);
+  if (!urls.originalUrl || !urls.resultUrl) {
+    return NextResponse.json(
+      {
+        error:
+          "Saved, but signed URLs failed - check the bg-removals storage bucket",
+        id: row.id,
+      },
+      { status: 502 },
+    );
+  }
 
   return NextResponse.json({
     id: row.id,
     mode: row.mode,
     createdAt: row.created_at,
     originalName: row.original_name,
-    originalUrl: originalSigned?.signedUrl ?? null,
-    resultUrl: resultSigned?.signedUrl ?? null,
+    originalUrl: urls.originalUrl,
+    resultUrl: urls.resultUrl,
     cached: false,
     contentHash,
   });
