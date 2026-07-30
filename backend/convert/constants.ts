@@ -41,7 +41,7 @@ export const OUTPUT_LABEL: Record<OutputFormat, string> = {
   bmp: "BMP",
 };
 
-export const MAX_CONVERT_UPLOAD_BYTES = 40 * 1024 * 1024;
+export const MAX_CONVERT_UPLOAD_BYTES = 100 * 1024 * 1024;
 export const MAX_CONVERT_BATCH = 24;
 export const CONVERT_HISTORY_KEY = "harbi.convert.history.v1";
 export const CONVERT_HISTORY_LIMIT = 24;
