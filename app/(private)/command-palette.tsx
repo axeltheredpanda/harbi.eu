@@ -32,6 +32,12 @@ const COMMANDS: Command[] = [
     keywords: "rembg background remove png cutout",
   },
   {
+    id: "convert",
+    label: "Convert · image formats",
+    href: "/convert",
+    keywords: "heic png jpeg webp avif tiff convert format zip",
+  },
+  {
     id: "analytics",
     label: "Analytics · usage report",
     href: "/analytics",

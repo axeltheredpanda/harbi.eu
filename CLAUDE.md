@@ -2,7 +2,7 @@
 
 ## C'est quoi
 Site perso combinant un portfolio public (destiné aux recruteurs) et une zone privée
-(Claudette, Cutout, news, analytics, settings). Projet solo, fait sur temps libre.
+(Claudette, Cutout, Convert, news, analytics, settings). Projet solo, fait sur temps libre.
 
 ## Stack
 - Next.js 16 (App Router), TypeScript, Tailwind 4
@@ -10,6 +10,8 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - API Anthropic serveur (`/api/claude`, `/api/claude/upload`)
 - Cutout : `@imgly/background-removal` **dans le navigateur** (ONNX) + stockage /
   cache hash via `/api/remove-bg` - pas de microservice Python
+- Convert : formats image entièrement client-side (Canvas + `@jsquash/avif` + `heic-to`)
+  - historique localStorage, zip via JSZip
 - News : drawer RSS reader (`frontend/news/*`) - feeds/feed_items in Supabase,
   sync serveur toutes les 30 min (GitHub Actions) + Refresh manuel (connecté),
   raccourcis Windows (Ctrl+K palette, Ctrl+Shift+Y news, j/k/Enter/m/r)
@@ -24,6 +26,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `app/notes/` - mini-blog markdown (`content/notes/*.md`)
 - `app/(private)/chat/` - Claudette
 - `app/(private)/cutout/` - remove background (client ONNX)
+- `app/(private)/convert/` - image format converter (Canvas + WASM, fully client-side)
 - `app/(private)/analytics/` - rapport d’usage / santé du site
 - `app/(private)/settings/` - onglets Site / CV / Claudette
 - `app/(private)/command-palette.tsx` - Ctrl+K
@@ -31,6 +34,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `backend/cv/milestones.ts` - drafts autosave + publish explicite (EN, FR colonnes mirroir)
 - `frontend/cv/milestone-image.ts` - URL logos bucket
 - `frontend/cutout/remove-background.ts` - wrapper imgly
+- `frontend/convert/` - decode / encode / zip / local history
 - `backend/analytics/` - agrégation + pricing approx
 - `frontend/navigation/soft-nav-refresh.tsx` - revisit → show router cache, refresh RSC
 - `content/now.ts` - lignes "now" éditables (EN)
@@ -39,9 +43,10 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `app/opengraph-image.tsx` (+ notes OG)
 
 ## État actuel
-- [x] Auth + proxy (`/chat` `/cutout` `/analytics` `/settings`)
+- [x] Auth + proxy (`/chat` `/cutout` `/convert` `/analytics` `/settings`)
 - [x] Claudette (streaming, modèles, uploads, UX, web search per-message, draft landing, coût, copy-segments)
 - [x] Cutout in-browser (imgly) + history/cache Supabase - SQL `cutout-and-settings.sql`
+- [x] Convert in-browser (HEIC/TIFF/… → PNG/JPG/WebP/AVIF/BMP) + zip + local history
 - [x] Settings (relationship status single/dating → bannière publique)
 - [x] Landing personnalité + now + notes + GitHub subtle + OG (English only)
 - [x] Command palette (Ctrl+K)

@@ -52,6 +52,7 @@ export async function updateSession(request: NextRequest) {
     "/chat",
     "/claudette",
     "/cutout",
+    "/convert",
     "/settings",
     "/analytics",
   ];
