@@ -9,7 +9,7 @@ import { LandingPage } from "./landing-page";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Arthur Reichard - Software, portfolio & notes · harbi.eu",
+    absolute: "harbi.eu",
   },
   description:
     "Arthur Reichard - Digital Web & E-Commerce Officer (intern) at Rémy Cointreau. ESSEC. Builder of Axel Project and harbi.eu.",

@@ -32,8 +32,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://harbi.eu"),
   title: {
-    default: "Arthur Reichard - harbi.eu",
-    template: "%s · Arthur Reichard",
+    default: "harbi.eu",
+    template: "%s · harbi.eu",
   },
   description:
     "Arthur Reichard - software from schema to screen. Portfolio, notes, and personal workspace at harbi.eu. Intern @ Rémy Cointreau (Digital Web & E-Commerce), ESSEC.",
