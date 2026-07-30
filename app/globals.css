@@ -55,6 +55,72 @@ body {
   color: var(--color-ink);
 }
 
+/*
+  Scrollbar — "cachet de cire"
+  Terracotta thumb on a soft wax-paper track; echoes the seal favicon.
+  Applies to the page and any overflow scrollers site-wide.
+*/
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-accent) var(--color-accent-soft);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--color-accent-soft);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  border-radius: 999px;
+  border: 2px solid var(--color-accent-soft);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-strong);
+  border: 2px solid var(--color-accent-soft);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/*
+  Public-only cursor — wax-seal ring + ink point (minimal).
+  Fine pointers only; touch / coarse pointers keep the system cursor.
+*/
+@media (pointer: fine) {
+  .public-wax-cursor,
+  .public-wax-cursor * {
+    cursor: url("/cursors/wax-ring.svg") 12 12, auto;
+  }
+
+  .public-wax-cursor a,
+  .public-wax-cursor button,
+  .public-wax-cursor [role="button"],
+  .public-wax-cursor [role="link"],
+  .public-wax-cursor summary,
+  .public-wax-cursor label[for],
+  .public-wax-cursor .link-underline,
+  .public-wax-cursor .cursor-pointer {
+    cursor: url("/cursors/wax-ring-fill.svg") 12 12, pointer;
+  }
+
+  .public-wax-cursor input,
+  .public-wax-cursor textarea,
+  .public-wax-cursor select,
+  .public-wax-cursor [contenteditable="true"] {
+    cursor: text;
+  }
+}
+
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;

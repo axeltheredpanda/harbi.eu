@@ -1,5 +1,5 @@
 export default function NotesLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return children;
+  return <div className="public-wax-cursor">{children}</div>;
 }
