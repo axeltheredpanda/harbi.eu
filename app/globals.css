@@ -56,36 +56,36 @@ body {
 }
 
 /*
-  Scrollbar — "cachet de cire"
-  Terracotta thumb on a soft wax-paper track; echoes the seal favicon.
-  Applies to the page and any overflow scrollers site-wide.
+  Scrollbar — minimal wax thread
+  Thin terracotta thumb, invisible track, no arrow buttons.
 */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-accent) var(--color-accent-soft);
+  scrollbar-color: var(--color-accent) transparent;
 }
 
 *::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 *::-webkit-scrollbar-track {
-  background: var(--color-accent-soft);
-  border-radius: 999px;
+  background: transparent;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 55%, transparent);
   border-radius: 999px;
-  border: 2px solid var(--color-accent-soft);
-  background-clip: padding-box;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: var(--color-accent-strong);
-  border: 2px solid var(--color-accent-soft);
-  background-clip: padding-box;
+  background: var(--color-accent);
 }
 
 *::-webkit-scrollbar-corner {
@@ -93,13 +93,14 @@ body {
 }
 
 /*
-  Public-only cursor — wax-seal ring + ink point (minimal).
-  Fine pointers only; touch / coarse pointers keep the system cursor.
+  Public-only cursor — wax-seal ring + ink point.
+  Default: hollow ring. Interactive: soft fill. Active: pressed seal.
+  !important beats utility classes like cursor-default / cursor-pointer.
 */
 @media (pointer: fine) {
   .public-wax-cursor,
   .public-wax-cursor * {
-    cursor: url("/cursors/wax-ring.svg") 12 12, auto;
+    cursor: url("/cursors/wax-ring.svg") 12 12, auto !important;
   }
 
   .public-wax-cursor a,
@@ -110,14 +111,25 @@ body {
   .public-wax-cursor label[for],
   .public-wax-cursor .link-underline,
   .public-wax-cursor .cursor-pointer {
-    cursor: url("/cursors/wax-ring-fill.svg") 12 12, pointer;
+    cursor: url("/cursors/wax-ring-fill.svg") 12 12, pointer !important;
+  }
+
+  .public-wax-cursor a:active,
+  .public-wax-cursor button:active,
+  .public-wax-cursor [role="button"]:active,
+  .public-wax-cursor [role="link"]:active,
+  .public-wax-cursor summary:active,
+  .public-wax-cursor label[for]:active,
+  .public-wax-cursor .link-underline:active,
+  .public-wax-cursor .cursor-pointer:active {
+    cursor: url("/cursors/wax-ring-press.svg") 12 12, pointer !important;
   }
 
   .public-wax-cursor input,
   .public-wax-cursor textarea,
   .public-wax-cursor select,
   .public-wax-cursor [contenteditable="true"] {
-    cursor: text;
+    cursor: text !important;
   }
 }
 
