@@ -12,12 +12,21 @@ create table if not exists public.bg_removals (
   result_path text not null,
   original_name text,
   content_hash text,
+  duration_ms integer,
+  cache_hit boolean not null default false,
+  failed boolean not null default false,
   created_at timestamptz not null default now()
 );
 
--- For DBs that already had bg_removals without content_hash:
+-- For DBs that already had bg_removals without later columns:
 alter table public.bg_removals
   add column if not exists content_hash text;
+alter table public.bg_removals
+  add column if not exists duration_ms integer;
+alter table public.bg_removals
+  add column if not exists cache_hit boolean not null default false;
+alter table public.bg_removals
+  add column if not exists failed boolean not null default false;
 
 create index if not exists bg_removals_user_created_idx
   on public.bg_removals (user_id, created_at desc);
