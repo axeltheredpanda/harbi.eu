@@ -4,19 +4,24 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "node scripts/copy-avif-wasm.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
     "@imgly/background-removal": "^1.7.0",
+    "@jsquash/avif": "^2.1.1",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.9",
+    "@types/utif": "^3.0.6",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "animejs": "^3.2.2",
+    "heic-to": "^1.5.2",
     "highlight.js": "^11.11.1",
+    "jszip": "^3.10.1",
     "next": "16.2.12",
     "onnxruntime-web": "^1.21.0",
     "react": "19.2.4",
@@ -25,7 +30,8 @@
     "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
     "rss-parser": "^3.13.0",
-    "unpdf": "^1.8.0"
+    "unpdf": "^1.8.0",
+    "utif": "^3.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

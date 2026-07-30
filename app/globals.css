@@ -21,6 +21,9 @@
   --color-accent: #9a4e2c;
   --color-accent-strong: #7a3b20;
   --color-accent-soft: #f2e4d8;
+
+  /* soft warning - larger-than-input convert results, etc. */
+  --color-warn: #a33b2d;
 }
 
 @theme inline {
@@ -34,6 +37,7 @@
   --color-accent: var(--color-accent);
   --color-accent-strong: var(--color-accent-strong);
   --color-accent-soft: var(--color-accent-soft);
+  --color-warn: var(--color-warn);
 
   /* display: Fraunces · body: Public Sans · mono: Geist Mono (workspace only) */
   --font-display: var(--font-fraunces);
