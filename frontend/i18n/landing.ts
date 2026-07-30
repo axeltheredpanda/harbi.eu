@@ -135,7 +135,7 @@ export const STATUS_JOKES = [
 /** Site copy - English only. */
 export const copy: LandingCopy = {
   available: "Available for opportunities",
-  bio: "Fresh off a digital / e-commerce internship, currently arguing with an internal AI tool that keeps losing. I still build software the careful way - schema to screen - and care about naming, structure, and the sentence a product leaves behind.",
+  bio: "Intern @ Rémy Cointreau (Digital Web & E-Commerce). After hours: trying to make Axel Project somewhat profitable without losing my mind in the process. I still build software the careful way - schema to screen - and care about naming, structure, and the sentence a product leaves behind.",
   writeToMe: "Write to me",
   readResume: "Read the résumé",
   navWork: "Work",
