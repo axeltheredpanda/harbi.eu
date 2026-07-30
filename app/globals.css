@@ -55,6 +55,43 @@ body {
   color: var(--color-ink);
 }
 
+/*
+  Scrollbar — "cachet de cire"
+  Terracotta thumb on a soft wax-paper track; echoes the seal favicon.
+  Applies to the page and any overflow scrollers site-wide.
+*/
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-accent) var(--color-accent-soft);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--color-accent-soft);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  border-radius: 999px;
+  border: 2px solid var(--color-accent-soft);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-strong);
+  border: 2px solid var(--color-accent-soft);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
