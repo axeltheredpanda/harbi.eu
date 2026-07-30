@@ -184,7 +184,7 @@ export const copy: LandingCopy = {
       name: "Axel CRM",
       wink: "The one product here that refused to wear my palette.",
       description:
-        "A CRM built for SMBs who've outgrown spreadsheets but aren't ready for enterprise software. Java backend, React frontend, Supabase and Stripe underneath. Built and used alongside real customers, not designed in a vacuum.",
+        "A CRM built for SMBs who've outgrown spreadsheets but aren't ready for enterprise software. Python backend, React frontend, Supabase and Stripe underneath. Built and used alongside real customers, not designed in a vacuum.",
     },
   ],
   skills: ["Claude", "Claude Code", "Claude Design"],
