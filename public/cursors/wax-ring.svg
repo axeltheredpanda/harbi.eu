@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Hollow wax-seal ring + ink hotspot -->
-  <circle cx="12" cy="12" r="7.25" stroke="#9a4e2c" stroke-width="1.75"/>
-  <circle cx="12" cy="12" r="1.4" fill="#1c1916"/>
+  <!-- Default: hollow wax ring + ink hotspot -->
+  <circle cx="12" cy="12" r="6.5" stroke="#9a4e2c" stroke-width="1.5"/>
+  <circle cx="12" cy="12" r="1.25" fill="#1c1916"/>
 </svg>

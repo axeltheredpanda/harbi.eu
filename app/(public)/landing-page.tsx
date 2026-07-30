@@ -364,7 +364,7 @@ export function LandingPage({
               text="Arthur Reichard"
               onActivate={handleNameClick}
               aria-label="Arthur Reichard"
-              className="cursor-default text-left transition-colors hover:text-accent focus-visible:rounded-sm"
+              className="cursor-pointer text-left transition-colors hover:text-accent focus-visible:rounded-sm"
             />
           </h1>
           <p className="animate-rise-delay-2 mt-8 max-w-xl text-lg leading-[1.7] text-ink-muted sm:text-xl sm:leading-[1.75]">
