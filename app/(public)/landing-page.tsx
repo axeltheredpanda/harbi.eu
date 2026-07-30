@@ -21,7 +21,7 @@ import { FuelStatusLine } from "./fuel-status-line";
 import { CvTimeline } from "./cv-timeline";
 import { SpecimenCard } from "./specimen-card";
 
-const AXEL_CRM_STACK = ["Java", "React", "Supabase", "Stripe"] as const;
+const AXEL_CRM_STACK = ["React", "Supabase", "Stripe"] as const;
 const AXEL_CRM_YEARS = "2025-";
 
 const SITE_LAUNCH_MS = Date.UTC(2026, 6, 27);
