@@ -64,9 +64,10 @@ export function SettingsShell({ site, cv, claudette, memory }: Props) {
       </div>
 
       <div
+        key={tab}
         role="tabpanel"
         aria-labelledby={`settings-tab-${tab}`}
-        className="min-h-[24rem]"
+        className="page-turn-panel min-h-[24rem]"
       >
         {tab === "site" ? site : null}
         {tab === "cv" ? cv : null}

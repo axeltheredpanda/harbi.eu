@@ -3,22 +3,26 @@ import { Fraunces, Geist_Mono, Public_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SiteMotion } from "@/frontend/motion/site-motion";
+import { ViewTransitionProvider } from "@/frontend/motion/view-transition-provider";
 import { NewsShell } from "@/frontend/news/news-shell";
 import "./globals.css";
 
+/* Variable fonts (single file per family) — next/font preloads + font-display: swap */
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
   axes: ["SOFT", "WONK", "opsz"],
   display: "swap",
+  preload: true,
   adjustFontFallback: true,
 });
 
 const publicSans = Public_Sans({
   variable: "--font-public-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  // Omit weight → variable font covering 100–900
   display: "swap",
+  preload: true,
   adjustFontFallback: true,
 });
 
@@ -26,6 +30,7 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
   adjustFontFallback: true,
 });
 
@@ -92,7 +97,9 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col font-body antialiased">
         <SiteMotion />
-        <NewsShell>{children}</NewsShell>
+        <ViewTransitionProvider>
+          <NewsShell>{children}</NewsShell>
+        </ViewTransitionProvider>
         <Analytics />
         <SpeedInsights />
       </body>

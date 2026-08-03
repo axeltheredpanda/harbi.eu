@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import anime from "animejs";
+import { EASE_SETTLE } from "@/frontend/motion/easing";
+import { prefersReducedMotion } from "@/frontend/motion/prefers-reduced";
 import {
   OUTPUT_FORMATS,
   OUTPUT_LABEL,
@@ -14,11 +16,6 @@ type Props = {
   disabled?: boolean;
   onChange: (format: OutputFormat) => void;
 };
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined") return true;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
 
 export function FormatFlipBadge({ value, disabled, onChange }: Props) {
   const [open, setOpen] = useState(false);
@@ -54,7 +51,7 @@ export function FormatFlipBadge({ value, disabled, onChange }: Props) {
           targets: el,
           rotateY: [-90, 0],
           duration: 180,
-          easing: "easeOutQuad",
+          easing: EASE_SETTLE,
         });
       },
     });

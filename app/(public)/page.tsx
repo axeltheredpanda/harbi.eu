@@ -7,6 +7,9 @@ import { getPublicSiteSettings } from "@/backend/settings";
 import { personJsonLd } from "@/frontend/seo/person-json-ld";
 import { LandingPage } from "./landing-page";
 
+/** ISR — public landing stays fast; revalidate hourly for fuel/github/settings. */
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: {
     absolute: "harbi.eu",

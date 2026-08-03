@@ -1,9 +1,32 @@
 import type { NextConfig } from "next";
 
+const supabaseHost = (() => {
+  try {
+    const raw = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!raw) return null;
+    return new URL(raw).hostname;
+  } catch {
+    return null;
+  }
+})();
+
 const nextConfig: NextConfig = {
   // Frozen at `next build` - used by the public landing tech badge.
   env: {
     BUILD_TIME: new Date().toISOString(),
+  },
+  images: {
+    remotePatterns: [
+      ...(supabaseHost
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: supabaseHost,
+              pathname: "/storage/v1/object/public/**",
+            },
+          ]
+        : []),
+    ],
   },
   experimental: {
     // Keep last soft-nav payload while browsing the site so revisits paint
@@ -12,6 +35,9 @@ const nextConfig: NextConfig = {
       dynamic: 1800, // 30 min - session-ish while still on the site
       static: 1800,
     },
+    // Enables Next/React View Transitions integration when available;
+    // CSS + ViewTransitionProvider provide the page-turn fallback.
+    viewTransition: true,
   },
   async redirects() {
     return [

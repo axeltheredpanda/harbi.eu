@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import anime from "animejs";
+import { EASE_SETTLE } from "./easing";
 import { prefersReducedMotion } from "./prefers-reduced";
 
 /** SVG monogram with progressive stroke draw-in. */
@@ -34,7 +35,7 @@ export function MonogramLogo({ className = "" }: { className?: string }) {
       strokeDashoffset: [anime.setDashoffset, 0],
       duration: 780,
       delay: anime.stagger(90),
-      easing: "easeInOutSine",
+      easing: EASE_SETTLE,
     });
   }, []);
 

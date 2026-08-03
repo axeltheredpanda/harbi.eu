@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import anime from "animejs";
+import { EASE_SETTLE, MOTION } from "./easing";
 import { prefersReducedMotion } from "./prefers-reduced";
 
 type Props = {
@@ -33,9 +34,9 @@ export function HeroAssemble({ text, className, onActivate, ...rest }: Props) {
       targets: letters,
       opacity: [0.001, 1],
       translateY: [10, 0],
-      duration: 420,
+      duration: MOTION.settle.duration,
       delay: anime.stagger(28, { start: 80 }),
-      easing: "easeOutCubic",
+      easing: EASE_SETTLE,
     });
   }, [text]);
 

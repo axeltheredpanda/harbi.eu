@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import anime from "animejs";
+import { EASE_SETTLE } from "./easing";
 import { prefersReducedMotion } from "./prefers-reduced";
 
 type Props = {
@@ -35,7 +36,7 @@ export function CountUp({ value, locale, className }: Props) {
       targets: state,
       n: value,
       duration: Math.min(900, 280 + Math.abs(value - from) * 4),
-      easing: "easeOutExpo",
+      easing: EASE_SETTLE,
       update() {
         el.textContent = Math.round(state.n).toLocaleString(locale);
       },

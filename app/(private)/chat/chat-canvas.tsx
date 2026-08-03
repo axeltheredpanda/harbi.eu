@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { EASE_SPRING, MOTION } from "@/frontend/motion/easing";
+import { EASE_SETTLE, EASE_SPRING, MOTION } from "@/frontend/motion/easing";
 import { prefersReducedMotion } from "@/frontend/motion/prefers-reduced";
-import { animate, anime } from "@/frontend/chat/use-anime";
+import { animate, anime } from "@/frontend/motion/use-anime";
 import { CopyIconButton } from "./copy-icon-button";
 
 type Props = {
@@ -52,7 +52,7 @@ export function ChatCanvas({
       targets: backdrop,
       opacity: 1,
       duration: 260,
-      easing: "easeOutCubic",
+      easing: EASE_SETTLE,
     });
   }, [open]);
 

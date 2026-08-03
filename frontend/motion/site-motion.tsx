@@ -2,7 +2,17 @@
 
 import { useEffect } from "react";
 import anime from "animejs";
+import { EASE_SETTLE, MOTION } from "./easing";
 import { prefersReducedMotion } from "./prefers-reduced";
+
+const INTERACTIVE_SELECTOR = [
+  "button:not([data-no-squash])",
+  "a.button-press",
+  "[role='button']:not([data-no-squash])",
+  "input[type='submit']",
+  "input[type='button']",
+  "[data-squash]",
+].join(", ");
 
 function enhanceUnderlines(root: ParentNode) {
   const reduced = prefersReducedMotion();
@@ -11,10 +21,7 @@ function enhanceUnderlines(root: ParentNode) {
     if (link.dataset.underlineReady) return;
     link.dataset.underlineReady = "1";
 
-    if (reduced) {
-      // Keep a static full underline - no draw animation
-      return;
-    }
+    if (reduced) return;
 
     link.classList.add("link-underline-animated");
     link.style.setProperty("--underline-scale", "0");
@@ -27,7 +34,7 @@ function enhanceUnderlines(root: ParentNode) {
         targets: state,
         scale: 1,
         duration: 320,
-        easing: "easeOutCubic",
+        easing: EASE_SETTLE,
         update() {
           link.style.setProperty("--underline-scale", String(state.scale));
         },
@@ -53,33 +60,40 @@ function enhanceUnderlines(root: ParentNode) {
 }
 
 function wireButtonSquash() {
+  function resolveTarget(event: Event): HTMLElement | null {
+    const target = (event.target as HTMLElement | null)?.closest(
+      INTERACTIVE_SELECTOR,
+    );
+    if (!(target instanceof HTMLElement)) return null;
+    if (target.dataset.noSquash === "1") return null;
+    if (target.hasAttribute("disabled") || target.getAttribute("aria-disabled") === "true") {
+      return null;
+    }
+    return target;
+  }
+
   function onDown(event: PointerEvent) {
     if (prefersReducedMotion()) return;
-    const target = (event.target as HTMLElement | null)?.closest(
-      "button, a.button-press",
-    );
-    if (!(target instanceof HTMLElement)) return;
-    if (target.dataset.noSquash === "1") return;
+    const target = resolveTarget(event);
+    if (!target) return;
     anime.remove(target);
     anime({
       targets: target,
-      scale: 0.97,
-      duration: 90,
-      easing: "easeOutQuad",
+      scale: MOTION.squash.downScale,
+      duration: MOTION.squash.downDuration,
+      easing: MOTION.squash.downEasing,
     });
   }
   function onUp(event: PointerEvent) {
     if (prefersReducedMotion()) return;
-    const target = (event.target as HTMLElement | null)?.closest(
-      "button, a.button-press",
-    );
-    if (!(target instanceof HTMLElement)) return;
+    const target = resolveTarget(event);
+    if (!target) return;
     anime.remove(target);
     anime({
       targets: target,
       scale: 1,
-      duration: 280,
-      easing: "easeOutElastic(1, 0.6)",
+      duration: MOTION.squash.upDuration,
+      easing: MOTION.squash.upEasing,
     });
   }
   document.addEventListener("pointerdown", onDown);
@@ -92,7 +106,7 @@ function wireButtonSquash() {
   };
 }
 
-/** Global polish: underline draw, button squash. */
+/** Global polish: underline draw, interactive squash/spring. */
 export function SiteMotion() {
   useEffect(() => {
     enhanceUnderlines(document);
