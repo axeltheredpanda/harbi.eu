@@ -25,7 +25,7 @@ export type Memory = {
 };
 
 /** Soft cap for injected memory (~2–3k tokens ≈ 8–12k chars). */
-export const MEMORY_INJECT_CHAR_BUDGET = 10_000;
+const MEMORY_INJECT_CHAR_BUDGET = 10_000;
 
 const MEMORY_EXTRACT_EVERY_N_ASSISTANT = 4;
 
