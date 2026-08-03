@@ -2,7 +2,7 @@
 
 ## C'est quoi
 Site perso combinant un portfolio public (destiné aux recruteurs) et une zone privée
-(Claudette, Cutout, Convert, news, analytics, settings). Projet solo, fait sur temps libre.
+(Claudette, Jarvis/Today, Cutout, Convert, news, analytics, settings). Projet solo, fait sur temps libre.
 
 ## Stack
 - Next.js 16 (App Router), TypeScript, Tailwind 4
@@ -17,6 +17,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
   raccourcis Windows (Ctrl+K palette, Ctrl+Shift+Y news, j/k/Enter/m/r)
 - Prix E10 national via Mon Plein Pas Cher (`backend/fuel.ts`, banner publique)
 - Rapport privé `/analytics` (`claude_usage`, `service_events` - SQL `supabase/analytics.sql`)
+- Jarvis second-brain `/today` - notes RAG (Voyage + pgvector), briefing quotidien Haiku - SQL `supabase/jarvis.sql`
 - CV timeline publique (scroll horizontal pin) + CRUD Settings - SQL `supabase/cv-milestones.sql`
 - Déploiement : Vercel (+ Analytics + Speed Insights)
 
@@ -24,7 +25,9 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `app/(public)/` - landing (EN), sections work / now / notes / skills / contact
 - `app/(public)/specimen-card.tsx` - cartes « museum specimen » pour Selected work
 - `app/notes/` - mini-blog markdown (`content/notes/*.md`)
+- `app/(private)/today/` - Jarvis home (briefing, ask/search, notes)
 - `app/(private)/chat/` - Claudette
+- `backend/jarvis/` - notes, Voyage embeds, Haiku process, RAG, briefing
 - `app/(private)/cutout/` - remove background (client ONNX)
 - `app/(private)/convert/` - image format converter (Canvas + WASM, fully client-side)
 - `app/(private)/analytics/` - rapport d’usage / santé du site
@@ -43,7 +46,8 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `app/opengraph-image.tsx` (+ notes OG)
 
 ## État actuel
-- [x] Auth + proxy (`/chat` `/cutout` `/convert` `/analytics` `/settings`)
+- [x] Auth + proxy (`/today` `/chat` `/cutout` `/convert` `/analytics` `/settings`)
+- [x] Jarvis foundation (`/today`) - notes, wiki links, hybrid search, RAG ask, daily briefing
 - [x] Claudette (streaming, modèles, uploads, UX, web search per-message, draft landing, coût, copy-segments)
 - [x] Cutout in-browser (imgly) + history/cache Supabase - SQL `cutout-and-settings.sql`
 - [x] Convert in-browser (HEIC/TIFF/… → PNG/JPG/WebP/AVIF/BMP) + zip + local history

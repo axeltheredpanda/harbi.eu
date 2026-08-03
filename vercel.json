@@ -3,6 +3,10 @@
     {
       "path": "/api/news/sync",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/jarvis/briefing",
+      "schedule": "0 5 * * *"
     }
   ]
 }

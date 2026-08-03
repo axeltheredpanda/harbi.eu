@@ -13,6 +13,7 @@ export default function robots(): MetadataRoute.Robots {
           "/chat",
           "/cutout",
           "/convert",
+          "/today",
           "/analytics",
           "/settings",
           "/login",

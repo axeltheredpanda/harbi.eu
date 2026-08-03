@@ -14,6 +14,24 @@ type Command = {
 
 const COMMANDS: Command[] = [
   {
+    id: "today",
+    label: "Today · Jarvis",
+    href: "/today",
+    keywords: "jarvis briefing notes ask home",
+  },
+  {
+    id: "daily",
+    label: "Daily note",
+    href: "/today/daily",
+    keywords: "journal diary today note",
+  },
+  {
+    id: "graph",
+    label: "Notes graph",
+    href: "/today/graph",
+    keywords: "wiki links graph backlinks",
+  },
+  {
     id: "news",
     label: "News · RSS reader",
     keywords: "feeds headlines reader atom",
