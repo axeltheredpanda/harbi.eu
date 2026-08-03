@@ -2,21 +2,23 @@
 
 import { useState, type ReactNode } from "react";
 
-export type SettingsTab = "site" | "cv" | "claudette";
+export type SettingsTab = "site" | "cv" | "claudette" | "memory";
 
 type Props = {
   site: ReactNode;
   cv: ReactNode;
   claudette: ReactNode;
+  memory: ReactNode;
 };
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: "site", label: "Site" },
   { id: "cv", label: "CV" },
   { id: "claudette", label: "Claudette" },
+  { id: "memory", label: "Memory" },
 ];
 
-export function SettingsShell({ site, cv, claudette }: Props) {
+export function SettingsShell({ site, cv, claudette, memory }: Props) {
   const [tab, setTab] = useState<SettingsTab>("site");
 
   return (
@@ -29,14 +31,15 @@ export function SettingsShell({ site, cv, claudette }: Props) {
           Settings
         </h1>
         <p className="max-w-prose text-base leading-relaxed text-ink-muted">
-          Banner dials, the public CV timeline, and Claudette’s private brief.
+          Banner dials, the public CV timeline, Claudette’s private brief, and
+          long-term memories.
         </p>
       </header>
 
       <div
         role="tablist"
         aria-label="Settings sections"
-        className="flex gap-1 border-b border-border"
+        className="flex flex-wrap gap-1 border-b border-border"
       >
         {TABS.map((item) => {
           const selected = tab === item.id;
@@ -68,6 +71,7 @@ export function SettingsShell({ site, cv, claudette }: Props) {
         {tab === "site" ? site : null}
         {tab === "cv" ? cv : null}
         {tab === "claudette" ? claudette : null}
+        {tab === "memory" ? memory : null}
       </div>
     </div>
   );

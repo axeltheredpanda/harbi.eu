@@ -31,7 +31,8 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `app/(private)/cutout/` - remove background (client ONNX)
 - `app/(private)/convert/` - image format converter (Canvas + WASM, fully client-side)
 - `app/(private)/analytics/` - rapport d’usage / santé du site
-- `app/(private)/settings/` - onglets Site / CV / Claudette
+- `app/(private)/settings/` - onglets Site / CV / Claudette / Memory
+- Claudette UX: branching, memories, canvas, voice, context gauge — SQL `supabase/claudette-ux.sql`
 - `app/(private)/command-palette.tsx` - Ctrl+K
 - `app/(public)/cv-timeline.tsx` - frise sticky (ligne terracotta) ; stack mobile / reduced-motion
 - `backend/cv/milestones.ts` - drafts autosave + publish explicite (EN, FR colonnes mirroir)
@@ -49,6 +50,7 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [x] Auth + proxy (`/today` `/chat` `/cutout` `/convert` `/analytics` `/settings`)
 - [x] Jarvis foundation (`/today`) - notes, wiki links, hybrid search, RAG ask, daily briefing
 - [x] Claudette (streaming, modèles, uploads, UX, web search per-message, draft landing, coût, copy-segments)
+- [x] Claudette UX: memory system, branching, canvas, quick actions, voice, context gauge, micro-interactions — SQL `claudette-ux.sql`
 - [x] Cutout in-browser (imgly) + history/cache Supabase - SQL `cutout-and-settings.sql`
 - [x] Convert in-browser (HEIC/TIFF/… → PNG/JPG/WebP/AVIF/BMP) + zip + local history
 - [x] Settings (relationship status single/dating → bannière publique)

@@ -8,6 +8,7 @@ import {
   type MemoryCategory,
   type TranscriptTurn,
 } from "@/backend/chat/extract";
+import { resolveActivePath } from "@/backend/chat/branches";
 
 export type Memory = {
   id: string;
@@ -166,18 +167,31 @@ export async function buildMemoryInjection(
 
 /**
  * After a conversation turn: maybe extract memories (async, never on stream path).
- * Call from a dedicated route / after() — not inside the SSE handler body delay.
+ * Call from after() — not inside the SSE handler body delay.
  */
 export async function maybeExtractMemoriesForConversation(
   conversationId: string,
+  opts?: {
+    userId?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabase?: any;
+  },
 ): Promise<{ extracted: number; skipped?: string }> {
-  const { supabase, user } = await requireUser();
+  const supabase = opts?.supabase ?? (await createClient());
+  let userId = opts?.userId;
+  if (!userId) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+    userId = user.id;
+  }
 
   const { data: conversation } = await supabase
     .from("conversations")
     .select("id, user_id, active_leaf_id")
     .eq("id", conversationId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (!conversation) return { extracted: 0, skipped: "not_found" };
@@ -192,7 +206,9 @@ export async function maybeExtractMemoriesForConversation(
     return { extracted: 0, skipped: "no_messages" };
   }
 
-  const assistantCount = allMessages.filter((m) => m.role === "assistant").length;
+  const assistantCount = allMessages.filter(
+    (m: { role: string }) => m.role === "assistant",
+  ).length;
   if (
     assistantCount < MEMORY_EXTRACT_EVERY_N_ASSISTANT ||
     assistantCount % MEMORY_EXTRACT_EVERY_N_ASSISTANT !== 0
@@ -200,7 +216,6 @@ export async function maybeExtractMemoriesForConversation(
     return { extracted: 0, skipped: "throttle" };
   }
 
-  // Use active path when available; else last ~12 linear messages
   const path = resolveActivePath(
     allMessages as {
       id: string;
@@ -213,7 +228,12 @@ export async function maybeExtractMemoriesForConversation(
   );
   const recent = path.slice(-12) as TranscriptTurn[];
 
-  const existing = await listMemories();
+  const { data: existingRows } = await supabase
+    .from("memories")
+    .select("*")
+    .eq("user_id", userId);
+  const existing = (existingRows ?? []) as Memory[];
+
   const drafts = await extractMemoryDrafts(
     recent,
     existing.map((m) => m.title),
@@ -222,7 +242,6 @@ export async function maybeExtractMemoriesForConversation(
 
   let extracted = 0;
   for (const draft of drafts) {
-    // Sensitive drafts are stored but unpinned — never auto-injected
     const match = existing.find(
       (m) => m.title.toLowerCase() === draft.title.toLowerCase(),
     );
@@ -238,11 +257,11 @@ export async function maybeExtractMemoriesForConversation(
           updated_at: new Date().toISOString(),
         })
         .eq("id", match.id)
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
       if (!updErr) extracted += 1;
     } else {
       const { error: insErr } = await supabase.from("memories").insert({
-        user_id: user.id,
+        user_id: userId,
         category: draft.category,
         title: draft.title,
         content: draft.content,
@@ -256,44 +275,4 @@ export async function maybeExtractMemoriesForConversation(
 
   if (extracted) revalidatePath("/settings");
   return { extracted };
-}
-
-/** Walk parent_id chain from leaf → root, return chronological path. */
-export function resolveActivePath<
-  T extends { id: string; parent_id: string | null },
->(messages: T[], leafId: string | null): T[] {
-  if (!messages.length) return [];
-  const byId = new Map(messages.map((m) => [m.id, m]));
-
-  let leaf = leafId ? byId.get(leafId) : undefined;
-  if (!leaf) {
-    // Fallback: latest by appearing last in array (caller should order by created_at)
-    leaf = messages[messages.length - 1];
-  }
-
-  const path: T[] = [];
-  const seen = new Set<string>();
-  let cursor: T | undefined = leaf;
-  while (cursor && !seen.has(cursor.id)) {
-    path.push(cursor);
-    seen.add(cursor.id);
-    cursor = cursor.parent_id ? byId.get(cursor.parent_id) : undefined;
-  }
-  path.reverse();
-  return path;
-}
-
-/** Sibling variants sharing the same parent_id (and role). */
-export function listSiblings<
-  T extends { id: string; parent_id: string | null; role: string; created_at: string },
->(messages: T[], messageId: string): T[] {
-  const target = messages.find((m) => m.id === messageId);
-  if (!target) return [];
-  return messages
-    .filter(
-      (m) =>
-        m.role === target.role &&
-        m.parent_id === target.parent_id,
-    )
-    .sort((a, b) => a.created_at.localeCompare(b.created_at));
 }

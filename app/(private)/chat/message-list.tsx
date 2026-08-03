@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Attachment, MessageWithAttachments } from "@/backend/supabase/types";
+import anime from "animejs";
+import type { Attachment } from "@/backend/supabase/types";
+import type { BranchedMessage } from "@/backend/chat/branches";
 import { formatQuietCostUsd } from "@/frontend/chat/format-cost";
+import { EASE_SETTLE, EASE_SPRING, MOTION } from "@/frontend/motion/easing";
+import { prefersReducedMotion } from "@/frontend/motion/prefers-reduced";
 import { MarkdownMessage, ThinkingIndicator } from "./markdown-message";
 import { SUGGESTED_PROMPTS } from "./chat-phrases";
+import { BranchNav } from "./branch-nav";
+import { CopyIconButton } from "./copy-icon-button";
+import { QuickActions } from "./quick-actions";
+import { ErrorFlinch } from "./error-flinch";
 
-export type ChatMessage = MessageWithAttachments & {
+export type ChatMessage = BranchedMessage & {
   pending?: boolean;
   streaming?: boolean;
   error?: boolean;
@@ -20,14 +28,24 @@ export type ThreadError = {
   onRetry: () => void;
 } | null;
 
+type CanvasPayload = {
+  title: string;
+  content: string;
+};
+
 type Props = {
   messages: ChatMessage[];
   streaming: boolean;
   threadError: ThreadError;
+  switchDirection?: "left" | "right" | null;
   onEdit: (message: ChatMessage) => void;
   onRegenerate: (message: ChatMessage) => void;
   onCopy: (text: string) => void;
   onSuggestedPrompt: (prompt: string) => void;
+  onBranchNav: (message: ChatMessage, siblingId: string) => void;
+  onSummarize: (message: ChatMessage) => void;
+  onSaveAsNote: (message: ChatMessage) => void;
+  onOpenCanvas: (payload: CanvasPayload) => void;
 };
 
 function attachmentLabel(attachment: Attachment) {
@@ -51,36 +69,63 @@ function AttachmentChips({ attachments }: { attachments: Attachment[] }) {
   );
 }
 
-function CopyButton({ text, onCopy }: { text: string; onCopy: (text: string) => void }) {
-  const [copied, setCopied] = useState(false);
+function HoverActions({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const items = el.querySelectorAll<HTMLElement>("[data-hover-action]");
+    if (prefersReducedMotion()) {
+      items.forEach((item) => {
+        item.style.opacity = "1";
+      });
+      return;
+    }
+    anime.set(items, { opacity: 0, translateX: -6 });
+    anime({
+      targets: items,
+      opacity: 1,
+      translateX: 0,
+      duration: 280,
+      delay: anime.stagger(MOTION.actionStaggerMs),
+      easing: EASE_SETTLE,
+    });
+  }, []);
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        onCopy(text);
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 1200);
-      }}
-      className="font-mono text-[11px] text-ink-faint opacity-0 transition-opacity duration-150 hover:text-ink group-hover:opacity-100"
-    >
-      {copied ? "copied" : "copy"}
-    </button>
+    <div ref={ref} className="flex max-w-[min(100%,42rem)] flex-wrap items-center gap-x-3 gap-y-1">
+      {children}
+    </div>
   );
+}
+
+function longContentCandidate(content: string): boolean {
+  if (content.length > 1800) return true;
+  const fence = content.match(/```[\s\S]*?```/g);
+  if (!fence) return false;
+  return fence.some((block) => block.split("\n").length > 18);
 }
 
 export function MessageList({
   messages,
   streaming,
   threadError,
+  switchDirection = null,
   onEdit,
   onRegenerate,
   onCopy,
   onSuggestedPrompt,
+  onBranchNav,
+  onSummarize,
+  onSaveAsNote,
+  onOpenCanvas,
 }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
   const [stickToBottom, setStickToBottom] = useState(true);
   const [showJump, setShowJump] = useState(false);
+  const jumpRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const el = scrollerRef.current;
@@ -88,7 +133,6 @@ export function MessageList({
       setShowJump(!stickToBottom && (streaming || messages.some((m) => m.streaming)));
       return;
     }
-    // Instant during stream so tokens don't lag behind; smooth only feels good off-stream
     el.scrollTo({
       top: el.scrollHeight,
       behavior: streaming ? "auto" : "smooth",
@@ -96,14 +140,44 @@ export function MessageList({
     setShowJump(false);
   }, [messages, stickToBottom, streaming, threadError]);
 
+  useEffect(() => {
+    const el = threadRef.current;
+    if (!el || !switchDirection || prefersReducedMotion()) return;
+    anime.remove(el);
+    anime.set(el, {
+      opacity: 0.001,
+      translateX: switchDirection === "left" ? -8 : 8,
+    });
+    anime({
+      targets: el,
+      opacity: 1,
+      translateX: 0,
+      duration: MOTION.settle.duration,
+      easing: MOTION.settle.easing,
+    });
+  }, [switchDirection, messages]);
+
+  useEffect(() => {
+    const btn = jumpRef.current;
+    if (!btn || !showJump || prefersReducedMotion()) return;
+    anime.remove(btn);
+    anime.set(btn, { opacity: 0, scale: 0.86 });
+    anime({
+      targets: btn,
+      opacity: 1,
+      scale: 1,
+      duration: MOTION.spring.duration,
+      easing: EASE_SPRING,
+    });
+  }, [showJump]);
+
   function handleScroll() {
     const el = scrollerRef.current;
     if (!el) return;
     const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
     const atBottom = distance < 80;
     setStickToBottom(atBottom);
-    if (!atBottom) setShowJump(true);
-    else setShowJump(false);
+    setShowJump(!atBottom);
   }
 
   function jumpToLatest() {
@@ -123,138 +197,190 @@ export function MessageList({
         onScroll={handleScroll}
         className="absolute inset-0 flex flex-col gap-5 overflow-y-auto px-4 py-6 sm:px-6"
       >
-        {empty && (
-          <div className="animate-chat-enter mx-auto flex max-w-lg flex-col gap-6 py-10 text-center sm:py-16">
-            <div>
-              <h2 className="font-display text-2xl font-medium tracking-tight text-ink">
-                Claudette
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-ink-muted">
-                Nouveau fil - il n’apparaît dans la sidebar qu’après le premier
-                message.
-              </p>
-            </div>
-            <ul className="flex flex-col gap-2 text-left">
-              {SUGGESTED_PROMPTS.map((prompt) => (
-                <li key={prompt}>
-                  <button
-                    type="button"
-                    onClick={() => onSuggestedPrompt(prompt)}
-                    className="w-full rounded-sm border border-border bg-surface px-4 py-3 text-left text-sm text-ink-muted transition-[color,background-color,border-color] duration-150 hover:border-accent/40 hover:bg-accent-soft hover:text-ink"
-                  >
-                    {prompt}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {messages.map((message) => {
-          const isUser = message.role === "user";
-          const thinking = Boolean(message.streaming && !message.content);
-          const actionsDisabled = streaming || Boolean(message.pending);
-          const costLabel = formatQuietCostUsd(message.costUsd);
-
-          return (
-            <div
-              key={message.id}
-              className={`group flex flex-col gap-1.5 ${
-                message.pending || message.streaming ? "animate-chat-enter" : ""
-              } ${isUser ? "items-end" : "items-start"}`}
-            >
-              <span className="font-mono text-[11px] tracking-wider text-ink-faint uppercase">
-                {isUser ? "you" : "claudette"}
-              </span>
-              <div
-                className={`max-w-[min(100%,42rem)] px-3.5 py-2.5 transition-colors duration-150 ${
-                  isUser
-                    ? "rounded-md bg-surface text-ink"
-                    : "rounded-md border border-border/70 bg-transparent"
-                }`}
-              >
-                {thinking ? (
-                  <ThinkingIndicator />
-                ) : isUser ? (
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink">
-                    {message.content || (message.attachments.length ? "" : "…")}
-                  </p>
-                ) : (
-                  <MarkdownMessage
-                    content={message.content}
-                    streaming={Boolean(message.streaming)}
-                    copySegments={
-                      message.copySegmentsLoading
-                        ? undefined
-                        : message.copySegments
-                    }
-                    onCopySegment={onCopy}
-                  />
-                )}
-                <AttachmentChips attachments={message.attachments} />
+        <div ref={threadRef} className="flex flex-col gap-5">
+          {empty && (
+            <div className="animate-chat-enter mx-auto flex max-w-lg flex-col gap-6 py-10 text-center sm:py-16">
+              <div>
+                <h2 className="font-display text-2xl font-medium tracking-tight text-ink">
+                  Claudette
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed text-ink-muted">
+                  Nouveau fil - il n’apparaît dans la sidebar qu’après le premier
+                  message.
+                </p>
               </div>
-              {!actionsDisabled && (
-                <div className="flex max-w-[min(100%,42rem)] flex-wrap items-center gap-x-3 gap-y-1">
-                  <CopyButton text={message.content} onCopy={onCopy} />
-                  {isUser ? (
-                    <>
+              <ul className="flex flex-col gap-2 text-left">
+                {SUGGESTED_PROMPTS.map((prompt) => (
+                  <li key={prompt}>
+                    <button
+                      type="button"
+                      onClick={() => onSuggestedPrompt(prompt)}
+                      className="w-full rounded-sm border border-border bg-surface px-4 py-3 text-left text-sm text-ink-muted transition-[color,background-color,border-color] duration-150 hover:border-accent/40 hover:bg-accent-soft hover:text-ink"
+                    >
+                      {prompt}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {messages.map((message) => {
+            const isUser = message.role === "user";
+            const thinking = Boolean(message.streaming && !message.content);
+            const actionsDisabled = streaming || Boolean(message.pending);
+            const costLabel = formatQuietCostUsd(message.costUsd);
+            const showCanvas = !isUser && longContentCandidate(message.content);
+
+            return (
+              <div
+                key={message.id}
+                className={`group flex flex-col gap-1.5 ${
+                  message.pending || message.streaming ? "animate-chat-enter" : ""
+                } ${isUser ? "items-end" : "items-start"}`}
+              >
+                <div className="flex max-w-[min(100%,42rem)] items-center gap-2">
+                  <span className="font-mono text-[11px] tracking-wider text-ink-faint uppercase">
+                    {isUser ? "you" : "claudette"}
+                  </span>
+                  <BranchNav
+                    index={message.branchIndex}
+                    count={message.branchCount}
+                    disabled={actionsDisabled}
+                    onPrev={() => {
+                      const prev = message.siblingIds[message.branchIndex - 1];
+                      if (prev) onBranchNav(message, prev);
+                    }}
+                    onNext={() => {
+                      const next = message.siblingIds[message.branchIndex + 1];
+                      if (next) onBranchNav(message, next);
+                    }}
+                  />
+                </div>
+                <div
+                  className={`max-w-[min(100%,42rem)] px-3.5 py-2.5 transition-colors duration-150 ${
+                    isUser
+                      ? "rounded-md bg-surface text-ink"
+                      : "rounded-md border border-border/70 bg-transparent"
+                  }`}
+                >
+                  {thinking ? (
+                    <ThinkingIndicator />
+                  ) : isUser ? (
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink">
+                      {message.content || (message.attachments.length ? "" : "…")}
+                    </p>
+                  ) : (
+                    <MarkdownMessage
+                      content={message.content}
+                      streaming={Boolean(message.streaming)}
+                      copySegments={
+                        message.copySegmentsLoading
+                          ? undefined
+                          : message.copySegments
+                      }
+                      onCopySegment={onCopy}
+                      onOpenCanvas={
+                        showCanvas
+                          ? (block) =>
+                              onOpenCanvas({
+                                title: block.title || "Canvas",
+                                content: block.content,
+                              })
+                          : undefined
+                      }
+                    />
+                  )}
+                  <AttachmentChips attachments={message.attachments} />
+                </div>
+                {!actionsDisabled && (
+                  <HoverActions>
+                    <span data-hover-action>
+                      <CopyIconButton text={message.content} onCopy={onCopy} />
+                    </span>
+                    {isUser ? (
+                      <>
+                        <button
+                          data-hover-action
+                          type="button"
+                          onClick={() => onEdit(message)}
+                          className="font-mono text-[11px] text-ink-faint hover:text-ink"
+                        >
+                          edit
+                        </button>
+                        <button
+                          data-hover-action
+                          type="button"
+                          onClick={() => onRegenerate(message)}
+                          className="font-mono text-[11px] text-ink-faint hover:text-ink"
+                        >
+                          regenerate
+                        </button>
+                      </>
+                    ) : (
                       <button
-                        type="button"
-                        onClick={() => onEdit(message)}
-                        className="font-mono text-[11px] text-ink-faint opacity-0 transition-opacity duration-150 hover:text-ink group-hover:opacity-100"
-                      >
-                        edit
-                      </button>
-                      <button
+                        data-hover-action
                         type="button"
                         onClick={() => onRegenerate(message)}
-                        className="font-mono text-[11px] text-ink-faint opacity-0 transition-opacity duration-150 hover:text-ink group-hover:opacity-100"
+                        className="font-mono text-[11px] text-ink-faint hover:text-ink"
                       >
                         regenerate
                       </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => onRegenerate(message)}
-                      className="font-mono text-[11px] text-ink-faint opacity-0 transition-opacity duration-150 hover:text-ink group-hover:opacity-100"
-                    >
-                      regenerate
-                    </button>
-                  )}
-                  {!isUser && costLabel ? (
-                    <span
-                      className="font-mono text-[10px] tabular-nums text-ink-faint/80"
-                      title="Estimated turn cost (approx.)"
-                    >
-                      {costLabel}
-                    </span>
-                  ) : null}
-                </div>
-              )}
-            </div>
-          );
-        })}
+                    )}
+                    {!isUser && costLabel ? (
+                      <span
+                        data-hover-action
+                        className="font-mono text-[10px] tabular-nums text-ink-faint/80"
+                        title="Estimated turn cost (approx.)"
+                      >
+                        {costLabel}
+                      </span>
+                    ) : null}
+                  </HoverActions>
+                )}
+                {!isUser && !actionsDisabled && !message.streaming && (
+                  <QuickActions
+                    disabled={streaming}
+                    onSummarize={() => onSummarize(message)}
+                    onSaveAsNote={() => onSaveAsNote(message)}
+                    onOpenCanvas={
+                      showCanvas
+                        ? () =>
+                            onOpenCanvas({
+                              title: message.content.slice(0, 48) || "Canvas",
+                              content: message.content,
+                            })
+                        : undefined
+                    }
+                  />
+                )}
+              </div>
+            );
+          })}
 
-        {threadError && (
-          <div className="animate-chat-enter mx-auto w-full max-w-lg rounded-md border border-border bg-accent-soft/60 px-4 py-3">
-            <p className="font-display text-sm text-ink">{threadError.message}</p>
-            <button
-              type="button"
-              onClick={threadError.onRetry}
-              className="mt-2 font-mono text-xs text-accent transition-colors duration-150 hover:text-accent-strong"
-            >
-              retry
-            </button>
-          </div>
-        )}
+          {threadError && (
+            <ErrorFlinch>
+              <div className="mx-auto w-full max-w-lg rounded-md border border-border bg-accent-soft/60 px-4 py-3">
+                <p className="font-display text-sm text-ink">{threadError.message}</p>
+                <button
+                  type="button"
+                  onClick={threadError.onRetry}
+                  className="mt-2 font-mono text-xs text-accent transition-colors duration-150 hover:text-accent-strong"
+                >
+                  retry
+                </button>
+              </div>
+            </ErrorFlinch>
+          )}
+        </div>
       </div>
 
       {showJump && (
         <button
+          ref={jumpRef}
           type="button"
           onClick={jumpToLatest}
-          className="animate-chat-pop absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border bg-canvas px-3 py-1.5 font-mono text-xs text-accent shadow-sm transition-colors duration-150 hover:bg-accent-soft"
+          className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border bg-canvas px-3 py-1.5 font-mono text-xs text-accent shadow-sm transition-colors duration-150 hover:bg-accent-soft"
         >
           ↓ new message
         </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import {
@@ -10,11 +10,14 @@ import {
 } from "@/frontend/chat/split-copy-segments";
 import { THINKING_PHRASES } from "./chat-phrases";
 
+type CanvasBlock = { title: string; content: string };
+
 type Props = {
   content: string;
   streaming?: boolean;
   copySegments?: CopySegmentInput[];
   onCopySegment?: (text: string) => void;
+  onOpenCanvas?: (block: CanvasBlock) => void;
 };
 
 /** Split at an unclosed fenced code block so partial highlighting doesn't flash. */
@@ -31,10 +34,65 @@ function splitForStreaming(content: string): { closed: string; open: string | nu
   };
 }
 
-function MarkdownChunk({ content }: { content: string }) {
+function MarkdownChunk({
+  content,
+  onOpenCanvas,
+}: {
+  content: string;
+  onOpenCanvas?: (block: CanvasBlock) => void;
+}) {
   if (!content) return null;
+
+  const components: Components = {
+    pre({ children, ...props }) {
+      const child = Array.isArray(children) ? children[0] : children;
+      let codeText = "";
+      let language = "code";
+      if (
+        child &&
+        typeof child === "object" &&
+        "props" in child &&
+        child.props
+      ) {
+        const className = String(
+          (child.props as { className?: string }).className ?? "",
+        );
+        const match = /language-([\w-]+)/.exec(className);
+        if (match) language = match[1] ?? "code";
+        const raw = (child.props as { children?: unknown }).children;
+        codeText = String(Array.isArray(raw) ? raw.join("") : (raw ?? ""));
+      }
+
+      const long = codeText.split("\n").length > 14 || codeText.length > 900;
+
+      return (
+        <div className="group/code relative">
+          {long && onOpenCanvas ? (
+            <button
+              type="button"
+              onClick={() =>
+                onOpenCanvas({
+                  title: language,
+                  content: codeText,
+                })
+              }
+              className="absolute top-1.5 right-1.5 z-10 rounded-sm bg-canvas/90 px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-ink-faint opacity-0 shadow-sm ring-1 ring-border/60 transition-[opacity,color] duration-150 hover:text-accent focus-visible:opacity-100 group-hover/code:opacity-100"
+            >
+              canvas
+            </button>
+          ) : null}
+          <pre {...props}>{children}</pre>
+        </div>
+      );
+    },
+  };
+
   return (
-    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeHighlight]}
+      components={components}
+    >
       {content}
     </ReactMarkdown>
   );
@@ -45,11 +103,13 @@ function CopyableRegion({
   text,
   content,
   onCopy,
+  onOpenCanvas,
 }: {
   label: string;
   text: string;
   content: string;
   onCopy: (text: string) => void;
+  onOpenCanvas?: (block: CanvasBlock) => void;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -71,7 +131,7 @@ function CopyableRegion({
         {copied ? "copied" : "copy"}
       </button>
       <div className="pr-12">
-        <MarkdownChunk content={content} />
+        <MarkdownChunk content={content} onOpenCanvas={onOpenCanvas} />
       </div>
     </div>
   );
@@ -82,6 +142,7 @@ export function MarkdownMessage({
   streaming = false,
   copySegments = [],
   onCopySegment,
+  onOpenCanvas,
 }: Props) {
   const { closed, open } = useMemo(() => {
     if (streaming) return splitForStreaming(content);
@@ -96,7 +157,11 @@ export function MarkdownMessage({
   }, [closed, copySegments, onCopySegment, streaming]);
 
   return (
-    <div className="markdown-body max-w-none text-sm leading-relaxed text-ink">
+    <div
+      className={`markdown-body max-w-none text-sm leading-relaxed text-ink ${
+        streaming ? "chat-stream-ink" : ""
+      }`}
+    >
       {parts.map((part, index) => {
         if (part.kind === "segment" && onCopySegment) {
           return (
@@ -106,17 +171,26 @@ export function MarkdownMessage({
               text={part.text}
               content={part.content}
               onCopy={onCopySegment}
+              onOpenCanvas={onOpenCanvas}
             />
           );
         }
-        return <MarkdownChunk key={`md-${index}`} content={part.content} />;
+        return (
+          <MarkdownChunk
+            key={`md-${index}`}
+            content={part.content}
+            onOpenCanvas={onOpenCanvas}
+          />
+        );
       })}
       {open ? (
         <pre className="!mt-2 whitespace-pre-wrap">
           <code>{open.replace(/^```\w*\n?/, "")}</code>
         </pre>
       ) : null}
-      {streaming ? <span className="streaming-cursor" aria-hidden="true" /> : null}
+      {streaming ? (
+        <span className="streaming-cursor" aria-hidden="true" />
+      ) : null}
     </div>
   );
 }

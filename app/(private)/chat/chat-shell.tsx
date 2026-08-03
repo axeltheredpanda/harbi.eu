@@ -11,17 +11,42 @@ import {
   createConversation,
   deleteConversation,
   getConversationMessages,
+  getConversationUsageTotals,
   listConversations,
+  switchConversationBranch,
 } from "@/backend/chat/conversations";
 import { estimateCostUsd } from "@/backend/analytics/pricing";
+import { createNote } from "@/backend/jarvis/notes";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { MessageList, type ChatMessage } from "./message-list";
 import { MessageInput, type PendingAttachment } from "./message-input";
 import { ModelSelect } from "./model-select";
+import { ChatCanvas } from "./chat-canvas";
+import { ContextGauge } from "./context-gauge";
+import { ConversationCost } from "./conversation-cost";
 
 const MODEL_STORAGE_KEY = "claudette.model";
 const WEB_SEARCH_STORAGE_KEY = "claudette.webSearch";
+/** Soft context window estimate for the gauge (Sonnet-class). */
+const CONTEXT_LIMIT_TOKENS = 200_000;
 
+function branchDefaults(
+  partial: Omit<
+    ChatMessage,
+    "parent_id" | "branchIndex" | "branchCount" | "siblingIds"
+  > &
+    Partial<
+      Pick<ChatMessage, "parent_id" | "branchIndex" | "branchCount" | "siblingIds">
+    >,
+): ChatMessage {
+  return {
+    parent_id: null,
+    branchIndex: 0,
+    branchCount: 1,
+    siblingIds: [],
+    ...partial,
+  };
+}
 type Props = {
   initialConversations: Conversation[];
   /** When true, composer is locked (Louis joke mode). */
@@ -104,13 +129,26 @@ export function ChatShell({
     message: string;
     onRetry: () => void;
   } | null>(null);
+  const [canvas, setCanvas] = useState<{
+    title: string;
+    content: string;
+  } | null>(null);
+  const [usageTotals, setUsageTotals] = useState({
+    inputTokens: 0,
+    outputTokens: 0,
+    totalCostUsd: 0,
+  });
+  const [contextUsedTokens, setContextUsedTokens] = useState(0);
+  const [switchDirection, setSwitchDirection] = useState<"left" | "right" | null>(
+    null,
+  );
   const [pending, startTransition] = useTransition();
   const abortRef = useRef<AbortController | null>(null);
   const loadingConvRef = useRef<string | null>(null);
   const lastRequestRef = useRef<LastRequest | null>(null);
   const createPromiseRef = useRef<Promise<string> | null>(null);
   const uploadAbortRef = useRef(new Map<string, AbortController>());
-
+  const prevActiveRef = useRef<string | null>(null);
   function isTempConversationId(id: string) {
     return id.startsWith("temp-");
   }
@@ -118,14 +156,25 @@ export function ChatShell({
   const loadMessages = useCallback(async (conversationId: string) => {
     if (isTempConversationId(conversationId)) {
       setMessages([]);
+      setUsageTotals({ inputTokens: 0, outputTokens: 0, totalCostUsd: 0 });
+      setContextUsedTokens(0);
       return;
     }
     loadingConvRef.current = conversationId;
-    const rows = await getConversationMessages(conversationId);
+    const [rows, usage] = await Promise.all([
+      getConversationMessages(conversationId),
+      getConversationUsageTotals(conversationId).catch(() => ({
+        inputTokens: 0,
+        outputTokens: 0,
+        totalCostUsd: 0,
+      })),
+    ]);
     if (loadingConvRef.current !== conversationId) return;
     setMessages(rows);
+    setUsageTotals(usage);
+    const approxChars = rows.reduce((sum, m) => sum + m.content.length, 0);
+    setContextUsedTokens(Math.round(approxChars / 4) + usage.inputTokens * 0);
   }, []);
-
   useEffect(() => {
     if (!activeId) {
       startTransition(() => {
@@ -258,16 +307,17 @@ export function ChatShell({
       const now = new Date().toISOString();
       setConversations((prev) => [
         {
-          id: tempId,
-          user_id: "",
-          title: "New conversation",
-          summary: null,
-          summary_until_message_id: null,
-          topic: null,
-          topic_at: null,
-          created_at: now,
-          updated_at: now,
-        },
+            id: tempId,
+            user_id: "",
+            title: "New conversation",
+            summary: null,
+            summary_until_message_id: null,
+            topic: null,
+            topic_at: null,
+            active_leaf_id: null,
+            created_at: now,
+            updated_at: now,
+          },
         ...prev,
       ]);
       setActiveId(tempId);
@@ -513,6 +563,19 @@ export function ChatShell({
                   })
                 : null;
 
+            if (usage?.input_tokens != null) {
+              setContextUsedTokens(usage.input_tokens);
+            }
+            if (costUsd != null) {
+              setUsageTotals((prev) => ({
+                inputTokens:
+                  prev.inputTokens + (usage?.input_tokens ?? 0),
+                outputTokens:
+                  prev.outputTokens + (usage?.output_tokens ?? 0),
+                totalCostUsd: prev.totalCostUsd + costUsd,
+              }));
+            }
+
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === options.streamId
@@ -528,6 +591,11 @@ export function ChatShell({
                   : m,
               ),
             );
+
+            // Refresh branch metadata from server after settle
+            void loadMessages(conversationId).catch(() => {
+              /* keep optimistic path */
+            });
 
             const textForSegments = finalContent;
             if (textForSegments && textForSegments.trim().length >= 48) {
@@ -663,38 +731,43 @@ export function ChatShell({
     }));
 
     if (editingMessageId) {
+      const branchedUserId = `branch-${crypto.randomUUID()}`;
       setMessages((prev) => {
         const index = prev.findIndex((m) => m.id === editingMessageId);
         if (index < 0) return prev;
         const kept = prev.slice(0, index);
+        const parentId = prev[index]?.parent_id ?? null;
         return [
           ...kept,
-          {
-            id: editingMessageId,
+          branchDefaults({
+            id: branchedUserId,
             conversation_id: conversationId,
-            role: "user" as const,
+            role: "user",
             content,
-            created_at: prev[index].created_at,
+            created_at: new Date().toISOString(),
             token_count: null,
             attachments: optimisticAttachments,
             pending: true,
-          },
-          {
+            parent_id: parentId,
+            branchCount: (prev[index]?.branchCount ?? 1) + 1,
+          }),
+          branchDefaults({
             id: streamId,
             conversation_id: conversationId,
-            role: "assistant" as const,
+            role: "assistant",
             content: "",
             created_at: new Date().toISOString(),
             token_count: null,
             attachments: [],
             streaming: true,
-          },
+            parent_id: branchedUserId,
+          }),
         ];
       });
     } else {
       setMessages((prev) => [
         ...prev,
-        {
+        branchDefaults({
           id: optimisticId,
           conversation_id: conversationId,
           role: "user",
@@ -703,8 +776,9 @@ export function ChatShell({
           token_count: null,
           attachments: optimisticAttachments,
           pending: true,
-        },
-        {
+          parent_id: prev[prev.length - 1]?.id ?? null,
+        }),
+        branchDefaults({
           id: streamId,
           conversation_id: conversationId,
           role: "assistant",
@@ -713,7 +787,8 @@ export function ChatShell({
           token_count: null,
           attachments: [],
           streaming: true,
-        },
+          parent_id: optimisticId,
+        }),
       ]);
     }
 
@@ -755,34 +830,37 @@ export function ChatShell({
         const kept = prev.slice(0, index + 1);
         return [
           ...kept,
-          {
+          branchDefaults({
             id: streamId,
             conversation_id: activeId,
-            role: "assistant" as const,
+            role: "assistant",
             content: "",
             created_at: new Date().toISOString(),
             token_count: null,
             attachments: [],
             streaming: true,
-          },
+            parent_id: message.id,
+            branchCount: (message.branchCount ?? 1) + 1,
+          }),
         ];
       }
       const kept = prev.slice(0, index);
       return [
         ...kept,
-        {
+        branchDefaults({
           id: streamId,
           conversation_id: activeId,
-          role: "assistant" as const,
+          role: "assistant",
           content: "",
           created_at: new Date().toISOString(),
           token_count: null,
           attachments: [],
           streaming: true,
-        },
+          parent_id: message.parent_id,
+          branchCount: (message.branchCount ?? 1) + 1,
+        }),
       ];
     });
-
     await runStream(
       activeId,
       {
@@ -823,6 +901,63 @@ export function ChatShell({
     void handleSend(prompt);
   }
 
+  async function handleBranchNav(message: ChatMessage, siblingId: string) {
+    if (!activeId || streaming) return;
+    const direction =
+      siblingId && message.siblingIds.indexOf(siblingId) < message.branchIndex
+        ? "left"
+        : "right";
+    setSwitchDirection(direction);
+    try {
+      const rows = await switchConversationBranch(activeId, siblingId);
+      setMessages(rows);
+    } catch (err) {
+      setThreadError({
+        message: err instanceof Error ? err.message : "Could not switch branch",
+        onRetry: () => void handleBranchNav(message, siblingId),
+      });
+    } finally {
+      window.setTimeout(() => setSwitchDirection(null), 500);
+    }
+  }
+
+  async function handleSummarize(_message: ChatMessage) {
+    if (!activeId) return;
+    try {
+      const res = await fetch("/api/claude/summarize-thread", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversation_id: activeId }),
+      });
+      const data = (await res.json()) as { summary?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Summarize failed");
+      setCanvas({
+        title: "Thread summary",
+        content: data.summary ?? "",
+      });
+    } catch (err) {
+      setThreadError({
+        message: err instanceof Error ? err.message : "Summarize failed",
+        onRetry: () => void handleSummarize(_message),
+      });
+    }
+  }
+
+  async function handleSaveAsNote(message: ChatMessage) {
+    try {
+      const note = await createNote({
+        title: `From Claudette · ${new Date().toLocaleDateString()}`,
+        content: message.content,
+      });
+      window.open(`/today/notes/${note.id}`, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      setThreadError({
+        message: err instanceof Error ? err.message : "Could not save note",
+        onRetry: () => void handleSaveAsNote(message),
+      });
+    }
+  }
+
   const activeTitle =
     activeId == null
       ? "New conversation"
@@ -839,6 +974,16 @@ export function ChatShell({
         onCloseMobile={() => setMobileOpen(false)}
         onSelect={(id) => {
           if (streaming) return;
+          const prev = prevActiveRef.current;
+          if (prev && conversations.length) {
+            const prevIdx = conversations.findIndex((c) => c.id === prev);
+            const nextIdx = conversations.findIndex((c) => c.id === id);
+            setSwitchDirection(
+              nextIdx >= 0 && prevIdx >= 0 && nextIdx < prevIdx ? "left" : "right",
+            );
+            window.setTimeout(() => setSwitchDirection(null), 500);
+          }
+          prevActiveRef.current = id;
           setActiveId(id);
           setMessages([]);
           clearComposer();
@@ -852,7 +997,7 @@ export function ChatShell({
         }}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative flex min-w-0 flex-1 flex-col">
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <button
@@ -870,7 +1015,18 @@ export function ChatShell({
               </h1>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+            <div className="hidden min-w-[9rem] flex-col items-end gap-1 sm:flex">
+              <ContextGauge
+                usedTokens={contextUsedTokens}
+                limitTokens={CONTEXT_LIMIT_TOKENS}
+              />
+              <ConversationCost
+                totalCostUsd={usageTotals.totalCostUsd}
+                inputTokens={usageTotals.inputTokens}
+                outputTokens={usageTotals.outputTokens}
+              />
+            </div>
             <ModelSelect
               value={model}
               disabled={streaming}
@@ -886,12 +1042,23 @@ export function ChatShell({
           messages={messages}
           streaming={streaming}
           threadError={threadError}
+          switchDirection={switchDirection}
           onEdit={handleEdit}
           onRegenerate={(message) => {
             void handleRegenerate(message);
           }}
           onCopy={handleCopy}
           onSuggestedPrompt={handleSuggestedPrompt}
+          onBranchNav={(message, siblingId) => {
+            void handleBranchNav(message, siblingId);
+          }}
+          onSummarize={(message) => {
+            void handleSummarize(message);
+          }}
+          onSaveAsNote={(message) => {
+            void handleSaveAsNote(message);
+          }}
+          onOpenCanvas={(payload) => setCanvas(payload)}
         />
 
         {claudetteBlocked && claudetteBlockMessage ? (
@@ -941,6 +1108,13 @@ export function ChatShell({
             void handleSend(content);
           }}
           onStop={handleStop}
+        />
+
+        <ChatCanvas
+          open={Boolean(canvas)}
+          title={canvas?.title ?? ""}
+          content={canvas?.content ?? ""}
+          onClose={() => setCanvas(null)}
         />
       </div>
     </div>
