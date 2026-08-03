@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { openNewsDrawer } from "@/frontend/news/news-provider";
 
 const links = [
+  { href: "/today", label: "/today" },
   { href: "/chat", label: "/chat" },
   { href: "/cutout", label: "/cutout" },
   { href: "/convert", label: "/convert" },

@@ -30,7 +30,7 @@ export function LoginForm({ louisJokeMode }: Props) {
       setStatus(error.message);
       return;
     }
-    window.location.href = "/chat";
+    window.location.href = "/today";
   }
 
   async function handleMagicLink() {

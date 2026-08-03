@@ -1,0 +1,35 @@
+# Daily Jarvis briefing (Hobby-friendly via GitHub Actions).
+# Uses the same CRON_SECRET as news sync.
+
+name: Jarvis briefing
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Generate daily briefings
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          NEWS_SYNC_URL: ${{ vars.NEWS_SYNC_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::Add repository secret CRON_SECRET (same as Vercel env)."
+            exit 1
+          fi
+          BASE="${NEWS_SYNC_URL:-https://harbi.eu}"
+          URL="${BASE%/}/api/jarvis/briefing"
+          echo "POST $URL"
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "$URL"
+          echo
+          echo "OK"
