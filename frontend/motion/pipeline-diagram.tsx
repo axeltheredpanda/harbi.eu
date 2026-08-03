@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import anime from "animejs";
+import { EASE_SETTLE } from "./easing";
 import { prefersReducedMotion } from "./prefers-reduced";
 
 const STAGES = [
@@ -50,7 +51,7 @@ export function PipelineDiagram({ className = "" }: { className?: string }) {
           if (!entry.isIntersecting) continue;
           observer.disconnect();
           anime
-            .timeline({ easing: "easeOutCubic" })
+            .timeline({ easing: EASE_SETTLE })
             .add({
               targets: line,
               strokeDashoffset: [length, 0],

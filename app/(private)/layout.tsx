@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/backend/supabase/server";
 import { NavLinks } from "./nav-links";
 import { SignOutButton } from "./sign-out-button";
-import { CommandPalette } from "./command-palette";
+import { CommandPaletteLazy } from "./command-palette-lazy";
 
 export const metadata: Metadata = {
   robots: {
@@ -50,7 +50,7 @@ export default async function PrivateLayout({
       <main className="mx-auto flex min-h-0 w-full flex-1 flex-col px-6 py-10 sm:px-10">
         {children}
       </main>
-      <CommandPalette />
+      <CommandPaletteLazy />
     </div>
   );
 }

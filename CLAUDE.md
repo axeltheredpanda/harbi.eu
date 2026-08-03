@@ -46,11 +46,21 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - `frontend/i18n/landing.ts` - copy EN only
 - `app/opengraph-image.tsx` (+ notes OG)
 
+## Conventions — motion & loading
+- **Easing**: always import from `frontend/motion/easing.ts` (`EASE_SETTLE`, `EASE_SPRING`, `EASE_ALERT`, `MOTION`). Never hardcode anime/CSS easing per component.
+- **Interactive press**: global squash/spring via `SiteMotion` (`button`, `[role=button]`, submit, `[data-squash]`). Opt out with `data-no-squash`.
+- **Route / panel transitions**: View Transitions (`experimental.viewTransition` + `ViewTransitionProvider`) — page-turn fade + few-px shift. Same `page-turn-panel` class for in-page tab swaps (Settings).
+- **Skeletons**: use `frontend/ui/skeleton.tsx` (cream `bg-surface` / shimmer) for async surfaces — never blank flash or generic grey spinners.
+- **Reduced motion**: go through `prefersReducedMotion()` / global CSS — do not invent per-component escape hatches that ignore the preference.
+- **Code splitting**: private heavy UI (command palette, news drawer, convert/cutout WASM) loads lazily; public landing must not pull chat/RAG/convert bundles.
+- **Images**: prefer `next/image` for remote logos/screenshots (Supabase Storage remotePatterns configured).
+
 ## État actuel
 - [x] Auth + proxy (`/today` `/chat` `/cutout` `/convert` `/analytics` `/settings`)
 - [x] Jarvis foundation (`/today`) - notes, wiki links, hybrid search, RAG ask, daily briefing
 - [x] Claudette (streaming, modèles, uploads, UX, web search per-message, draft landing, coût, copy-segments)
 - [x] Claudette UX: memory system, branching, canvas, quick actions, voice, context gauge, micro-interactions — SQL `claudette-ux.sql`
+- [x] Site-wide motion system + View Transitions + editorial skeletons + loading perf (fonts, ISR landing, lazy news/palette)
 - [x] Cutout in-browser (imgly) + history/cache Supabase - SQL `cutout-and-settings.sql`
 - [x] Convert in-browser (HEIC/TIFF/… → PNG/JPG/WebP/AVIF/BMP) + zip + local history
 - [x] Settings (relationship status single/dating → bannière publique)

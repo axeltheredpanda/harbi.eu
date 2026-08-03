@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import type { CvMilestone } from "@/backend/cv/types";
 import { milestoneImageUrl } from "@/frontend/cv/milestone-image";
 import { prefersReducedMotion } from "@/frontend/motion/prefers-reduced";
@@ -48,11 +49,13 @@ function ActiveContent({
       </p>
       <div className="mt-3 flex items-start gap-4">
         {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={image}
             alt=""
+            width={72}
+            height={36}
             className="mt-1 h-9 w-auto max-w-[4.5rem] shrink-0 object-contain"
+            unoptimized={image.startsWith("blob:")}
           />
         ) : null}
         <div className="min-w-0">
@@ -120,11 +123,13 @@ function VerticalStack({
               </p>
               <div className="mt-2 flex items-start gap-3">
                 {image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={image}
                     alt=""
+                    width={56}
+                    height={32}
                     className="mt-0.5 h-8 w-auto max-w-[3.5rem] object-contain"
+                    unoptimized={image.startsWith("blob:")}
                   />
                 ) : null}
                 <div>

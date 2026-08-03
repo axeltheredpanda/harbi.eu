@@ -531,9 +531,12 @@ export function NewsDrawer() {
         ) : (
           <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
             {loading && items.length === 0 ? (
-              <p className="px-5 py-10 font-mono text-xs text-ink-faint">
-                Loading shelf…
-              </p>
+              <div className="space-y-4 px-5 py-8" aria-busy="true" aria-label="Loading shelf">
+                <div className="h-3 w-24 rounded-sm bg-surface" />
+                <div className="h-16 rounded-sm bg-surface" />
+                <div className="h-16 rounded-sm bg-surface" />
+                <div className="h-16 rounded-sm bg-surface" />
+              </div>
             ) : visibleItems.length === 0 ? (
               <div className="px-5 py-12 text-center">
                 <p className="font-display text-lg text-ink">

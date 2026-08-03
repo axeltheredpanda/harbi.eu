@@ -1,4 +1,5 @@
 import anime from "animejs";
+import { EASE_SETTLE } from "./easing";
 import { prefersReducedMotion } from "./prefers-reduced";
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -74,7 +75,7 @@ export function morphTheme(toRally: boolean): Promise<void> {
       targets: state,
       t: 1,
       duration: 720,
-      easing: "easeInOutSine",
+      easing: EASE_SETTLE,
       update() {
         for (const key of keys) {
           root.style.setProperty(

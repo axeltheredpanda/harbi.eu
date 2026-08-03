@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import anime from "animejs";
+import { EASE_SETTLE, MOTION } from "./easing";
 import { prefersReducedMotion } from "./prefers-reduced";
 
 type Props = {
@@ -61,9 +62,9 @@ export function ScrollReveal({
             targets: target,
             opacity: [0, 1],
             translateY: [12, 0],
-            duration: 520,
+            duration: MOTION.settle.duration + 100,
             delay: Math.max(0, index) * stagger,
-            easing: "easeOutCubic",
+            easing: EASE_SETTLE,
           });
         }
       },

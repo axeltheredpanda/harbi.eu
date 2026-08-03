@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import { copy, type LandingCopy } from "@/frontend/i18n/landing";
 import type { NoteMeta } from "@/backend/notes";
@@ -14,12 +15,36 @@ import { HeroAssemble } from "@/frontend/motion/hero-assemble";
 import { ScrollReveal } from "@/frontend/motion/scroll-reveal";
 import { CountUp } from "@/frontend/motion/count-up";
 import { MonogramLogo } from "@/frontend/motion/monogram-logo";
-import { PipelineDiagram } from "@/frontend/motion/pipeline-diagram";
 import { morphTheme } from "@/frontend/motion/theme-morph";
 import { openNewsDrawer } from "@/frontend/news/news-provider";
 import { FuelStatusLine } from "./fuel-status-line";
-import { CvTimeline } from "./cv-timeline";
 import { SpecimenCard } from "./specimen-card";
+
+const PipelineDiagram = dynamic(
+  () =>
+    import("@/frontend/motion/pipeline-diagram").then((m) => ({
+      default: m.PipelineDiagram,
+    })),
+  { ssr: true },
+);
+
+const CvTimeline = dynamic(
+  () => import("./cv-timeline").then((m) => ({ default: m.CvTimeline })),
+  {
+    ssr: true,
+    loading: () => (
+      <div
+        className="border-t border-border py-16 sm:py-20"
+        aria-busy="true"
+        aria-label="Loading CV"
+      >
+        <div className="h-3 w-24 rounded-sm bg-surface" />
+        <div className="mt-4 h-10 w-64 rounded-sm bg-surface" />
+        <div className="mt-8 h-40 rounded-sm bg-surface" />
+      </div>
+    ),
+  },
+);
 
 const AXEL_CRM_STACK = ["Python", "React", "Supabase", "Stripe"] as const;
 const AXEL_CRM_YEARS = "2025-";
