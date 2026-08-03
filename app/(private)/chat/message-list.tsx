@@ -5,7 +5,7 @@ import anime from "animejs";
 import type { Attachment } from "@/backend/supabase/types";
 import type { BranchedMessage } from "@/backend/chat/branches";
 import { formatQuietCostUsd } from "@/frontend/chat/format-cost";
-import { EASE_SETTLE, EASE_SPRING, MOTION } from "@/frontend/motion/easing";
+import { EASE_SPRING, MOTION } from "@/frontend/motion/easing";
 import { prefersReducedMotion } from "@/frontend/motion/prefers-reduced";
 import { MarkdownMessage, ThinkingIndicator } from "./markdown-message";
 import { SUGGESTED_PROMPTS } from "./chat-phrases";
@@ -36,6 +36,7 @@ type CanvasPayload = {
 type Props = {
   messages: ChatMessage[];
   streaming: boolean;
+  loading?: boolean;
   threadError: ThreadError;
   switchDirection?: "left" | "right" | null;
   onEdit: (message: ChatMessage) => void;
@@ -70,32 +71,35 @@ function AttachmentChips({ attachments }: { attachments: Attachment[] }) {
 }
 
 function HoverActions({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const items = el.querySelectorAll<HTMLElement>("[data-hover-action]");
-    if (prefersReducedMotion()) {
-      items.forEach((item) => {
-        item.style.opacity = "1";
-      });
-      return;
-    }
-    anime.set(items, { opacity: 0, translateX: -6 });
-    anime({
-      targets: items,
-      opacity: 1,
-      translateX: 0,
-      duration: 280,
-      delay: anime.stagger(MOTION.actionStaggerMs),
-      easing: EASE_SETTLE,
-    });
-  }, []);
-
   return (
-    <div ref={ref} className="flex max-w-[min(100%,42rem)] flex-wrap items-center gap-x-3 gap-y-1">
+    <div
+      className="flex max-w-[min(100%,42rem)] flex-wrap items-center gap-x-3 gap-y-1.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+    >
       {children}
+    </div>
+  );
+}
+
+function ThreadSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-5"
+      aria-busy="true"
+      aria-label="Loading conversation"
+    >
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className={`flex flex-col gap-2 ${i % 2 === 0 ? "items-end" : "items-start"}`}
+        >
+          <div className="skeleton-line h-2.5 w-14 rounded-sm" />
+          <div
+            className={`skeleton-block rounded-md ${
+              i % 2 === 0 ? "h-14 w-[min(100%,18rem)]" : "h-20 w-[min(100%,28rem)]"
+            }`}
+          />
+        </div>
+      ))}
     </div>
   );
 }
@@ -110,6 +114,7 @@ function longContentCandidate(content: string): boolean {
 export function MessageList({
   messages,
   streaming,
+  loading = false,
   threadError,
   switchDirection = null,
   onEdit,
@@ -188,7 +193,7 @@ export function MessageList({
     setShowJump(false);
   }
 
-  const empty = messages.length === 0 && !streaming && !threadError;
+  const empty = messages.length === 0 && !streaming && !threadError && !loading;
 
   return (
     <div className="relative min-h-0 flex-1">
@@ -197,6 +202,9 @@ export function MessageList({
         onScroll={handleScroll}
         className="absolute inset-0 flex flex-col gap-5 overflow-y-auto px-4 py-6 sm:px-6"
       >
+        {loading && messages.length === 0 ? (
+          <ThreadSkeleton />
+        ) : (
         <div ref={threadRef} className="flex flex-col gap-5">
           {empty && (
             <div className="animate-chat-enter mx-auto flex max-w-lg flex-col gap-6 py-10 text-center sm:py-16">
@@ -295,13 +303,10 @@ export function MessageList({
                 </div>
                 {!actionsDisabled && (
                   <HoverActions>
-                    <span data-hover-action>
-                      <CopyIconButton text={message.content} onCopy={onCopy} />
-                    </span>
+                    <CopyIconButton text={message.content} onCopy={onCopy} />
                     {isUser ? (
                       <>
                         <button
-                          data-hover-action
                           type="button"
                           onClick={() => onEdit(message)}
                           className="font-mono text-[11px] text-ink-faint hover:text-ink"
@@ -309,7 +314,6 @@ export function MessageList({
                           edit
                         </button>
                         <button
-                          data-hover-action
                           type="button"
                           onClick={() => onRegenerate(message)}
                           className="font-mono text-[11px] text-ink-faint hover:text-ink"
@@ -319,7 +323,6 @@ export function MessageList({
                       </>
                     ) : (
                       <button
-                        data-hover-action
                         type="button"
                         onClick={() => onRegenerate(message)}
                         className="font-mono text-[11px] text-ink-faint hover:text-ink"
@@ -329,30 +332,29 @@ export function MessageList({
                     )}
                     {!isUser && costLabel ? (
                       <span
-                        data-hover-action
                         className="font-mono text-[10px] tabular-nums text-ink-faint/80"
                         title="Estimated turn cost (approx.)"
                       >
                         {costLabel}
                       </span>
                     ) : null}
+                    {!isUser && !message.streaming ? (
+                      <QuickActions
+                        disabled={streaming}
+                        onSummarize={() => onSummarize(message)}
+                        onSaveAsNote={() => onSaveAsNote(message)}
+                        onOpenCanvas={
+                          showCanvas
+                            ? () =>
+                                onOpenCanvas({
+                                  title: message.content.slice(0, 48) || "Canvas",
+                                  content: message.content,
+                                })
+                            : undefined
+                        }
+                      />
+                    ) : null}
                   </HoverActions>
-                )}
-                {!isUser && !actionsDisabled && !message.streaming && (
-                  <QuickActions
-                    disabled={streaming}
-                    onSummarize={() => onSummarize(message)}
-                    onSaveAsNote={() => onSaveAsNote(message)}
-                    onOpenCanvas={
-                      showCanvas
-                        ? () =>
-                            onOpenCanvas({
-                              title: message.content.slice(0, 48) || "Canvas",
-                              content: message.content,
-                            })
-                        : undefined
-                    }
-                  />
                 )}
               </div>
             );
@@ -373,6 +375,7 @@ export function MessageList({
             </ErrorFlinch>
           )}
         </div>
+        )}
       </div>
 
       {showJump && (
