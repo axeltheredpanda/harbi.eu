@@ -150,6 +150,8 @@ export function ChatShell({
   const createPromiseRef = useRef<Promise<string> | null>(null);
   const uploadAbortRef = useRef(new Map<string, AbortController>());
   const prevActiveRef = useRef<string | null>(null);
+  /** Skip wipe/reload when temp id is swapped for the real conversation id mid-send. */
+  const suppressNextLoadRef = useRef(false);
   function isTempConversationId(id: string) {
     return id.startsWith("temp-");
   }
@@ -194,9 +196,14 @@ export function ChatShell({
     }
     if (isTempConversationId(activeId)) {
       setLoadingMessages(false);
-      startTransition(() => {
-        setMessages([]);
-      });
+      // Keep any in-flight optimistic draft; only clear when truly empty draft.
+      return;
+    }
+    // First send: temp → real id. Keep optimistic user/assistant bubbles.
+    if (suppressNextLoadRef.current) {
+      suppressNextLoadRef.current = false;
+      loadingConvRef.current = activeId;
+      setLoadingMessages(false);
       return;
     }
     setLoadingMessages(true);
@@ -342,6 +349,8 @@ export function ChatShell({
         setConversations((prev) =>
           prev.map((c) => (c.id === tempId ? created : c)),
         );
+        // Preserve optimistic thread when swapping temp → persisted id
+        suppressNextLoadRef.current = true;
         setActiveId((prev) => (prev === tempId ? created.id : prev));
         return created.id;
       })
@@ -606,10 +615,22 @@ export function ChatShell({
               ),
             );
 
-            // Refresh branch metadata from server after settle
-            void loadMessages(conversationId).catch(() => {
-              /* keep optimistic path */
-            });
+    // Refresh branch metadata after settle — don't flip loading skeleton
+    void (async () => {
+      try {
+        const rows = await getConversationMessages(conversationId);
+        if (loadingConvRef.current && loadingConvRef.current !== conversationId) {
+          return;
+        }
+        setMessages(rows);
+        const usage = await getConversationUsageTotals(conversationId).catch(
+          () => null,
+        );
+        if (usage) setUsageTotals(usage);
+      } catch {
+        /* keep optimistic path */
+      }
+    })();
 
             const textForSegments = finalContent;
             if (textForSegments && textForSegments.trim().length >= 48) {
