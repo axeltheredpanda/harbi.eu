@@ -58,6 +58,7 @@ export function buildSystemBlocks(
   summary: string | null,
   pdfTexts: string[],
   profile?: ClaudetteProfile | null,
+  memoryBlock?: string | null,
 ): Anthropic.TextBlockParam[] {
   const blocks: Anthropic.TextBlockParam[] = [
     {
@@ -76,6 +77,14 @@ export function buildSystemBlocks(
         cache_control: { type: "ephemeral" },
       });
     }
+  }
+
+  if (memoryBlock?.trim()) {
+    blocks.push({
+      type: "text",
+      text: `Long-term memories (durable facts across chats — use only when relevant; never invent beyond these):\n${memoryBlock.trim()}`,
+      cache_control: { type: "ephemeral" },
+    });
   }
 
   if (summary?.trim()) {
@@ -166,6 +175,7 @@ export function prepareContext(
   summary: string | null,
   summaryUntilMessageId: string | null,
   profile?: ClaudetteProfile | null,
+  memoryBlock?: string | null,
 ): BuiltContext {
   const { older, window } = splitContextWindow(allMessages);
 
@@ -182,7 +192,7 @@ export function prepareContext(
   const needsSummaryRefresh = unsummarizedOlder.length > 0;
 
   return {
-    system: buildSystemBlocks(summary, pdfTexts, profile),
+    system: buildSystemBlocks(summary, pdfTexts, profile, memoryBlock),
     messages: [],
     olderMessages: older,
     windowMessages: window,

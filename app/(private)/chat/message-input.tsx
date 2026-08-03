@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import anime from "animejs";
 import { buttonClass } from "@/frontend/components/button-variants";
+import { EASE_SPRING, MOTION } from "@/frontend/motion/easing";
+import { prefersReducedMotion } from "@/frontend/motion/prefers-reduced";
 import { PLACEHOLDERS } from "./chat-phrases";
+import { SendStopButton } from "./send-stop-button";
+import { VoiceDictateButton } from "./voice-dictate-button";
 
 export type PendingAttachment = {
   id: string;
@@ -74,7 +79,10 @@ export function MessageInput({
   const [placeholderVisible, setPlaceholderVisible] = useState(true);
   const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const attachmentsRef = useRef<HTMLDivElement>(null);
+  const prevAttachCount = useRef(attachments.length);
 
   useEffect(() => {
     if (editingContent === null) return;
@@ -114,6 +122,22 @@ export function MessageInput({
     };
   }, [value, focused]);
 
+  useEffect(() => {
+    const grew = attachments.length > prevAttachCount.current;
+    prevAttachCount.current = attachments.length;
+    const el = attachmentsRef.current;
+    if (!grew || !el || prefersReducedMotion()) return;
+    anime.remove(el);
+    anime.set(el, { translateY: -6, opacity: 0.4 });
+    anime({
+      targets: el,
+      translateY: 0,
+      opacity: 1,
+      duration: MOTION.spring.duration,
+      easing: EASE_SPRING,
+    });
+  }, [attachments.length]);
+
   const canSend =
     Boolean(value.trim() || attachments.length > 0) &&
     !attachments.some((a) => a.uploading);
@@ -151,6 +175,15 @@ export function MessageInput({
     onPickFiles(imageFiles);
   }
 
+  function handleTranscript(text: string, isFinal: boolean) {
+    setValue((prev) => {
+      const base = prev.replace(/\s+$/, "");
+      const next = base ? `${base} ${text}` : text;
+      return isFinal ? next.trimStart() : next;
+    });
+    textareaRef.current?.focus();
+  }
+
   return (
     <div className="shrink-0 border-t border-border bg-canvas px-4 py-4 sm:px-6">
       {editingContent !== null && (
@@ -167,11 +200,11 @@ export function MessageInput({
       )}
 
       {attachments.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-2">
+        <div ref={attachmentsRef} className="mb-3 flex flex-wrap gap-2">
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
-              className={`animate-chat-pop group relative flex max-w-[11rem] items-center gap-2 overflow-hidden rounded-sm border border-border bg-surface ${
+              className={`group relative flex max-w-[11rem] items-center gap-2 overflow-hidden rounded-sm border border-border bg-surface ${
                 attachment.uploading ? "opacity-70" : ""
               }`}
             >
@@ -229,7 +262,12 @@ export function MessageInput({
         >
           +
         </button>
-        <div className="relative min-w-0 flex-1">
+        <div
+          ref={wrapRef}
+          className={`relative min-w-0 flex-1 rounded-md ${
+            focused ? "chat-focus-ring chat-focus-ring-active" : "chat-focus-ring"
+          }`}
+        >
           {!value && (
             <span
               aria-hidden="true"
@@ -257,31 +295,20 @@ export function MessageInput({
             rows={1}
             aria-label="Message Claudette"
             disabled={disabled}
-            className={`max-h-[176px] min-h-[42px] w-full resize-none overflow-y-auto rounded-md border bg-surface px-3 py-2.5 text-sm text-ink transition-[border-color,box-shadow,height] duration-150 ease-out ${
-              focused
-                ? "border-accent shadow-[0_0_0_1px_var(--color-accent)]"
-                : "border-border"
-            }`}
+            className="max-h-[176px] min-h-[42px] w-full resize-none overflow-y-auto rounded-md border border-transparent bg-surface px-3 py-2.5 text-sm text-ink transition-[height] duration-150 ease-out"
           />
         </div>
-        {streaming ? (
-          <button type="button" onClick={onStop} className={buttonClass("secondary", "shrink-0")}>
-            Stop
-          </button>
-        ) : (
-          <button
-            type="button"
-            disabled={disabled || !canSend}
-            onClick={submit}
-            className={`inline-flex shrink-0 items-center justify-center rounded-sm px-4 py-2 text-sm font-medium transition-colors duration-150 ${
-              canSend
-                ? "bg-accent text-canvas hover:bg-accent-strong"
-                : "cursor-not-allowed bg-surface-hover text-ink-faint"
-            }`}
-          >
-            Send
-          </button>
-        )}
+        <VoiceDictateButton
+          disabled={disabled || streaming}
+          onTranscript={handleTranscript}
+        />
+        <SendStopButton
+          streaming={streaming}
+          disabled={disabled}
+          canSend={canSend}
+          onSend={submit}
+          onStop={onStop}
+        />
       </div>
 
       <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">

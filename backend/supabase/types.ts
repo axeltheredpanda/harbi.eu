@@ -61,6 +61,7 @@ export type Database = {
           summary_until_message_id: string | null;
           topic: string | null;
           topic_at: string | null;
+          active_leaf_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -72,6 +73,7 @@ export type Database = {
           summary_until_message_id?: string | null;
           topic?: string | null;
           topic_at?: string | null;
+          active_leaf_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -83,6 +85,7 @@ export type Database = {
           summary_until_message_id?: string | null;
           topic?: string | null;
           topic_at?: string | null;
+          active_leaf_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -96,6 +99,7 @@ export type Database = {
           content: string;
           created_at: string;
           token_count: number | null;
+          parent_id: string | null;
         };
         Insert: {
           id?: string;
@@ -104,6 +108,7 @@ export type Database = {
           content?: string;
           created_at?: string;
           token_count?: number | null;
+          parent_id?: string | null;
         };
         Update: {
           id?: string;
@@ -112,6 +117,49 @@ export type Database = {
           content?: string;
           created_at?: string;
           token_count?: number | null;
+          parent_id?: string | null;
+        };
+        Relationships: [];
+      };
+      memories: {
+        Row: {
+          id: string;
+          user_id: string;
+          category: "personal" | "projects" | "preferences" | "ongoing" | "other";
+          title: string;
+          content: string;
+          sensitive: boolean;
+          pinned: boolean;
+          source_conversation_id: string | null;
+          last_touched_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          category: "personal" | "projects" | "preferences" | "ongoing" | "other";
+          title: string;
+          content: string;
+          sensitive?: boolean;
+          pinned?: boolean;
+          source_conversation_id?: string | null;
+          last_touched_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          category?: "personal" | "projects" | "preferences" | "ongoing" | "other";
+          title?: string;
+          content?: string;
+          sensitive?: boolean;
+          pinned?: boolean;
+          source_conversation_id?: string | null;
+          last_touched_at?: string;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };

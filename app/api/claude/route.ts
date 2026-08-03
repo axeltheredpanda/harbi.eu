@@ -1,6 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { after } from "next/server";
 import { createClient } from "@/backend/supabase/server";
 import { anthropic } from "@/backend/anthropic";
+import { maybeExtractMemoriesForConversation } from "@/backend/chat/memories";
 import {
   buildAnthropicMessages,
   buildSystemBlocks,
@@ -112,10 +114,11 @@ export async function POST(request: Request) {
     });
   }
 
-  // Edit / regenerate / new message paths
+  // Edit / regenerate / new message paths — branching (never delete siblings)
   let userMessageId: string;
   let userMessageContent = content;
   let shouldGenerateTitle = false;
+  let assistantParentId: string | null = null;
 
   if (regenerateMessageId) {
     const { data: target, error: targetError } = await supabase
@@ -133,30 +136,22 @@ export async function POST(request: Request) {
     }
 
     if (target.role === "assistant") {
-      const { error: deleteError } = await supabase
-        .from("messages")
-        .delete()
-        .eq("conversation_id", conversationId)
-        .gte("created_at", target.created_at);
-
-      if (deleteError) {
-        return new Response(JSON.stringify({ error: deleteError.message }), {
-          status: 502,
+      // New assistant sibling under the same parent (user turn)
+      const parentId = target.parent_id;
+      if (!parentId) {
+        return new Response(JSON.stringify({ error: "Nothing to regenerate from" }), {
+          status: 400,
           headers: { "Content-Type": "application/json" },
         });
       }
-
       const { data: priorUser } = await supabase
         .from("messages")
         .select("*")
+        .eq("id", parentId)
         .eq("conversation_id", conversationId)
-        .eq("role", "user")
-        .lt("created_at", target.created_at)
-        .order("created_at", { ascending: false })
-        .limit(1)
         .maybeSingle();
 
-      if (!priorUser) {
+      if (!priorUser || priorUser.role !== "user") {
         return new Response(JSON.stringify({ error: "Nothing to regenerate from" }), {
           status: 400,
           headers: { "Content-Type": "application/json" },
@@ -165,22 +160,12 @@ export async function POST(request: Request) {
 
       userMessageId = priorUser.id;
       userMessageContent = priorUser.content;
+      assistantParentId = priorUser.id;
     } else {
-      const { error: deleteError } = await supabase
-        .from("messages")
-        .delete()
-        .eq("conversation_id", conversationId)
-        .gt("created_at", target.created_at);
-
-      if (deleteError) {
-        return new Response(JSON.stringify({ error: deleteError.message }), {
-          status: 502,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-
+      // Regenerate from user message: keep user, new assistant sibling of any existing replies
       userMessageId = target.id;
       userMessageContent = target.content;
+      assistantParentId = target.id;
     }
   } else if (editMessageId) {
     const { data: existing, error: existingError } = await supabase
@@ -197,48 +182,14 @@ export async function POST(request: Request) {
       });
     }
 
-    const { error: deleteError } = await supabase
-      .from("messages")
-      .delete()
-      .eq("conversation_id", conversationId)
-      .gt("created_at", existing.created_at);
-
-    if (deleteError) {
-      return new Response(JSON.stringify({ error: deleteError.message }), {
-        status: 502,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    const { error: updateError } = await supabase
-      .from("messages")
-      .update({ content: userMessageContent })
-      .eq("id", editMessageId);
-
-    if (updateError) {
-      return new Response(JSON.stringify({ error: updateError.message }), {
-        status: 502,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    userMessageId = editMessageId;
-
-    if (attachmentIds.length > 0) {
-      await supabase
-        .from("attachments")
-        .update({ message_id: userMessageId })
-        .in("id", attachmentIds)
-        .eq("user_id", user.id)
-        .eq("conversation_id", conversationId);
-    }
-  } else {
+    // Branch: new user sibling with same parent (do not overwrite)
     const { data: inserted, error: insertError } = await supabase
       .from("messages")
       .insert({
         conversation_id: conversationId,
         role: "user",
         content: userMessageContent,
+        parent_id: existing.parent_id,
       })
       .select("*")
       .single();
@@ -251,6 +202,46 @@ export async function POST(request: Request) {
     }
 
     userMessageId = inserted.id;
+    assistantParentId = inserted.id;
+
+    if (attachmentIds.length > 0) {
+      await supabase
+        .from("attachments")
+        .update({ message_id: userMessageId })
+        .in("id", attachmentIds)
+        .eq("user_id", user.id)
+        .eq("conversation_id", conversationId);
+    }
+
+    await supabase
+      .from("conversations")
+      .update({
+        active_leaf_id: userMessageId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", conversationId);
+  } else {
+    const parentId = conversation.active_leaf_id ?? null;
+    const { data: inserted, error: insertError } = await supabase
+      .from("messages")
+      .insert({
+        conversation_id: conversationId,
+        role: "user",
+        content: userMessageContent,
+        parent_id: parentId,
+      })
+      .select("*")
+      .single();
+
+    if (insertError || !inserted) {
+      return new Response(JSON.stringify({ error: insertError?.message ?? "Insert failed" }), {
+        status: 502,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    userMessageId = inserted.id;
+    assistantParentId = inserted.id;
 
     if (attachmentIds.length > 0) {
       const { error: linkError } = await supabase
@@ -269,11 +260,18 @@ export async function POST(request: Request) {
       }
     }
 
-    // Title is generated after the first full exchange (user + assistant).
+    await supabase
+      .from("conversations")
+      .update({
+        active_leaf_id: userMessageId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", conversationId);
+
     shouldGenerateTitle = conversation.title === "New conversation";
   }
 
-  // Load full history + attachments
+  // Load full tree, then take active path for model context
   const { data: messages, error: messagesError } = await supabase
     .from("messages")
     .select("*")
@@ -286,6 +284,13 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  const { resolveActivePath } = await import("@/backend/chat/branches");
+  const pathMessages = resolveActivePath(
+    messages as Message[],
+    // Prefer path ending at the user turn we're answering
+    userMessageId,
+  );
 
   const { data: attachments } = await supabase
     .from("attachments")
@@ -300,13 +305,15 @@ export async function POST(request: Request) {
     byMessage.set(attachment.message_id, list);
   }
 
-  const contextMessages: ContextMessage[] = messages.map((message: Message) => ({
+  const contextMessages: ContextMessage[] = pathMessages.map((message: Message) => ({
     ...message,
     attachments: byMessage.get(message.id) ?? [],
   }));
 
   const claudette = await getClaudetteSettings();
   const profile = claudette.profile;
+  const { buildMemoryInjection } = await import("@/backend/chat/memories");
+  const memoryBlock = await buildMemoryInjection(user.id).catch(() => null);
   // Per-message toggle wins; settings default is only a fallback for old clients
   const webSearchEnabled =
     typeof body.web_search === "boolean"
@@ -321,6 +328,7 @@ export async function POST(request: Request) {
     conversation.summary,
     conversation.summary_until_message_id,
     profile,
+    memoryBlock,
   );
 
   let summary = conversation.summary;
@@ -359,7 +367,7 @@ export async function POST(request: Request) {
 
         prepared = {
           ...prepared,
-          system: buildSystemBlocks(summary, pdfTexts, profile),
+          system: buildSystemBlocks(summary, pdfTexts, profile, memoryBlock),
           needsSummaryRefresh: false,
         };
       } catch {
@@ -500,7 +508,7 @@ export async function POST(request: Request) {
         }
       }
 
-      // Persist assistant message (including partial on abort)
+      // Persist assistant message (including partial on abort) as branch child
       let assistantId: string | null = null;
       if (assistantText.trim() || aborted) {
         const { data: assistantRow } = await supabase
@@ -510,11 +518,22 @@ export async function POST(request: Request) {
             role: "assistant",
             content: assistantText,
             token_count: outputTokens,
+            parent_id: assistantParentId ?? userMessageId,
           })
           .select("id")
           .single();
 
         assistantId = assistantRow?.id ?? null;
+
+        if (assistantId) {
+          await supabase
+            .from("conversations")
+            .update({
+              active_leaf_id: assistantId,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", conversationId);
+        }
       }
 
       await recordClaudeUsage({
@@ -570,6 +589,18 @@ export async function POST(request: Request) {
           cache_read_input_tokens: cacheReadTokens,
         },
       });
+
+      if (!aborted && assistantId) {
+        after(() => {
+          void maybeExtractMemoriesForConversation(conversationId, {
+            userId: user.id,
+            supabase,
+          }).catch(() => {
+            // best-effort background extraction
+          });
+        });
+      }
+
       controller.close();
     },
   });
