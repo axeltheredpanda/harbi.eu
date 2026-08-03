@@ -110,6 +110,7 @@ export function ChatShell({
   // Claude.ai style: land on a blank draft; persist only after first send.
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [streaming, setStreaming] = useState(false);
@@ -156,40 +157,53 @@ export function ChatShell({
   const loadMessages = useCallback(async (conversationId: string) => {
     if (isTempConversationId(conversationId)) {
       setMessages([]);
+      setLoadingMessages(false);
       setUsageTotals({ inputTokens: 0, outputTokens: 0, totalCostUsd: 0 });
       setContextUsedTokens(0);
       return;
     }
     loadingConvRef.current = conversationId;
-    const [rows, usage] = await Promise.all([
-      getConversationMessages(conversationId),
-      getConversationUsageTotals(conversationId).catch(() => ({
-        inputTokens: 0,
-        outputTokens: 0,
-        totalCostUsd: 0,
-      })),
-    ]);
-    if (loadingConvRef.current !== conversationId) return;
-    setMessages(rows);
-    setUsageTotals(usage);
-    const approxChars = rows.reduce((sum, m) => sum + m.content.length, 0);
-    setContextUsedTokens(Math.round(approxChars / 4) + usage.inputTokens * 0);
+    setLoadingMessages(true);
+    try {
+      const [rows, usage] = await Promise.all([
+        getConversationMessages(conversationId),
+        getConversationUsageTotals(conversationId).catch(() => ({
+          inputTokens: 0,
+          outputTokens: 0,
+          totalCostUsd: 0,
+        })),
+      ]);
+      if (loadingConvRef.current !== conversationId) return;
+      setMessages(rows);
+      setUsageTotals(usage);
+      const approxChars = rows.reduce((sum, m) => sum + m.content.length, 0);
+      setContextUsedTokens(Math.round(approxChars / 4));
+    } finally {
+      if (loadingConvRef.current === conversationId) {
+        setLoadingMessages(false);
+      }
+    }
   }, []);
   useEffect(() => {
     if (!activeId) {
+      setLoadingMessages(false);
       startTransition(() => {
         setMessages([]);
       });
       return;
     }
     if (isTempConversationId(activeId)) {
+      setLoadingMessages(false);
       startTransition(() => {
         setMessages([]);
       });
       return;
     }
+    setLoadingMessages(true);
+    setMessages([]);
     startTransition(() => {
       void loadMessages(activeId).catch((err: unknown) => {
+        setLoadingMessages(false);
         setThreadError({
           message: err instanceof Error ? err.message : "Failed to load messages",
           onRetry: () => {
@@ -964,7 +978,7 @@ export function ChatShell({
       : (conversations.find((c) => c.id === activeId)?.title ?? "Claudette");
 
   return (
-    <div className="-mx-6 -my-10 flex h-[calc(100dvh-4.25rem)] min-h-0 flex-1 sm:-mx-10">
+    <div className="flex h-full min-h-0 flex-1 overflow-hidden">
       <ConversationSidebar
         conversations={conversations}
         activeId={activeId}
@@ -986,6 +1000,7 @@ export function ChatShell({
           prevActiveRef.current = id;
           setActiveId(id);
           setMessages([]);
+          setLoadingMessages(true);
           clearComposer();
           setThreadError(null);
         }}
@@ -1032,15 +1047,13 @@ export function ChatShell({
               disabled={streaming}
               onChange={handleModelChange}
             />
-            {pending && (
-              <span className="font-mono text-xs text-ink-faint">loading…</span>
-            )}
           </div>
         </div>
 
         <MessageList
           messages={messages}
           streaming={streaming}
+          loading={loadingMessages}
           threadError={threadError}
           switchDirection={switchDirection}
           onEdit={handleEdit}

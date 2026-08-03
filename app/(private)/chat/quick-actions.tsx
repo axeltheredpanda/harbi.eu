@@ -12,10 +12,10 @@ export function QuickActions({
   onOpenCanvas,
 }: Props) {
   const className =
-    "rounded-sm border border-border/70 px-2 py-1 font-mono text-[10px] tracking-wide text-ink-faint transition-[border-color,background-color,color,opacity] duration-150 hover:border-accent/40 hover:bg-accent-soft/60 hover:text-accent disabled:pointer-events-none disabled:opacity-40";
+    "rounded-sm border border-border/70 px-2 py-1 font-mono text-[10px] tracking-wide text-ink-faint transition-[border-color,background-color,color] duration-150 hover:border-accent/40 hover:bg-accent-soft/60 hover:text-accent disabled:pointer-events-none disabled:opacity-40";
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <span className="inline-flex flex-wrap items-center gap-1.5">
       <button
         type="button"
         disabled={disabled}
@@ -42,6 +42,6 @@ export function QuickActions({
           open canvas
         </button>
       ) : null}
-    </div>
+    </span>
   );
 }

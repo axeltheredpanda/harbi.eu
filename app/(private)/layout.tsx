@@ -30,7 +30,7 @@ export default async function PrivateLayout({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-surface/80 px-6 py-4 sm:px-10">
+      <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-surface/80 px-6 sm:px-10">
         <div className="flex min-w-0 items-center gap-8">
           <Link
             href="/"
