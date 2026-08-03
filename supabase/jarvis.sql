@@ -37,6 +37,15 @@ create index if not exists notes_user_title_idx
 alter table public.notes
   add column if not exists processed_hash text;
 
+-- Full-text search column (must exist before the GIN index below)
+alter table public.notes
+  add column if not exists fts tsvector
+  generated always as (
+    setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+    setweight(to_tsvector('english', coalesce(content, '')), 'B') ||
+    setweight(to_tsvector('english', coalesce(auto_summary, '')), 'C')
+  ) stored;
+
 create index if not exists notes_fts_idx on public.notes using gin (fts);
 
 -- Vector index (cosine). HNSW works well for small personal corpora.
