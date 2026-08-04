@@ -81,8 +81,8 @@ Site perso combinant un portfolio public (destiné aux recruteurs) et une zone p
 - [ ] Brancher Supabase (SQL à jour) si besoin - dont `supabase/now-playing.sql`
 - [ ] Contenu projets encore placeholders
 - [x] Contact : arthur.reichard@essec.edu · GitHub · LinkedIn
-- [x] SEO : sitemap.xml, robots.txt, metadata Arthur Reichard, JSON-LD Person
-- [ ] Soumettre harbi.eu dans Google Search Console (sitemap `/sitemap.xml`)
+- [x] SEO : sitemap.xml (route handler `app/sitemap.xml/route.ts`, pas MetadataRoute — évite Content-Disposition qui casse GSC), robots.txt, metadata Arthur Reichard, JSON-LD Person
+- [ ] GSC : resoumettre `https://harbi.eu/sitemap.xml` (ou `…/sitemap.xml?v=2` / trailing slash pour bust le cache d’erreur) sur la propriété apex `harbi.eu`
 ## Notes
 - Pas de todo/projects / market / garage UI (retirés volontairement).
 - Mettre à jour cette section à chaque session.
