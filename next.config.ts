@@ -63,6 +63,25 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async headers() {
+    // Belt-and-suspenders for GSC: force sitemap charset + XML type.
+    // Route handler already sets these; this covers CDN edge cases.
+    return [
+      {
+        source: "/sitemap.xml",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "text/xml; charset=utf-8",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+        ],
+      },
+    ];
+  },
   // Silence webpack/turbopack dual-config error (Next 16 defaults to Turbopack)
   turbopack: {
     resolveAlias: {
